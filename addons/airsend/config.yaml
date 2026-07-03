@@ -2,7 +2,7 @@ name: AirSend
 description: Connect your AirSend / AirSend Duo boxes to Home Assistant (RF cover/switch/button/sensor via MQTT discovery)
 version: "0.1.0"
 slug: airsend
-url: https://github.com/<votre_org>/hass_airsend-addon
+url: https://github.com/38decibel/airsend-addon-dev
 arch:
   - aarch64
   - amd64
