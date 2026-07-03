@@ -21,6 +21,7 @@ export MQTT_USER=$(bashio::services mqtt "username")
 export MQTT_PASS=$(bashio::services mqtt "password")
 export MQTT_SSL=$(bashio::config 'mqtt.ssl' 'false')
 export BOXES_JSON=$(bashio::config 'boxes' | jq -c .)
+bashio::log.info "BOXES_JSON=${BOXES_JSON}"
 export LOG_LEVEL=$(bashio::config 'system.log_level' 'INFO')
 
 # --- Demarre AirSendWebService ---
