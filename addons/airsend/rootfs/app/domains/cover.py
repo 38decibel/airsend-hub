@@ -32,8 +32,8 @@ _STATE_DOWN = 34
 _STATE_STOP = 17
 
 
-def discovery_config(device, topics: DeviceTopics) -> dict:
-    payload = base_discovery_payload(device, COMPONENT, topics)
+def discovery_config(device, topics: DeviceTopics, device_info: dict) -> dict:
+    payload = base_discovery_payload(device, COMPONENT, topics, device_info)
     payload.update(
         {
             "command_topic": topics.command,
