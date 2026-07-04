@@ -20,8 +20,8 @@ COMPONENT = "event"
 _EVENT_TYPES = ["triggered"]
 
 
-def discovery_config(device, topics: DeviceTopics) -> dict:
-    payload = base_discovery_payload(device, COMPONENT, topics)
+def discovery_config(device, topics: DeviceTopics, device_info: dict) -> dict:
+    payload = base_discovery_payload(device, COMPONENT, topics, device_info)
     payload["event_types"] = device.options.get("event_types", _EVENT_TYPES)
     return payload
 
