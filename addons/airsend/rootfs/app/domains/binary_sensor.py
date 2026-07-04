@@ -14,8 +14,8 @@ from domains.topics import DeviceTopics, base_discovery_payload
 COMPONENT = "binary_sensor"
 
 
-def discovery_config(device, topics: DeviceTopics) -> dict:
-    payload = base_discovery_payload(device, COMPONENT, topics)
+def discovery_config(device, topics: DeviceTopics, device_info: dict) -> dict:
+    payload = base_discovery_payload(device, COMPONENT, topics, device_info)
     device_class = device.options.get("device_class")
     if device_class:
         payload["device_class"] = device_class
