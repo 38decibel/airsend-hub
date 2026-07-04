@@ -353,5 +353,6 @@ class MqttBridge:
         channel = {"id": device.channel_id, "source": device.channel_source}
         try:
             await self._client.transfer(box, channel=channel, thingnotes=thingnotes, wait=True)
+            _LOGGER.info("Transfer result for %s: %r", device.key, result)
         except AirSendError as exc:
             _LOGGER.warning("Failed to send command for device %s: %s", device.key, exc)
