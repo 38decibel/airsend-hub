@@ -19,17 +19,33 @@ import paho.mqtt.client as mqtt
 from airsend_client import AirSendClient, AirSendError, BoxConfig
 from device_registry import Device, DeviceRegistry
 from domains import get_domain_module
-from domains.topics import AVAILABILITY_OFFLINE, AVAILABILITY_ONLINE, AVAILABILITY_TOPIC, DeviceTopics
+from domains.topics import (
+    AVAILABILITY_OFFLINE,
+    AVAILABILITY_ONLINE,
+    AVAILABILITY_TOPIC,
+    DeviceTopics,
+    build_device_info,
+)
 from inclusion import InclusionState
+from net_utils import mac_from_link_local
+from protocol_catalog import ProtocolCatalog
+from runtime_settings import RuntimeSettings
 
 _LOGGER = logging.getLogger("airsend.mqtt_bridge")
 
-# Entite systeme "mode inclusion", independante du device_registry (ce n'est
-# pas un appareil AirSend, c'est un mode de fonctionnement de l'addon).
+# Entites systeme (mode inclusion, reglages), independantes du device_registry
+# (pas des appareils AirSend, mais des modes/reglages de l'addon lui-meme).
+# Rattachees au device de la PREMIERE box configuree (limitation actuelle :
+# le mode inclusion et les reglages sont partages entre toutes les box s'il y
+# en a plusieurs - a revisiter si besoin de reglages par-box).
 _INCLUSION_COMMAND_TOPIC = "airsend/inclusion/set"
 _INCLUSION_STATE_TOPIC = "airsend/inclusion/state"
 _INCLUSION_DISCOVERY_TOPIC = "homeassistant/switch/airsend_inclusion_mode/config"
 _INCLUSION_CANDIDATES_TOPIC = "airsend/inclusion/candidates"
+
+_RELIABILITY_COMMAND_TOPIC = "airsend/settings/reliability_min/set"
+_RELIABILITY_STATE_TOPIC = "airsend/settings/reliability_min/state"
+_RELIABILITY_DISCOVERY_TOPIC = "homeassistant/number/airsend_reliability_min/config"
 
 
 class MqttBridge:
@@ -39,6 +55,8 @@ class MqttBridge:
         client: AirSendClient,
         boxes_by_slug: dict[str, BoxConfig],
         inclusion: InclusionState,
+        catalog: ProtocolCatalog,
+        settings: RuntimeSettings,
         host: str,
         port: int = 1883,
         username: str | None = None,
@@ -49,6 +67,8 @@ class MqttBridge:
         self._client = client
         self._boxes_by_slug = boxes_by_slug
         self._inclusion = inclusion
+        self._catalog = catalog
+        self._settings = settings
         self._loop = asyncio.get_event_loop()
         self._candidates_task: asyncio.Task | None = None
 
@@ -106,21 +126,62 @@ class MqttBridge:
         client.subscribe("airsend/+/set")
         client.subscribe("airsend/+/set_position")
         client.subscribe(_INCLUSION_COMMAND_TOPIC)
+        client.subscribe(_RELIABILITY_COMMAND_TOPIC)
         # Republie la discovery + le dernier etat connu de tous les devices a
         # chaque (re)connexion : couvre le cas d'un broker/HA redemarre.
         for device in self._registry.all():
             self.publish_discovery(device)
         self._publish_inclusion_discovery()
         self._publish_inclusion_state()
+        self._publish_reliability_discovery()
+        self._publish_reliability_state()
+        for box in self._boxes_by_slug.values():
+            self.publish_box_diagnostics(box)
 
     # ------------------------------------------------------------------ #
-    # Entite systeme : mode inclusion
+    # Bloc `device` par box (nom reel + modele detecte + MAC)
+    # ------------------------------------------------------------------ #
+
+    def _box_model(self, box_slug: str) -> str | None:
+        is_duo = self._catalog.is_duo_best_effort(box_slug)
+        if is_duo is True:
+            return "AirSend Duo"
+        if is_duo is False:
+            return "AirSend"
+        return None  # catalogue pas encore recupere
+
+    def _device_info_for_box(self, box_slug: str) -> dict:
+        box = self._boxes_by_slug.get(box_slug)
+        name = box.name if box else box_slug
+        mac = mac_from_link_local(box.localip) if box else None
+        return build_device_info(
+            identifier=f"airsend_{box_slug}",
+            name=name,
+            model=self._box_model(box_slug),
+            mac=mac,
+        )
+
+    def _primary_box_slug(self) -> str | None:
+        """cf. limitation notee plus haut : le mode inclusion et les reglages
+        sont rattaches a la premiere box configuree tant qu'on ne gere qu'un
+        etat global (pas encore per-box)."""
+        return next(iter(self._boxes_by_slug), None)
+
+    # ------------------------------------------------------------------ #
+    # Entite systeme : mode inclusion (bloc "Configuration")
     # ------------------------------------------------------------------ #
 
     def _publish_inclusion_discovery(self) -> None:
+        box_slug = self._primary_box_slug()
+        device_info = (
+            self._device_info_for_box(box_slug)
+            if box_slug
+            else build_device_info("airsend_addon", "AirSend")
+        )
         config = {
-            "name": "AirSend - Mode inclusion",
+            "name": "Mode inclusion",
             "unique_id": "airsend_inclusion_mode",
+            "entity_category": "config",
             "command_topic": _INCLUSION_COMMAND_TOPIC,
             "state_topic": _INCLUSION_STATE_TOPIC,
             "payload_on": "ON",
@@ -130,11 +191,7 @@ class MqttBridge:
             "availability_topic": AVAILABILITY_TOPIC,
             "payload_available": AVAILABILITY_ONLINE,
             "payload_not_available": AVAILABILITY_OFFLINE,
-            "device": {
-                "identifiers": ["airsend_addon"],
-                "name": "AirSend Addon",
-                "manufacturer": "Devmel",
-            },
+            "device": device_info,
         }
         self._mqtt.publish(_INCLUSION_DISCOVERY_TOPIC, json.dumps(config), retain=True)
 
@@ -146,7 +203,61 @@ class MqttBridge:
         )
 
     # ------------------------------------------------------------------ #
-    # Discovery
+    # Entite systeme : seuil de fiabilite (bloc "Configuration")
+    # ------------------------------------------------------------------ #
+
+    def _publish_reliability_discovery(self) -> None:
+        box_slug = self._primary_box_slug()
+        device_info = (
+            self._device_info_for_box(box_slug)
+            if box_slug
+            else build_device_info("airsend_addon", "AirSend")
+        )
+        config = {
+            "name": "Fiabilite minimale",
+            "unique_id": "airsend_reliability_min",
+            "entity_category": "config",
+            "command_topic": _RELIABILITY_COMMAND_TOPIC,
+            "state_topic": _RELIABILITY_STATE_TOPIC,
+            "min": 0,
+            "max": RuntimeSettings.RELIABILITY_MAX - 1,
+            "step": 1,
+            "mode": "slider",
+            "availability_topic": AVAILABILITY_TOPIC,
+            "payload_available": AVAILABILITY_ONLINE,
+            "payload_not_available": AVAILABILITY_OFFLINE,
+            "device": device_info,
+        }
+        self._mqtt.publish(_RELIABILITY_DISCOVERY_TOPIC, json.dumps(config), retain=True)
+
+    def _publish_reliability_state(self) -> None:
+        self._mqtt.publish(_RELIABILITY_STATE_TOPIC, str(self._settings.reliability_min), retain=True)
+
+    # ------------------------------------------------------------------ #
+    # Diagnostics par box (IPv4) - bloc "Diagnostic"
+    # ------------------------------------------------------------------ #
+
+    def publish_box_diagnostics(self, box: BoxConfig) -> None:
+        """Publie une entite sensor (categorie diagnostic) affichant l'IPv4
+        de la box. La MAC, elle, est exposee nativement via `connections`
+        dans le bloc `device` (cf. _device_info_for_box) plutot qu'en entite
+        separee - c'est l'emplacement standard HA pour ce genre d'identifiant."""
+        topics = DeviceTopics.for_device("sensor", f"{box.slug}_ipv4")
+        config = {
+            "name": "Adresse IPv4",
+            "unique_id": f"airsend_{box.slug}_ipv4",
+            "entity_category": "diagnostic",
+            "state_topic": topics.state,
+            "availability_topic": AVAILABILITY_TOPIC,
+            "payload_available": AVAILABILITY_ONLINE,
+            "payload_not_available": AVAILABILITY_OFFLINE,
+            "device": self._device_info_for_box(box.slug),
+        }
+        self._mqtt.publish(topics.discovery, json.dumps(config), retain=True)
+        self._mqtt.publish(topics.state, box.ipv4, retain=True)
+
+    # ------------------------------------------------------------------ #
+    # Discovery (appareils RF)
     # ------------------------------------------------------------------ #
 
     def publish_discovery(self, device: Device) -> None:
@@ -155,7 +266,8 @@ class MqttBridge:
             _LOGGER.warning("Unknown domain '%s' for device %s, skipping discovery", device.domain, device.key)
             return
         topics = DeviceTopics.for_device(module.COMPONENT, device.key)
-        config = module.discovery_config(device, topics)
+        device_info = self._device_info_for_box(device.box)
+        config = module.discovery_config(device, topics, device_info)
         self._mqtt.publish(topics.discovery, json.dumps(config), retain=True)
         _LOGGER.info("Published discovery for %s (%s) on %s", device.key, device.domain, topics.discovery)
 
@@ -185,7 +297,7 @@ class MqttBridge:
             _LOGGER.debug("Published state %s = %s", topic, payload)
 
     # ------------------------------------------------------------------ #
-    # Commande entrante (MQTT -> RF)
+    # Commande entrante (MQTT -> RF / reglages)
     # ------------------------------------------------------------------ #
 
     def _on_message(self, client, userdata, msg) -> None:
@@ -200,6 +312,18 @@ class MqttBridge:
             else:
                 self._inclusion.stop()
             self._publish_inclusion_state()
+            return
+
+        if topic == _RELIABILITY_COMMAND_TOPIC:
+            try:
+                value = int(float(payload))
+            except ValueError:
+                _LOGGER.warning("Invalid reliability_min payload: %r", payload)
+                return
+            value = max(0, min(RuntimeSettings.RELIABILITY_MAX - 1, value))
+            self._settings.reliability_min = value
+            self._publish_reliability_state()
+            _LOGGER.info("reliability_min updated to %s", value)
             return
 
         # topic attendu: airsend/<device_key>/set ou /set_position
