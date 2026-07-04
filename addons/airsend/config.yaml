@@ -21,21 +21,21 @@ map:
   - data:rw
 options:
   boxes:
-    - name: ""
-      localip: ""
-      ipv6: ""
+    - localip: "fe80::dcf6:e5ff:fe"
       password: ""
+      ipv4: ""
       gw: false
+      name: "AIRSEND_"
   system:
     log_level: INFO
   mqtt: {}
 schema:
   boxes:
-    - name: str
-      localip: str
-      ipv6: str
+    - localip: str
       password: str
+      ipv4: str
       gw: bool
+      name: str
   system:
     log_level: match(^ERROR|WARNING|INFO|DEBUG$)
   mqtt:
@@ -53,4 +53,3 @@ services:
 # toujours demander confirmation utilisateur (nom + kind + domaine) avant de
 # creer un appareil, pour eviter qu'un volet soit devine a tort comme une
 # lumiere (ou l'inverse) sans que personne ne s'en rende compte.
-
