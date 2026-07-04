@@ -35,12 +35,10 @@ from aiohttp import web
 from device_registry import DeviceRegistry
 from inclusion import InclusionState
 from protocol_catalog import ProtocolCatalog
+from runtime_settings import RuntimeSettings
 from thing_notes import convert_notes_to_states
 
 _LOGGER = logging.getLogger("airsend.callback_server")
-
-_RELIABILITY_MIN = 0x6
-_RELIABILITY_MAX = 0x47
 
 # Signature du callback appele pour chaque etat decode et route vers un device connu.
 # (device_key, stype, svalue, channel) -> None
@@ -53,6 +51,7 @@ class CallbackServer:
         registry: DeviceRegistry,
         inclusion: InclusionState,
         catalog: ProtocolCatalog,
+        settings: RuntimeSettings,
         on_state: StateSink,
         host: str = "127.0.0.1",
         port: int = 8126,
@@ -60,6 +59,7 @@ class CallbackServer:
         self._registry = registry
         self._inclusion = inclusion
         self._catalog = catalog
+        self._settings = settings
         self._on_state = on_state
         self._host = host
         self._port = port
@@ -142,10 +142,12 @@ class CallbackServer:
             return
 
         reliability = event.get("reliability")
-        if not isinstance(reliability, (int, float)) or not (_RELIABILITY_MIN < reliability < _RELIABILITY_MAX):
+        reliability_min = self._settings.reliability_min
+        reliability_max = RuntimeSettings.RELIABILITY_MAX
+        if not isinstance(reliability, (int, float)) or not (reliability_min < reliability < reliability_max):
             _LOGGER.debug(
-                "Interrupt event dropped (reliability=%s out of range) on box=%s channel=%s/%s",
-                reliability, box_slug, channel_id, channel_source,
+                "Interrupt event dropped (reliability=%s out of range [%s, %s]) on box=%s channel=%s/%s",
+                reliability, reliability_min, reliability_max, box_slug, channel_id, channel_source,
             )
             return
 
