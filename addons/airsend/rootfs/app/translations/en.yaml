@@ -1,0 +1,54 @@
+## NOTE IMPORTANTE : "boxes" est une liste d'objets (repeatable group), pas un
+## simple objet imbrique. Un utilisateur d'add-on tiers a signale que la
+## traduction des sous-champs ("fields") a l'interieur d'une liste ne
+## s'applique pas de facon fiable dans certaines versions de Supervisor
+## (cf. community.home-assistant.io/t/891303). On tente quand meme la
+## structure standard ci-dessous (identique au cas "objet imbrique" documente
+## officiellement) - A VERIFIER a l'usage : si les libelles ne s'affichent
+## pas dans l'UI, il faudra soit renommer les cles du schema elles-memes
+## (dernier recours, moins joli mais garanti), soit remonter le probleme.
+
+configuration:
+  boxes:
+    name: "Boxes AirSend"
+    description: "Retrouvez les informations de connexion au dos de l'appareil."
+    fields:
+      localip:
+        name: "Local IP"
+        description: "Adresse IPv6 link-local de la box (imprimee sous le boitier)."
+      password:
+        name: "Password"
+        description: "Mot de passe de la box (imprime sous le boitier)."
+      ipv4:
+        name: "Adresse secondaire"
+        description: "ex. 192.168.x.x"
+      gw:
+        name: "GW"
+        description: "Active si la box est configuree pour passer par la passerelle internet."
+      name:
+        name: "Name"
+        description: "The name that will be used for MQTT device"
+  system:
+    name: "Systeme"
+    description: "Reglages generaux de l'addon."
+    fields:
+      log_level:
+        name: "Niveau de log"
+        description: "Verbosite des journaux de l'addon."
+  mqtt:
+    name: "MQTT"
+    description: >-
+      (optional) MQTT configuration to connect to an external MQTT broker.
+      when not configured, the built-in MQTT broker of Home Assistant will
+      be used.
+    fields:
+      host:
+        name: "Host"
+      port:
+        name: "Port"
+      ssl:
+        name: "SSL"
+      username:
+        name: "Username"
+      password:
+        name: "Password"
