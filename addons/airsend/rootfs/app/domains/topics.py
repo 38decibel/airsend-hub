@@ -71,12 +71,25 @@ def base_discovery_payload(device, component: str, topics: DeviceTopics, device_
     l'entite par le nom de l'appareil (ex. "AIRSEND_BB5D74 Volet cuisine
     porte" -> juste "Volet cuisine porte"), et donne un entity_id propre et
     stable (ex. cover.lames_pergola) independant du nom affiche, qui lui peut
-    changer sans casser les automatisations existantes."""
+    changer sans casser les automatisations existantes.
+
+    Forme "{device.key}_airsend" (device.key en premier) sur unique_id, au
+    lieu de l'ancien "airsend_{device.key}" : le registre HA lie unique_id ->
+    entity_id/nom de facon permanente des la premiere creation, et ne les met
+    JAMAIS a jour retroactivement meme si la config de discovery change
+    (comportement voulu par HA, pour ne pas casser les automatisations
+    existantes). Les entites creees avant l'introduction de object_id/
+    has_entity_name restaient donc bloquees sur leur ancien nom/entity_id
+    malgre tout changement de code. Inverser l'ordre des termes force HA a
+    traiter ces entites comme reellement nouvelles. Les anciennes entrees
+    (forme "airsend_{key}") deviennent orphelines - a supprimer une fois
+    manuellement, plus jamais recreees puisqu'aucun message de discovery ne
+    referencera plus leur ancien unique_id."""
     return {
         "name": device.friendly_name,
         "object_id": device.key,
         "has_entity_name": True,
-        "unique_id": f"airsend_{device.key}",
+        "unique_id": f"{device.key}_airsend",
         "state_topic": topics.state,
         "availability_topic": AVAILABILITY_TOPIC,
         "payload_available": AVAILABILITY_ONLINE,
