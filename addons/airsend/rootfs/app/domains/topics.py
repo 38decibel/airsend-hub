@@ -67,27 +67,31 @@ def base_discovery_payload(device, component: str, topics: DeviceTopics, device_
     `device_info` est calcule par mqtt_bridge (build_device_info) car lui seul
     connait le nom reel et le modele detecte de la box associee.
 
-    has_entity_name=True + object_id : evite que HA prefixe le nom de
+    has_entity_name=True + default_entity_id : evite que HA prefixe le nom de
     l'entite par le nom de l'appareil (ex. "AIRSEND_BB5D74 Volet cuisine
     porte" -> juste "Volet cuisine porte"), et donne un entity_id propre et
     stable (ex. cover.lames_pergola) independant du nom affiche, qui lui peut
     changer sans casser les automatisations existantes.
+
+    IMPORTANT : `object_id` (utilise dans une version anterieure) est
+    DEPRECIE cote HA depuis 2025.10 et son support a ete retire en HA Core
+    2026.4 - il etait donc silencieusement ignore, ce qui expliquait que rien
+    ne changait malgre plusieurs tentatives de correction. Le remplacant
+    officiel est `default_entity_id`, qui prend la forme complete
+    "<component>.<slug>" (ex. "cover.lames_pergola"), pas juste le slug seul.
 
     Forme "{device.key}_airsend" (device.key en premier) sur unique_id, au
     lieu de l'ancien "airsend_{device.key}" : le registre HA lie unique_id ->
     entity_id/nom de facon permanente des la premiere creation, et ne les met
     JAMAIS a jour retroactivement meme si la config de discovery change
     (comportement voulu par HA, pour ne pas casser les automatisations
-    existantes). Les entites creees avant l'introduction de object_id/
-    has_entity_name restaient donc bloquees sur leur ancien nom/entity_id
-    malgre tout changement de code. Inverser l'ordre des termes force HA a
-    traiter ces entites comme reellement nouvelles. Les anciennes entrees
-    (forme "airsend_{key}") deviennent orphelines - a supprimer une fois
-    manuellement, plus jamais recreees puisqu'aucun message de discovery ne
-    referencera plus leur ancien unique_id."""
+    existantes). Inverser l'ordre des termes force HA a traiter ces entites
+    comme reellement nouvelles. Les anciennes entrees (forme "airsend_{key}")
+    deviennent orphelines - nettoyees automatiquement au demarrage (cf.
+    MqttBridge._cleanup_legacy_discovery_topics)."""
     return {
         "name": device.friendly_name,
-        "object_id": device.key,
+        "default_entity_id": f"{component}.{device.key}",
         "has_entity_name": True,
         "unique_id": f"{device.key}_airsend",
         "state_topic": topics.state,

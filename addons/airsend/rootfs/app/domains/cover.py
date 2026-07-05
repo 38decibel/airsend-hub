@@ -99,9 +99,11 @@ def encode_state(device, stype: str, svalue) -> list[tuple[str, str]]:
             # DOWN/UP recus -> level 0/100 (cf. thing_notes.py)
             out.append((topics.state, "closed" if svalue == 0 else "open"))
         elif stype == "state" and svalue == "stop":
-            # Pas de position connue apres un STOP intermediaire : on ne
-            # republie pas un etat qu'on ne connait pas.
-            pass
+            # Meme raisonnement que dans encode_optimistic_state : publier
+            # "unknown" explicitement plutot que de ne rien faire, sinon le
+            # dernier open/closed connu reste fige et grise le bouton
+            # correspondant cote HA.
+            out.append((topics.state, "unknown"))
 
     return out
 
@@ -120,6 +122,16 @@ def encode_optimistic_state(device, topic: str, payload: str) -> list[tuple[str,
     envoyer pour obtenir l'effet physique demande - une fois cet effet
     obtenu, l'etat affiche doit rester ce que l'utilisateur a demande
     (CLOSE -> "closed"), pas son inverse.
+
+    STOP : publie explicitement "unknown" (pas juste une absence de
+    publication). Sans ca, l'etat MQTT retenu restait bloque sur le dernier
+    "open"/"closed" optimiste envoye par la commande PRECEDENTE (ex. OPEN),
+    alors qu'un arret en cours de route ne garantit ni l'un ni l'autre. Le
+    frontend HA desactive le bouton correspondant des que l'etat vaut
+    exactement "open" ou "closed" - meme avec assumed_state=true (comportement
+    documente, cf. github.com/home-assistant/core/issues/147976) - donc
+    laisser trainer l'ancien etat bloquait le bouton "ouvrir" apres un
+    STOP survenu pendant une montee. "unknown" reactive les deux boutons.
     """
     topics = DeviceTopics.for_device(COMPONENT, device.key)
 
@@ -129,7 +141,9 @@ def encode_optimistic_state(device, topic: str, payload: str) -> list[tuple[str,
             return [(topics.state, "open")]
         if cmd == "CLOSE":
             return [(topics.state, "closed")]
-        return []  # STOP : position inconnue apres un arret en cours de route
+        if cmd == "STOP":
+            return [(topics.state, "unknown")]
+        return []
 
     if topic == topics.set_position and device.kind == "niveau":
         try:
