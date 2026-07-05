@@ -40,12 +40,12 @@ _LOGGER = logging.getLogger("airsend.mqtt_bridge")
 # en a plusieurs - a revisiter si besoin de reglages par-box).
 _INCLUSION_COMMAND_TOPIC = "airsend/inclusion/set"
 _INCLUSION_STATE_TOPIC = "airsend/inclusion/state"
-_INCLUSION_DISCOVERY_TOPIC = "homeassistant/switch/airsend_inclusion_mode/config"
+_INCLUSION_DISCOVERY_TOPIC = "homeassistant/switch/inclusion_mode_airsend/config"
 _INCLUSION_CANDIDATES_TOPIC = "airsend/inclusion/candidates"
 
 _RELIABILITY_COMMAND_TOPIC = "airsend/settings/reliability_min/set"
 _RELIABILITY_STATE_TOPIC = "airsend/settings/reliability_min/state"
-_RELIABILITY_DISCOVERY_TOPIC = "homeassistant/number/airsend_reliability_min/config"
+_RELIABILITY_DISCOVERY_TOPIC = "homeassistant/number/reliability_min_airsend/config"
 
 
 class MqttBridge:
@@ -127,6 +127,7 @@ class MqttBridge:
         client.subscribe("airsend/+/set_position")
         client.subscribe(_INCLUSION_COMMAND_TOPIC)
         client.subscribe(_RELIABILITY_COMMAND_TOPIC)
+        self._cleanup_legacy_discovery_topics()
         # Republie la discovery + le dernier etat connu de tous les devices a
         # chaque (re)connexion : couvre le cas d'un broker/HA redemarre.
         for device in self._registry.all():
@@ -137,6 +138,29 @@ class MqttBridge:
         self._publish_reliability_state()
         for box in self._boxes_by_slug.values():
             self.publish_box_diagnostics(box)
+
+    def _cleanup_legacy_discovery_topics(self) -> None:
+        """
+        Migration ponctuelle : efface les topics de discovery de l'ANCIEN
+        schema (avant l'inversion "airsend_X" -> "X_airsend"). Publier un
+        payload vide et retenu sur un topic de discovery MQTT est la methode
+        standard pour supprimer une entite decouverte cote HA - on l'utilise
+        ici pour eviter d'avoir a supprimer les anciennes entites a la main
+        a chaque fois qu'on change le schema. Sans danger a rejouer : publier
+        un payload vide sur un topic deja vide ne fait rien.
+        """
+        for device in self._registry.all():
+            module = get_domain_module(device.domain)
+            if module is None:
+                continue
+            legacy_topic = f"homeassistant/{module.COMPONENT}/airsend_{device.key}/config"
+            self._mqtt.publish(legacy_topic, "", retain=True)
+
+        self._mqtt.publish("homeassistant/switch/airsend_inclusion_mode/config", "", retain=True)
+        self._mqtt.publish("homeassistant/number/airsend_reliability_min/config", "", retain=True)
+        for box in self._boxes_by_slug.values():
+            legacy_ipv4_topic = f"homeassistant/sensor/airsend_{box.slug}_ipv4/config"
+            self._mqtt.publish(legacy_ipv4_topic, "", retain=True)
 
     # ------------------------------------------------------------------ #
     # Bloc `device` par box (nom reel + modele detecte + MAC)
