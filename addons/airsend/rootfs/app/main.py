@@ -166,7 +166,7 @@ async def async_main() -> None:
     callback_base_url = f"http://{CALLBACK_HOST}:{CALLBACK_PORT}"
     _LOGGER.info("Callback base URL: %s", callback_base_url)
 
-    bind_manager = BindManager(client, callback_base_url)
+    bind_manager = BindManager(client, callback_base_url, settings)
     for box in boxes:
         bind_manager.add_box(box)
 

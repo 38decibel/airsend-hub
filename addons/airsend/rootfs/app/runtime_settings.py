@@ -19,4 +19,11 @@ class RuntimeSettings:
         # qu'on n'a pas de cas reel justifiant de la rendre ajustable aussi.
         self.reliability_min: int = 6
 
+        # Duree (en secondes) du bind d'ecoute permanente aupres de chaque
+        # box (cf. bind_manager.py). Une valeur modifiee prend effet au
+        # PROCHAIN renouvellement naturel du bind, pas immediatement (pas de
+        # coupure/redemarrage force du bind en cours pour un simple
+        # changement de reglage).
+        self.bind_duration_s: float = 3600.0
+
     RELIABILITY_MAX = 0x47  # 71, fixe

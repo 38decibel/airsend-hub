@@ -14,23 +14,22 @@ import asyncio
 import logging
 
 from airsend_client import AirSendClient, AirSendError, BoxConfig
+from runtime_settings import RuntimeSettings
 
 _LOGGER = logging.getLogger("airsend.bind_manager")
 
 # Marge de securite avant expiration du bind pour lancer le renouvellement.
-# Un bind de 3600s sera renouvele des 3300s (60s de marge, avec le min() ci-dessous
-# pour rester raisonnable si jamais duration est tres courte en test).
 _RENEW_MARGIN_S = 60.0
-_BIND_DURATION_S = 3600.0
 
 
 class BoxBindHandle:
     """Represente le bind actif (ou en cours de (re)tentative) pour une box."""
 
-    def __init__(self, client: AirSendClient, box: BoxConfig, callback_base_url: str) -> None:
+    def __init__(self, client: AirSendClient, box: BoxConfig, callback_base_url: str, settings: RuntimeSettings) -> None:
         self._client = client
         self.box = box
         self._callback_url = f"{callback_base_url.rstrip('/')}/cb/{box.slug}"
+        self._settings = settings
         self._task: asyncio.Task | None = None
         self._stopped = asyncio.Event()
 
@@ -63,20 +62,21 @@ class BoxBindHandle:
         mot de passe invalide, etc.) - ne doit jamais planter tout le process."""
         backoff = 5.0
         while not self._stopped.is_set():
+            duration = self._settings.bind_duration_s
             try:
                 _LOGGER.info(
                     "Binding box '%s' (callback=%s, duration=%ss)",
                     self.box.name,
                     self._callback_url,
-                    _BIND_DURATION_S,
+                    duration,
                 )
                 await self._client.bind(
                     self.box,
                     callback_url=self._callback_url,
-                    duration=_BIND_DURATION_S,
+                    duration=duration,
                 )
                 backoff = 5.0  # succes => on reset le backoff pour la prochaine erreur eventuelle
-                sleep_for = max(_BIND_DURATION_S - _RENEW_MARGIN_S, 5.0)
+                sleep_for = max(duration - _RENEW_MARGIN_S, 5.0)
                 await asyncio.sleep(sleep_for)
             except asyncio.CancelledError:
                 raise
@@ -94,13 +94,14 @@ class BoxBindHandle:
 class BindManager:
     """Orchestre un BoxBindHandle par box configuree."""
 
-    def __init__(self, client: AirSendClient, callback_base_url: str) -> None:
+    def __init__(self, client: AirSendClient, callback_base_url: str, settings: RuntimeSettings) -> None:
         self._client = client
         self._callback_base_url = callback_base_url
+        self._settings = settings
         self._handles: dict[str, BoxBindHandle] = {}
 
     def add_box(self, box: BoxConfig) -> BoxBindHandle:
-        handle = BoxBindHandle(self._client, box, self._callback_base_url)
+        handle = BoxBindHandle(self._client, box, self._callback_base_url, self._settings)
         self._handles[box.slug] = handle
         handle.start()
         return handle

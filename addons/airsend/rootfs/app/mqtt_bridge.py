@@ -47,6 +47,10 @@ _RELIABILITY_COMMAND_TOPIC = "airsend/settings/reliability_min/set"
 _RELIABILITY_STATE_TOPIC = "airsend/settings/reliability_min/state"
 _RELIABILITY_DISCOVERY_TOPIC = "homeassistant/number/reliability_min_airsend/config"
 
+_BIND_DURATION_COMMAND_TOPIC = "airsend/settings/bind_duration/set"
+_BIND_DURATION_STATE_TOPIC = "airsend/settings/bind_duration/state"
+_BIND_DURATION_DISCOVERY_TOPIC = "homeassistant/number/bind_duration_airsend/config"
+
 
 class MqttBridge:
     def __init__(
@@ -71,6 +75,7 @@ class MqttBridge:
         self._settings = settings
         self._loop = asyncio.get_event_loop()
         self._candidates_task: asyncio.Task | None = None
+        self._health_task: asyncio.Task | None = None
 
         self._mqtt = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="airsend-addon")
         if username:
@@ -92,8 +97,11 @@ class MqttBridge:
         self._mqtt.connect_async(self._host, self._port)
         self._mqtt.loop_start()
         self._candidates_task = asyncio.create_task(self._candidates_publisher_loop())
+        self._health_task = asyncio.create_task(self._health_poll_loop())
 
     async def stop(self) -> None:
+        if self._health_task is not None:
+            self._health_task.cancel()
         if self._candidates_task is not None:
             self._candidates_task.cancel()
         self._mqtt.publish(AVAILABILITY_TOPIC, AVAILABILITY_OFFLINE, retain=True)
@@ -127,6 +135,7 @@ class MqttBridge:
         client.subscribe("airsend/+/set_position")
         client.subscribe(_INCLUSION_COMMAND_TOPIC)
         client.subscribe(_RELIABILITY_COMMAND_TOPIC)
+        client.subscribe(_BIND_DURATION_COMMAND_TOPIC)
         self._cleanup_legacy_discovery_topics()
         # Republie la discovery + le dernier etat connu de tous les devices a
         # chaque (re)connexion : couvre le cas d'un broker/HA redemarre.
@@ -136,6 +145,8 @@ class MqttBridge:
         self._publish_inclusion_state()
         self._publish_reliability_discovery()
         self._publish_reliability_state()
+        self._publish_bind_duration_discovery()
+        self._publish_bind_duration_state()
         for box in self._boxes_by_slug.values():
             self.publish_box_diagnostics(box)
 
@@ -204,7 +215,7 @@ class MqttBridge:
         )
         config = {
             "name": "Mode inclusion",
-            "object_id": "mode_inclusion",
+            "default_entity_id": "switch.mode_inclusion",
             "has_entity_name": True,
             "unique_id": "inclusion_mode_airsend",
             "entity_category": "config",
@@ -241,7 +252,7 @@ class MqttBridge:
         )
         config = {
             "name": "Fiabilite minimale",
-            "object_id": "reliability_min",
+            "default_entity_id": "number.reliability_min",
             "has_entity_name": True,
             "unique_id": "reliability_min_airsend",
             "entity_category": "config",
@@ -261,31 +272,127 @@ class MqttBridge:
     def _publish_reliability_state(self) -> None:
         self._mqtt.publish(_RELIABILITY_STATE_TOPIC, str(self._settings.reliability_min), retain=True)
 
+    def _publish_bind_duration_discovery(self) -> None:
+        box_slug = self._primary_box_slug()
+        device_info = (
+            self._device_info_for_box(box_slug)
+            if box_slug
+            else build_device_info("airsend_addon", "AirSend")
+        )
+        config = {
+            "name": "Duree du bind",
+            "default_entity_id": "number.bind_duration",
+            "has_entity_name": True,
+            "unique_id": "bind_duration_airsend",
+            "entity_category": "config",
+            "command_topic": _BIND_DURATION_COMMAND_TOPIC,
+            "state_topic": _BIND_DURATION_STATE_TOPIC,
+            "unit_of_measurement": "s",
+            "min": 60,
+            "max": 86400,
+            "step": 60,
+            "mode": "box",
+            "availability_topic": AVAILABILITY_TOPIC,
+            "payload_available": AVAILABILITY_ONLINE,
+            "payload_not_available": AVAILABILITY_OFFLINE,
+            "device": device_info,
+        }
+        self._mqtt.publish(_BIND_DURATION_DISCOVERY_TOPIC, json.dumps(config), retain=True)
+
+    def _publish_bind_duration_state(self) -> None:
+        self._mqtt.publish(_BIND_DURATION_STATE_TOPIC, str(int(self._settings.bind_duration_s)), retain=True)
+
     # ------------------------------------------------------------------ #
     # Diagnostics par box (IPv4) - bloc "Diagnostic"
     # ------------------------------------------------------------------ #
 
     def publish_box_diagnostics(self, box: BoxConfig) -> None:
-        """Publie une entite sensor (categorie diagnostic) affichant l'IPv4
-        de la box. La MAC, elle, est exposee nativement via `connections`
-        dans le bloc `device` (cf. _device_info_for_box) plutot qu'en entite
-        separee - c'est l'emplacement standard HA pour ce genre d'identifiant."""
-        object_id = f"{box.slug}_ipv4"
-        topics = DeviceTopics.for_device("sensor", object_id)
-        config = {
+        """Publie les entites sensor (categorie diagnostic) : IPv4, statut et
+        version du service AirSendWebService. La MAC, elle, est exposee
+        nativement via `connections` dans le bloc `device` (cf.
+        _device_info_for_box) plutot qu'en entite separee - c'est
+        l'emplacement standard HA pour ce genre d'identifiant.
+
+        NOTE : /service/status interroge le binaire AirSendWebService
+        lui-meme (le moteur RF local partage), pas une box precise - si
+        plusieurs box sont configurees, ce statut/version sera identique
+        pour toutes (c'est le meme service qui les sert toutes, cf.
+        airsend_client.py). Rattache quand meme au diagnostic de chaque box
+        pour rester visible sans introduire un device "addon" a part."""
+        ipv4_object_id = f"{box.slug}_ipv4"
+        ipv4_topics = DeviceTopics.for_device("sensor", ipv4_object_id)
+        ipv4_config = {
             "name": "Adresse IPv4",
-            "object_id": object_id,
+            "default_entity_id": f"sensor.{ipv4_object_id}",
             "has_entity_name": True,
-            "unique_id": f"{object_id}_airsend",
+            "unique_id": f"{ipv4_object_id}_airsend",
             "entity_category": "diagnostic",
-            "state_topic": topics.state,
+            "state_topic": ipv4_topics.state,
             "availability_topic": AVAILABILITY_TOPIC,
             "payload_available": AVAILABILITY_ONLINE,
             "payload_not_available": AVAILABILITY_OFFLINE,
             "device": self._device_info_for_box(box.slug),
         }
-        self._mqtt.publish(topics.discovery, json.dumps(config), retain=True)
-        self._mqtt.publish(topics.state, box.ipv4, retain=True)
+        self._mqtt.publish(ipv4_topics.discovery, json.dumps(ipv4_config), retain=True)
+        self._mqtt.publish(ipv4_topics.state, box.ipv4, retain=True)
+
+        status_object_id = f"{box.slug}_service_status"
+        status_topics = DeviceTopics.for_device("sensor", status_object_id)
+        status_config = {
+            "name": "Statut du service",
+            "default_entity_id": f"sensor.{status_object_id}",
+            "has_entity_name": True,
+            "unique_id": f"{status_object_id}_airsend",
+            "entity_category": "diagnostic",
+            "state_topic": status_topics.state,
+            "availability_topic": AVAILABILITY_TOPIC,
+            "payload_available": AVAILABILITY_ONLINE,
+            "payload_not_available": AVAILABILITY_OFFLINE,
+            "device": self._device_info_for_box(box.slug),
+        }
+        self._mqtt.publish(status_topics.discovery, json.dumps(status_config), retain=True)
+
+        version_object_id = f"{box.slug}_service_version"
+        version_topics = DeviceTopics.for_device("sensor", version_object_id)
+        version_config = {
+            "name": "Version du service",
+            "default_entity_id": f"sensor.{version_object_id}",
+            "has_entity_name": True,
+            "unique_id": f"{version_object_id}_airsend",
+            "entity_category": "diagnostic",
+            "state_class": "measurement",
+            "state_topic": version_topics.state,
+            "availability_topic": AVAILABILITY_TOPIC,
+            "payload_available": AVAILABILITY_ONLINE,
+            "payload_not_available": AVAILABILITY_OFFLINE,
+            "device": self._device_info_for_box(box.slug),
+        }
+        self._mqtt.publish(version_topics.discovery, json.dumps(version_config), retain=True)
+
+    async def _refresh_box_service_health(self) -> None:
+        """Interroge GET /service/status une seule fois (service partage,
+        cf. note plus haut) et republie le resultat sur les entites
+        diagnostic de chaque box configuree."""
+        try:
+            result = await self._client.get_status()
+            is_ok = isinstance(result, dict)
+            version = result.get("version") if is_ok else None
+        except AirSendError as exc:
+            _LOGGER.debug("service/status check failed: %s", exc)
+            is_ok = False
+            version = None
+
+        for box in self._boxes_by_slug.values():
+            status_topics = DeviceTopics.for_device("sensor", f"{box.slug}_service_status")
+            version_topics = DeviceTopics.for_device("sensor", f"{box.slug}_service_version")
+            self._mqtt.publish(status_topics.state, "actif" if is_ok else "inactif", retain=True)
+            if version is not None:
+                self._mqtt.publish(version_topics.state, str(version), retain=True)
+
+    async def _health_poll_loop(self, interval_s: float = 60.0) -> None:
+        while True:
+            await self._refresh_box_service_health()
+            await asyncio.sleep(interval_s)
 
     # ------------------------------------------------------------------ #
     # Discovery (appareils RF)
@@ -355,6 +462,20 @@ class MqttBridge:
             self._settings.reliability_min = value
             self._publish_reliability_state()
             _LOGGER.info("reliability_min updated to %s", value)
+            return
+
+        if topic == _BIND_DURATION_COMMAND_TOPIC:
+            try:
+                value = max(60.0, min(86400.0, float(payload)))
+            except ValueError:
+                _LOGGER.warning("Invalid bind_duration payload: %r", payload)
+                return
+            self._settings.bind_duration_s = value
+            self._publish_bind_duration_state()
+            _LOGGER.info(
+                "bind_duration_s updated to %s (effectif au prochain renouvellement de bind)",
+                value,
+            )
             return
 
         # topic attendu: airsend/<device_key>/set ou /set_position
