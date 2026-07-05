@@ -155,7 +155,7 @@ class MqttBridge:
         name = box.name if box else box_slug
         mac = mac_from_link_local(box.localip) if box else None
         return build_device_info(
-            identifier=f"airsend_{box_slug}",
+            identifier=box_slug,
             name=name,
             model=self._box_model(box_slug),
             mac=mac,
@@ -180,6 +180,8 @@ class MqttBridge:
         )
         config = {
             "name": "Mode inclusion",
+            "object_id": "mode_inclusion",
+            "has_entity_name": True,
             "unique_id": "airsend_inclusion_mode",
             "entity_category": "config",
             "command_topic": _INCLUSION_COMMAND_TOPIC,
@@ -215,6 +217,8 @@ class MqttBridge:
         )
         config = {
             "name": "Fiabilite minimale",
+            "object_id": "reliability_min",
+            "has_entity_name": True,
             "unique_id": "airsend_reliability_min",
             "entity_category": "config",
             "command_topic": _RELIABILITY_COMMAND_TOPIC,
@@ -242,10 +246,13 @@ class MqttBridge:
         de la box. La MAC, elle, est exposee nativement via `connections`
         dans le bloc `device` (cf. _device_info_for_box) plutot qu'en entite
         separee - c'est l'emplacement standard HA pour ce genre d'identifiant."""
-        topics = DeviceTopics.for_device("sensor", f"{box.slug}_ipv4")
+        object_id = f"{box.slug}_ipv4"
+        topics = DeviceTopics.for_device("sensor", object_id)
         config = {
             "name": "Adresse IPv4",
-            "unique_id": f"airsend_{box.slug}_ipv4",
+            "object_id": object_id,
+            "has_entity_name": True,
+            "unique_id": f"airsend_{object_id}",
             "entity_category": "diagnostic",
             "state_topic": topics.state,
             "availability_topic": AVAILABILITY_TOPIC,
@@ -353,6 +360,18 @@ class MqttBridge:
         channel = {"id": device.channel_id, "source": device.channel_source}
         try:
             await self._client.transfer(box, channel=channel, thingnotes=thingnotes, wait=True)
-            _LOGGER.info("Transfer result for %s: %r", device.key, result)
         except AirSendError as exc:
             _LOGGER.warning("Failed to send command for device %s: %s", device.key, exc)
+            return
+
+        # Etat optimiste : la plupart des recepteurs RF (rolling-code
+        # notamment) ne renvoient aucune confirmation de position exploitable
+        # via le canal de callback (cf. callback_server.py, evenements avec
+        # uid ignores). Sans ca, l'entite resterait affichee dans son ancien
+        # etat indefiniment apres une commande reussie. C'est une
+        # approximation assumee, pas une lecture reelle de l'etat materiel.
+        optimistic = getattr(module, "encode_optimistic_state", None)
+        if optimistic is not None:
+            for state_topic, state_payload in optimistic(device, topic, payload):
+                self._mqtt.publish(state_topic, state_payload, retain=True)
+                _LOGGER.debug("Published optimistic state %s = %s", state_topic, state_payload)
