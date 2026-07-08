@@ -1,4 +1,4 @@
 # https://developers.home-assistant.io/docs/add-ons/repository#repository-configuration
 name: Home Assistant AirSend add-on repository
 url: 'https://github.com/38decibel/airsend-addon-dev'
-maintainer: 38decibel <email@domain.com>
+maintainer: 38decibel
