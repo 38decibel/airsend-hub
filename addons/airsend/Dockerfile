@@ -1,9 +1,7 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
-# Python runtime
-RUN apk add --no-cache python3 py3-pip wget tar jq
-
+# Python runtime + outils necessaires au telechargement du binaire AirSendWebService.
 # Vendorise le binaire officiel AirSendWebService (moteur RF local, cf. Phase 1)
 # Ecoute en HTTP simple sur le port 33863 (confirme empiriquement, cf. discussion Phase 1 -
 # NE PAS remettre de nginx/SSL devant, ce n'est pas necessaire malgre un vieux nginx.conf trouve
@@ -11,7 +9,8 @@ RUN apk add --no-cache python3 py3-pip wget tar jq
 # chmod 777 (pas 755) : repris tel quel de l'addon d'origine - plusieurs
 # binaires par architecture sous bin/unix/<arch>/, pas confirme lequel a
 # strictement besoin de quels bits, on reproduit l'existant qui fonctionne.
-RUN mkdir -p /opt/airsend && cd /opt/airsend && \
+RUN apk add --no-cache python3 py3-pip wget tar jq \
+    && mkdir -p /opt/airsend && cd /opt/airsend && \
     wget http://devmel.com/dl/AirSendWebService.tgz && \
     tar -zxvf AirSendWebService.tgz && \
     rm AirSendWebService.tgz && \

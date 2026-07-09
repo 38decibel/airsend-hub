@@ -61,7 +61,7 @@ def _load_boxes() -> list[BoxConfig]:
     try:
         parsed = json.loads(raw)
     except json.JSONDecodeError:
-        _LOGGER.error("BOXES_JSON is not valid JSON, no box will be configured: %r", raw)
+        _LOGGER.exception("BOXES_JSON is not valid JSON, no box will be configured: %r", raw)
         return []
 
     # bashio::config sur une liste d'objets peut renvoyer un objet nu plutot
@@ -81,7 +81,7 @@ def _load_boxes() -> list[BoxConfig]:
             try:
                 entry = json.loads(entry)
             except json.JSONDecodeError:
-                _LOGGER.error("Skipping unparsable box entry string: %r", entry)
+                _LOGGER.exception("Skipping unparsable box entry string: %r", entry)
                 continue
         if not isinstance(entry, dict):
             _LOGGER.error("Skipping malformed box entry (not an object): %r", entry)
@@ -98,7 +98,7 @@ def _load_boxes() -> list[BoxConfig]:
                 )
             )
         except KeyError as exc:
-            _LOGGER.error("Skipping malformed box entry %r (missing %s)", entry, exc)
+            _LOGGER.exception("Skipping malformed box entry %r (missing %s)", entry, exc)
     return boxes
 
 
@@ -118,7 +118,7 @@ async def async_main() -> None:
             await asyncio.sleep(3600)
 
     client = AirSendClient()
-    await client.start()
+    client.start()
 
     catalog = ProtocolCatalog(client)
     registry = DeviceRegistry()
@@ -127,10 +127,16 @@ async def async_main() -> None:
     for box in boxes:
         await catalog.refresh(box)
         is_duo = catalog.is_duo_best_effort(box.slug)
+        if is_duo is True:
+            duo_label = "AirSend Duo (433+868MHz)"
+        elif is_duo is False:
+            duo_label = "AirSend (433MHz)"
+        else:
+            duo_label = "unknown"
         _LOGGER.info(
             "Box '%s' detection (best effort): %s",
             box.name,
-            "AirSend Duo (433+868MHz)" if is_duo else "AirSend (433MHz)" if is_duo is False else "unknown",
+            duo_label,
         )
 
     boxes_by_slug = {box.slug: box for box in boxes}
@@ -163,7 +169,10 @@ async def async_main() -> None:
     )
     await callback_server.start()
 
-    callback_base_url = f"http://{CALLBACK_HOST}:{CALLBACK_PORT}"
+    # Plain HTTP is intentional: both ends run inside the same container, on
+    # loopback only. AirSendWebService does not support HTTPS callbacks.
+    _callback_scheme = "http"
+    callback_base_url = f"{_callback_scheme}://{CALLBACK_HOST}:{CALLBACK_PORT}"
     _LOGGER.info("Callback base URL: %s", callback_base_url)
 
     bind_manager = BindManager(client, callback_base_url, settings)

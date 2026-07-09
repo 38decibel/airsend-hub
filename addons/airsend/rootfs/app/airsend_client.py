@@ -84,7 +84,7 @@ class AirSendClient:
         self._base_url = base_url.rstrip("/")
         self._session: aiohttp.ClientSession | None = None
 
-    async def start(self) -> None:
+    def start(self) -> None:
         if self._session is None:
             self._session = aiohttp.ClientSession()
 
@@ -94,7 +94,7 @@ class AirSendClient:
             self._session = None
 
     async def __aenter__(self) -> "AirSendClient":
-        await self.start()
+        self.start()
         return self
 
     async def __aexit__(self, *_exc: Any) -> None:
