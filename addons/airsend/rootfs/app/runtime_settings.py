@@ -26,4 +26,14 @@ class RuntimeSettings:
         # changement de reglage).
         self.bind_duration_s: float = 3600.0
 
-    RELIABILITY_MAX = 0x47  # 71, fixe
+    # Releve le 2026-07-09 : un vrai appui telecommande PFX (Profalux) a
+    # produit reliability=128, hors de l'ancienne borne 0x47 (71) heritee de
+    # hass_cb.php. Cette ancienne plage n'a probablement ete calibree que sur
+    # des protocoles 433 MHz (band=1) ; PFX est 868 MHz (band=2) et semble
+    # utiliser une echelle differente. 128 est retenu ici comme borne haute
+    # provisoire, EMPIRIQUE et NON DEFINITIVE - a reviser une fois
+    # l'echantillonnage (cf. reliability_sample logs) accumule assez de
+    # mesures reelles par protocole/bande, notamment a la distance boitier
+    # recommandee par Devmel (50-100cm ; le premier test a 20cm peut avoir
+    # biaise la mesure).
+    RELIABILITY_MAX = 128

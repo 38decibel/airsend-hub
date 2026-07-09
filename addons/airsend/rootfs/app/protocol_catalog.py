@@ -61,6 +61,16 @@ class ProtocolCatalog:
                 return entry.get("name")
         return None
 
+    def entry_for(self, box_slug: str, channel_id: int) -> dict | None:
+        """Retourne l'entree catalogue complete (name, band, id, ...) pour ce
+        channel_id, si connue. Utilise pour l'echantillonnage de reliability
+        par protocole/bande (cf. callback_server.py), le nom seul ne suffit
+        pas a distinguer un biais lie a la bande (433 vs 868 MHz)."""
+        for entry in self._get_cached(box_slug):
+            if entry.get("id") == channel_id:
+                return entry
+        return None
+
     def is_duo_best_effort(self, box_slug: str) -> bool | None:
         """True/False si on a un catalogue en cache pour cette box, None si pas
         encore recupere (ne pas afficher de faux negatif avant le premier refresh)."""

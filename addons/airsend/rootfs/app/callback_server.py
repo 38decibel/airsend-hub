@@ -134,7 +134,24 @@ class CallbackServer:
         reliability = event.get("reliability")
         reliability_min = self._settings.reliability_min
         reliability_max = RuntimeSettings.RELIABILITY_MAX
-        if not isinstance(reliability, (int, float)) or not (reliability_min < reliability < reliability_max):
+
+        # Echantillonnage EMPIRIQUE, volontairement inconditionnel (avant tout
+        # filtrage/retour), le temps de calibrer la vraie plage par
+        # protocole/bande. Log en INFO (visible sans LOG_LEVEL=DEBUG) mais
+        # uniquement sur les GOT non sollicites (deja filtre type==3, uid
+        # absent a ce stade), donc pas de spam sur le trafic normal.
+        catalog_entry = self._catalog.entry_for(box_slug, channel_id)
+        _LOGGER.info(
+            "reliability_sample value=%s protocol=%s band=%s box=%s channel=%s/%s",
+            reliability,
+            catalog_entry.get("name") if catalog_entry else None,
+            catalog_entry.get("band") if catalog_entry else None,
+            box_slug, channel_id, channel_source,
+        )
+
+        # Borne haute INCLUSIVE (<=) : un plafond exact comme 128 doit passer,
+        # pas seulement les valeurs strictement inferieures.
+        if not isinstance(reliability, (int, float)) or not (reliability_min < reliability <= reliability_max):
             _LOGGER.debug(
                 "Interrupt event dropped (reliability=%s out of range [%s, %s]) on box=%s channel=%s/%s",
                 reliability, reliability_min, reliability_max, box_slug, channel_id, channel_source,
