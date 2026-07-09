@@ -44,12 +44,24 @@ _INCLUSION_DISCOVERY_TOPIC = "homeassistant/switch/inclusion_mode_airsend/config
 _INCLUSION_CANDIDATES_TOPIC = "airsend/inclusion/candidates"
 
 _RELIABILITY_COMMAND_TOPIC = "airsend/settings/reliability_min/set"
-_RELIABILITY_STATE_TOPIC = "airsend/settings/reliability_min/state"
-_RELIABILITY_DISCOVERY_TOPIC = "homeassistant/number/reliability_min_airsend/config"
 
 _BIND_DURATION_COMMAND_TOPIC = "airsend/settings/bind_duration/set"
 _BIND_DURATION_STATE_TOPIC = "airsend/settings/bind_duration/state"
 _BIND_DURATION_DISCOVERY_TOPIC = "homeassistant/number/bind_duration_airsend/config"
+
+# Legacy : l'entite "fiabilite minimale" (number.reliability_min) a existe
+# jusqu'a la v0.1.11 puis a ete retiree (cf. callback_server.py - la borne
+# basse est desormais fixe a 6, alignee sur jeeAirSend.php/Jeedom, non
+# ajustable). On garde les anciens topics de discovery ici UNIQUEMENT pour
+# publier une chaine vide dessus au demarrage (retrait propre de l'entite
+# chez les utilisateurs deja installes) - cf. _cleanup_legacy_discovery_topics().
+# _RELIABILITY_COMMAND_TOPIC est conserve tel quel (non renomme) uniquement
+# pour reconnaitre et ignorer proprement d'anciens messages retenus sur ce
+# topic (cf. _on_message) - pas une entite active.
+_LEGACY_RELIABILITY_DISCOVERY_TOPICS = (
+    "homeassistant/number/reliability_min_airsend/config",
+    "homeassistant/number/airsend_reliability_min/config",
+)
 
 
 class MqttBridge:
@@ -134,7 +146,7 @@ class MqttBridge:
         client.subscribe("airsend/+/set")
         client.subscribe("airsend/+/set_position")
         client.subscribe(_INCLUSION_COMMAND_TOPIC)
-        client.subscribe(_RELIABILITY_COMMAND_TOPIC)
+        client.subscribe(_RELIABILITY_COMMAND_TOPIC)  # entite retiree, cf. constante
         client.subscribe(_BIND_DURATION_COMMAND_TOPIC)
         self._cleanup_legacy_discovery_topics()
         # Republie la discovery + le dernier etat connu de tous les devices a
@@ -143,8 +155,6 @@ class MqttBridge:
             self.publish_discovery(device)
         self._publish_inclusion_discovery()
         self._publish_inclusion_state()
-        self._publish_reliability_discovery()
-        self._publish_reliability_state()
         self._publish_bind_duration_discovery()
         self._publish_bind_duration_state()
         for box in self._boxes_by_slug.values():
@@ -168,7 +178,9 @@ class MqttBridge:
             self._mqtt.publish(legacy_topic, "", retain=True)
 
         self._mqtt.publish("homeassistant/switch/airsend_inclusion_mode/config", "", retain=True)
-        self._mqtt.publish("homeassistant/number/airsend_reliability_min/config", "", retain=True)
+        for legacy_topic in _LEGACY_RELIABILITY_DISCOVERY_TOPICS:
+            self._mqtt.publish(legacy_topic, "", retain=True)
+        self._mqtt.publish("airsend/settings/reliability_min/state", "", retain=True)
         for box in self._boxes_by_slug.values():
             legacy_ipv4_topic = f"homeassistant/sensor/airsend_{box.slug}_ipv4/config"
             self._mqtt.publish(legacy_ipv4_topic, "", retain=True)
@@ -238,39 +250,6 @@ class MqttBridge:
             "ON" if self._inclusion.active else "OFF",
             retain=True,
         )
-
-    # ------------------------------------------------------------------ #
-    # Entite systeme : seuil de fiabilite (bloc "Configuration")
-    # ------------------------------------------------------------------ #
-
-    def _publish_reliability_discovery(self) -> None:
-        box_slug = self._primary_box_slug()
-        device_info = (
-            self._device_info_for_box(box_slug)
-            if box_slug
-            else build_device_info("airsend_addon", "AirSend")
-        )
-        config = {
-            "name": "Fiabilite minimale",
-            "default_entity_id": "number.reliability_min",
-            "has_entity_name": True,
-            "unique_id": "reliability_min_airsend",
-            "entity_category": "config",
-            "command_topic": _RELIABILITY_COMMAND_TOPIC,
-            "state_topic": _RELIABILITY_STATE_TOPIC,
-            "min": 0,
-            "max": RuntimeSettings.RELIABILITY_MAX - 1,
-            "step": 1,
-            "mode": "slider",
-            "availability_topic": AVAILABILITY_TOPIC,
-            "payload_available": AVAILABILITY_ONLINE,
-            "payload_not_available": AVAILABILITY_OFFLINE,
-            "device": device_info,
-        }
-        self._mqtt.publish(_RELIABILITY_DISCOVERY_TOPIC, json.dumps(config), retain=True)
-
-    def _publish_reliability_state(self) -> None:
-        self._mqtt.publish(_RELIABILITY_STATE_TOPIC, str(self._settings.reliability_min), retain=True)
 
     def _publish_bind_duration_discovery(self) -> None:
         box_slug = self._primary_box_slug()
@@ -450,17 +429,6 @@ class MqttBridge:
             self._inclusion.stop()
         self._publish_inclusion_state()
 
-    def _handle_reliability_command(self, payload: str) -> None:
-        try:
-            value = int(float(payload))
-        except ValueError:
-            _LOGGER.warning("Invalid reliability_min payload: %r", payload)
-            return
-        value = max(0, min(RuntimeSettings.RELIABILITY_MAX - 1, value))
-        self._settings.reliability_min = value
-        self._publish_reliability_state()
-        _LOGGER.info("reliability_min updated to %s", value)
-
     def _handle_bind_duration_command(self, payload: str) -> None:
         try:
             value = max(60.0, min(86400.0, float(payload)))
@@ -521,7 +489,10 @@ class MqttBridge:
         if topic == _INCLUSION_COMMAND_TOPIC:
             self._handle_inclusion_command(payload)
         elif topic == _RELIABILITY_COMMAND_TOPIC:
-            self._handle_reliability_command(payload)
+            # Entite retiree (cf. constante ci-dessus) : un message peut
+            # encore arriver une seule fois si HA avait un payload retenu
+            # sur ce topic avant la mise a jour. On l'ignore sciemment.
+            _LOGGER.debug("Ignoring stale message on removed reliability_min topic")
         elif topic == _BIND_DURATION_COMMAND_TOPIC:
             self._handle_bind_duration_command(payload)
         else:

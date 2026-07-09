@@ -78,3 +78,4 @@ class ProtocolCatalog:
         if not channels:
             return None
         return any(entry.get("band") == 2 for entry in channels)
+

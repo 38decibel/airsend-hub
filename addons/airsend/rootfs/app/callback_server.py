@@ -17,11 +17,17 @@ Deux categories de ThingEvent, distinguees par la presence de thingnotes.uid :
   - SANS uid : evenement non sollicite = candidat serieux pour "quelqu'un a
     appuye sur une telecommande physique". On ne le traite QUE si :
       * type == 3 (GOT, cf. enum ThingEvent.type du spec)
-      * ET reliability compris entre reliability_min (ajustable) et 0x47 (71)
+      * ET reliability, SI PRESENT, strictement compris entre 6 et 71
+        (cf. jeeAirSend.php, reference historique Jeedom). Absence du champ
+        => reliable par defaut, on ne dropp jamais sur ce seul motif.
     Le champ `reliability` n'apparait dans AUCUN spec OpenAPI vu jusqu'ici :
-    c'est une extension non documentee du firmware, mais confirmee critique en
-    pratique - sans ce filtre, on capte du bruit RF ambiant en plus des
-    vraies pressions de telecommande.
+    c'est une extension non documentee du firmware. Releve empirique du
+    2026-07-09 : sur un vrai appui, la meme trame RF est vue plusieurs fois
+    avec reliability = 0, 64, 128, 192 (multiples de 64) - probablement un
+    compteur de retransmissions, pas une mesure de qualite de signal. La
+    borne [6, 71] ne sert donc qu'a ne retenir qu'une seule retransmission
+    par appui, pas a juger la qualite RF. Ne plus etendre cette plage sans
+    nouvelle preuve empirique concrete.
 """
 
 from __future__ import annotations
@@ -106,11 +112,29 @@ class CallbackServer:
 
         return web.Response(status=200)
 
-    def _is_valid_reliability(self, reliability) -> bool:
-        """Returns True when reliability is within the accepted [min, max] range."""
+    def _is_valid_reliability(self, event: dict) -> bool:
+        """Mirroir exact de jeeAirSend.php (Jeedom, reference historique) :
+
+            $isreliable = true;
+            if (array_key_exists('reliability', $val)) {
+                $isreliable = false;
+                if ($val['reliability'] > 0x6 && $val['reliability'] < 0x47) {
+                    $isreliable = true;
+                }
+            }
+
+        C-a-d : absence du champ => reliable par defaut (ne JAMAIS dropper
+        sur ce seul motif). Presence du champ => bornes [6, 71] strictement
+        exclusives. On avait initialement code l'inverse (absent => rejete),
+        ce qui pouvait bloquer silencieusement un protocole qui n'emet pas
+        ce champ du tout.
+        """
+        if "reliability" not in event:
+            return True
+        reliability = event.get("reliability")
         if not isinstance(reliability, (int, float)):
             return False
-        return self._settings.reliability_min < reliability <= RuntimeSettings.RELIABILITY_MAX
+        return RuntimeSettings.RELIABILITY_MIN < reliability < RuntimeSettings.RELIABILITY_MAX
 
     async def _handle_event(self, box_slug: str, event: dict) -> None:
         channel = event.get("channel") or {}
@@ -142,11 +166,8 @@ class CallbackServer:
 
         reliability = event.get("reliability")
 
-        # Echantillonnage EMPIRIQUE, volontairement inconditionnel (avant tout
-        # filtrage/retour), le temps de calibrer la vraie plage par
-        # protocole/bande. Log en INFO (visible sans LOG_LEVEL=DEBUG) mais
-        # uniquement sur les GOT non sollicites (deja filtre type==3, uid
-        # absent a ce stade), donc pas de spam sur le trafic normal.
+        # Echantillonnage empirique conserve (peu couteux, utile en cas de
+        # regression future ou de nouveau protocole a calibrer).
         catalog_entry = self._catalog.entry_for(box_slug, channel_id)
         _LOGGER.info(
             "reliability_sample value=%s protocol=%s band=%s box=%s channel=%s/%s",
@@ -156,13 +177,11 @@ class CallbackServer:
             box_slug, channel_id, channel_source,
         )
 
-        # Borne haute INCLUSIVE (<=) : un plafond exact comme 128 doit passer,
-        # pas seulement les valeurs strictement inferieures.
-        if not self._is_valid_reliability(reliability):
+        if not self._is_valid_reliability(event):
             _LOGGER.debug(
                 "Interrupt event dropped (reliability=%s out of range [%s, %s]) on box=%s channel=%s/%s",
                 reliability,
-                self._settings.reliability_min,
+                RuntimeSettings.RELIABILITY_MIN,
                 RuntimeSettings.RELIABILITY_MAX,
                 box_slug, channel_id, channel_source,
             )
