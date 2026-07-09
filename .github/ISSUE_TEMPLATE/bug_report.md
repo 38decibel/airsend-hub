@@ -7,15 +7,15 @@ assignees: ''
 
 ---
 
-**Where is the issue:** `<path/to/filename.ext>`
+**Where is the issue:** <path/to/filename.ext>
 
-**Software qualities impacted:** `<Security|Reliability|Maintainability>`
+**Software qualities impacted:** <Security|Reliability|Maintainability>
 
-**Severity:** `<Info|Low|Medium|High|Blocker>`
+**Severity:** <Info|Low|Medium|High|Blocker>
 
 **Why is this an issue:** 
 <issue description>
 
 **How can fix it:**
 <fix description>
-If possible add Noncompliant code example and Compliant solution
+<If possible add Noncompliant code example and Compliant solution>
