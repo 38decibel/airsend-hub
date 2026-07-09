@@ -59,8 +59,8 @@ class DeviceRegistry:
         try:
             with open(self._path, "r", encoding="utf-8") as fh:
                 raw = json.load(fh)
-        except (OSError, json.JSONDecodeError) as exc:
-            _LOGGER.error("Failed to load %s (%s), starting empty to avoid crash-loop", self._path, exc)
+        except (OSError, json.JSONDecodeError):
+            _LOGGER.exception("Failed to load %s, starting empty to avoid crash-loop", self._path)
             return
 
         for key, payload in raw.items():

@@ -47,6 +47,72 @@ def _as_int_state_value(raw_value) -> int | None:
     return None
 
 
+def _decode_state_note(raw_value) -> tuple[str, object] | None:
+    """Decode a STATE note (type 0) into (stype, svalue)."""
+    ivalue = _as_int_state_value(raw_value)
+    if ivalue is None:
+        return None
+    if ivalue == 18:  # TOGGLE
+        return "toggle", "pressed"
+    if ivalue in (19, 34):  # OFF, DOWN
+        return "level", 0
+    if ivalue in (20, 35):  # ON, UP
+        return "level", 100
+    if ivalue == 17:  # STOP
+        return "state", "stop"
+    if ivalue in (33, 38):  # MIDDLE, USERPOSITION
+        return "state", "user"
+    return "state", ivalue  # etat non mappe explicitement, on garde brut
+
+
+def _decode_temperature_note(raw_value) -> tuple[str, float] | None:
+    """Decode a TEMPERATURE note (type 2): Kelvins -> Celsius."""
+    try:
+        return "temperature", round((float(raw_value) - 273.15) * 10.0) / 10.0
+    except (TypeError, ValueError):
+        return None
+
+
+def _decode_illuminance_note(raw_value) -> tuple[str, float] | None:
+    """Decode an ILLUMINANCE note (type 3)."""
+    try:
+        return "illuminance", float(raw_value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _decode_r_humidity_note(raw_value) -> tuple[str, int] | None:
+    """Decode a R_HUMIDITY note (type 4)."""
+    try:
+        return "r_humidity", int(raw_value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _decode_level_note(raw_value) -> tuple[str, int] | None:
+    """Decode a LEVEL note (type 9)."""
+    try:
+        return "level", int(raw_value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _decode_data_note(raw_value) -> tuple[str, object]:
+    """Decode a DATA note (type 1): pass through as-is."""
+    return "data", raw_value
+
+
+# Dispatch table: note.type -> decoder function
+_NOTE_DECODERS = {
+    0: _decode_state_note,
+    1: _decode_data_note,
+    2: _decode_temperature_note,
+    3: _decode_illuminance_note,
+    4: _decode_r_humidity_note,
+    9: _decode_level_note,
+}
+
+
 def convert_notes_to_states(notes: list[dict]) -> list[tuple[str, object]]:
     """
     Retourne une liste de (stype, svalue) exploitables par les modules domains/*.
@@ -61,62 +127,10 @@ def convert_notes_to_states(notes: list[dict]) -> list[tuple[str, object]]:
     for note in notes:
         note_type = note.get("type")
         raw_value = note.get("value")
-        stype: str | None = None
-        svalue = None
-
-        if note_type == 0:  # STATE
-            ivalue = _as_int_state_value(raw_value)
-            if ivalue is not None:
-                stype = "state"
-                if ivalue == 18:  # TOGGLE
-                    stype, svalue = "toggle", "pressed"
-                elif ivalue == 19:  # OFF
-                    stype, svalue = "level", 0
-                elif ivalue == 20:  # ON
-                    stype, svalue = "level", 100
-                elif ivalue == 17:  # STOP
-                    svalue = "stop"
-                elif ivalue in (33, 38):  # MIDDLE / USERPOSITION
-                    svalue = "user"
-                elif ivalue == 34:  # DOWN
-                    stype, svalue = "level", 0
-                elif ivalue == 35:  # UP
-                    stype, svalue = "level", 100
-                else:
-                    svalue = ivalue  # etat non mappe explicitement, on garde brut
-
-        elif note_type == 1:  # DATA
-            stype, svalue = "data", raw_value
-
-        elif note_type == 2:  # TEMPERATURE (Kelvins -> Celsius)
-            try:
-                svalue = round((float(raw_value) - 273.15) * 10.0) / 10.0
-                stype = "temperature"
-            except (TypeError, ValueError):
-                pass
-
-        elif note_type == 3:  # ILLUMINANCE
-            try:
-                svalue = float(raw_value)
-                stype = "illuminance"
-            except (TypeError, ValueError):
-                pass
-
-        elif note_type == 4:  # R_HUMIDITY
-            try:
-                svalue = int(raw_value)
-                stype = "r_humidity"
-            except (TypeError, ValueError):
-                pass
-
-        elif note_type == 9:  # LEVEL
-            try:
-                svalue = int(raw_value)
-                stype = "level"
-            except (TypeError, ValueError):
-                pass
-
-        if stype is not None:
-            results.append((stype, svalue))
+        decoder = _NOTE_DECODERS.get(note_type)
+        if decoder is not None:
+            result = decoder(raw_value)
+            if result is not None:
+                results.append(result)
 
     return results

@@ -420,7 +420,7 @@ class MqttBridge:
     # Etat sortant (RF -> MQTT)
     # ------------------------------------------------------------------ #
 
-    async def publish_state(self, device_key: str, stype: str, svalue: object, channel: dict) -> None:
+    def publish_state(self, device_key: str, stype: str, svalue: object, channel: dict) -> None:
         device = self._registry.get(device_key)
         if device is None:
             _LOGGER.warning("publish_state called for unknown device_key=%s", device_key)
@@ -443,42 +443,38 @@ class MqttBridge:
         # asyncio pour pouvoir faire l'appel HTTP vers AirSendWebService.
         asyncio.run_coroutine_threadsafe(self._handle_command(msg.topic, msg.payload.decode()), self._loop)
 
-    async def _handle_command(self, topic: str, payload: str) -> None:
-        if topic == _INCLUSION_COMMAND_TOPIC:
-            if payload.upper() == "ON":
-                self._inclusion.start()
-            else:
-                self._inclusion.stop()
-            self._publish_inclusion_state()
-            return
+    def _handle_inclusion_command(self, payload: str) -> None:
+        if payload.upper() == "ON":
+            self._inclusion.start()
+        else:
+            self._inclusion.stop()
+        self._publish_inclusion_state()
 
-        if topic == _RELIABILITY_COMMAND_TOPIC:
-            try:
-                value = int(float(payload))
-            except ValueError:
-                _LOGGER.warning("Invalid reliability_min payload: %r", payload)
-                return
-            value = max(0, min(RuntimeSettings.RELIABILITY_MAX - 1, value))
-            self._settings.reliability_min = value
-            self._publish_reliability_state()
-            _LOGGER.info("reliability_min updated to %s", value)
+    def _handle_reliability_command(self, payload: str) -> None:
+        try:
+            value = int(float(payload))
+        except ValueError:
+            _LOGGER.warning("Invalid reliability_min payload: %r", payload)
             return
+        value = max(0, min(RuntimeSettings.RELIABILITY_MAX - 1, value))
+        self._settings.reliability_min = value
+        self._publish_reliability_state()
+        _LOGGER.info("reliability_min updated to %s", value)
 
-        if topic == _BIND_DURATION_COMMAND_TOPIC:
-            try:
-                value = max(60.0, min(86400.0, float(payload)))
-            except ValueError:
-                _LOGGER.warning("Invalid bind_duration payload: %r", payload)
-                return
-            self._settings.bind_duration_s = value
-            self._publish_bind_duration_state()
-            _LOGGER.info(
-                "bind_duration_s updated to %s (effectif au prochain renouvellement de bind)",
-                value,
-            )
+    def _handle_bind_duration_command(self, payload: str) -> None:
+        try:
+            value = max(60.0, min(86400.0, float(payload)))
+        except ValueError:
+            _LOGGER.warning("Invalid bind_duration payload: %r", payload)
             return
+        self._settings.bind_duration_s = value
+        self._publish_bind_duration_state()
+        _LOGGER.info(
+            "bind_duration_s updated to %s (effectif au prochain renouvellement de bind)",
+            value,
+        )
 
-        # topic attendu: airsend/<device_key>/set ou /set_position
+    async def _handle_device_command(self, topic: str, payload: str) -> None:
         parts = topic.split("/")
         if len(parts) < 3:
             return
@@ -520,3 +516,13 @@ class MqttBridge:
             for state_topic, state_payload in optimistic(device, topic, payload):
                 self._mqtt.publish(state_topic, state_payload, retain=True)
                 _LOGGER.debug("Published optimistic state %s = %s", state_topic, state_payload)
+
+    async def _handle_command(self, topic: str, payload: str) -> None:
+        if topic == _INCLUSION_COMMAND_TOPIC:
+            self._handle_inclusion_command(payload)
+        elif topic == _RELIABILITY_COMMAND_TOPIC:
+            self._handle_reliability_command(payload)
+        elif topic == _BIND_DURATION_COMMAND_TOPIC:
+            self._handle_bind_duration_command(payload)
+        else:
+            await self._handle_device_command(topic, payload)

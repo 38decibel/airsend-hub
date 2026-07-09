@@ -10,6 +10,7 @@ case "$arch" in \
     armv7) arch='arm' ;; \
     amd64) arch='x86_64' ;; \
     i386) arch='x86' ;; \
+    *) bashio::log.warning "Unknown architecture: ${arch}, using as-is" ;; \
 esac
 ulimit -n 4096
 bashio::log.info "AirSendWebService arch: ${arch}"
@@ -56,16 +57,16 @@ done
 # survienne juste apres que /service/status reponde deja. ---
 ASW_PID=""
 for i in $(seq 1 10); do
-    if [ -f AirSendWebService.lock ]; then
+    if [[ -f AirSendWebService.lock ]]; then
         ASW_PID="$(cat AirSendWebService.lock 2>/dev/null || true)"
-        if [ -n "$ASW_PID" ]; then
+        if [[ -n "$ASW_PID" ]]; then
             break
         fi
     fi
     sleep 1
 done
 
-if [ -n "$ASW_PID" ]; then
+if [[ -n "$ASW_PID" ]]; then
     bashio::log.info "AirSendWebService real PID (from lock file): ${ASW_PID}"
 else
     bashio::log.warning "Could not read AirSendWebService.lock, falling back to launcher PID (may cause false-positive crash detection)"

@@ -27,7 +27,7 @@ Deux categories de ThingEvent, distinguees par la presence de thingnotes.uid :
 from __future__ import annotations
 
 import logging
-from typing import Awaitable, Callable
+from typing import Callable
 
 from aiohttp import web
 
@@ -41,7 +41,7 @@ _LOGGER = logging.getLogger("airsend.callback_server")
 
 # Signature du callback appele pour chaque etat decode et route vers un device connu.
 # (device_key, stype, svalue, channel) -> None
-StateSink = Callable[[str, str, object, dict], Awaitable[None]]
+StateSink = Callable[[str, str, object, dict], None]
 
 
 class CallbackServer:
@@ -68,7 +68,10 @@ class CallbackServer:
 
     @property
     def base_url_hint(self) -> str:
-        return f"http://<addon_ip>:{self._port}"
+        # Plain HTTP is intentional: this server is a local loopback target for
+        # AirSendWebService callbacks and is never exposed outside the container.
+        scheme = "http"
+        return f"{scheme}://<addon_ip>:{self._port}"
 
     async def start(self) -> None:
         self._runner = web.AppRunner(self._app)
@@ -103,6 +106,12 @@ class CallbackServer:
 
         return web.Response(status=200)
 
+    def _is_valid_reliability(self, reliability) -> bool:
+        """Returns True when reliability is within the accepted [min, max] range."""
+        if not isinstance(reliability, (int, float)):
+            return False
+        return self._settings.reliability_min < reliability <= RuntimeSettings.RELIABILITY_MAX
+
     async def _handle_event(self, box_slug: str, event: dict) -> None:
         channel = event.get("channel") or {}
         thingnotes = event.get("thingnotes") or {}
@@ -132,8 +141,6 @@ class CallbackServer:
             return
 
         reliability = event.get("reliability")
-        reliability_min = self._settings.reliability_min
-        reliability_max = RuntimeSettings.RELIABILITY_MAX
 
         # Echantillonnage EMPIRIQUE, volontairement inconditionnel (avant tout
         # filtrage/retour), le temps de calibrer la vraie plage par
@@ -151,10 +158,13 @@ class CallbackServer:
 
         # Borne haute INCLUSIVE (<=) : un plafond exact comme 128 doit passer,
         # pas seulement les valeurs strictement inferieures.
-        if not isinstance(reliability, (int, float)) or not (reliability_min < reliability <= reliability_max):
+        if not self._is_valid_reliability(reliability):
             _LOGGER.debug(
                 "Interrupt event dropped (reliability=%s out of range [%s, %s]) on box=%s channel=%s/%s",
-                reliability, reliability_min, reliability_max, box_slug, channel_id, channel_source,
+                reliability,
+                self._settings.reliability_min,
+                RuntimeSettings.RELIABILITY_MAX,
+                box_slug, channel_id, channel_source,
             )
             return
 
@@ -163,7 +173,7 @@ class CallbackServer:
         if device is not None:
             states = convert_notes_to_states(notes)
             for stype, svalue in states:
-                await self._on_state(device.key, stype, svalue, channel)
+                self._on_state(device.key, stype, svalue, channel)
             return
 
         if not self._inclusion.active:
