@@ -188,7 +188,7 @@ async def async_main() -> None:
     finally:
         await bind_manager.stop_all()
         await callback_server.stop()
-        await mqtt_bridge.stop()
+        mqtt_bridge.stop()
         await client.close()
 
 
