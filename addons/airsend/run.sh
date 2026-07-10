@@ -8,8 +8,8 @@ case "$arch" in \
     aarch64) arch='arm64' ;; \
     armhf) arch='armhf' ;; \
     armv7) arch='arm' ;; \
-    amd64) arch='x86_64' ;; \
-    i386) arch='x86' ;; \
+    x86_64) arch='x86_64' ;; \
+    x86) arch='x86' ;; \
     *) bashio::log.warning "Unknown architecture: ${arch}, using as-is" ;; \
 esac
 ulimit -n 4096
