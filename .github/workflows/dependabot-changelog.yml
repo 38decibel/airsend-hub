@@ -9,28 +9,45 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
+  pull-requests: read
 
 jobs:
   changelog:
-    if: github.actor == 'dependabot[bot]'
     runs-on: ubuntu-latest
 
     steps:
 
-      - name: Checkout PR
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+      # Vérifie qu'il s'agit bien d'une PR Dependabot
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        continue-on-error: true
 
+      - name: Stop if not a Dependabot PR
+        if: steps.metadata.outcome != 'success'
+        run: |
+          echo "Not a Dependabot PR."
+          exit 0
+
+      # Checkout du dépôt principal (main)
+      # C'est CE dépôt qui contient le script Python de confiance.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Exécution du script provenant de main
       - name: Update changelog
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           python3 .github/scripts/update_changelog.py
 
-      - name: Commit changelog
+      # On bascule ensuite sur la branche de la PR
+      - name: Checkout PR branch
+        run: |
+          git fetch origin "${{ github.event.pull_request.head.ref }}"
+          git checkout "${{ github.event.pull_request.head.ref }}"
+
+      - name: Commit
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
@@ -38,8 +55,9 @@ jobs:
           git add CHANGELOG.md
 
           if git diff --cached --quiet; then
+            echo "Nothing to commit."
             exit 0
           fi
 
           git commit -m "docs: update changelog"
-          git push
+          git push origin HEAD
