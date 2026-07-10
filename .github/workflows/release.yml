@@ -23,7 +23,7 @@ jobs:
         run: |
           git add \
             addons/airsend/config.yaml \
-            CHANGELOG.md
+            addons/airsend/CHANGELOG.md
           git commit \
             -m "chore: release"
           git push

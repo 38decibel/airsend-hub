@@ -10,7 +10,7 @@ CONFIG = Path(
 )
 
 CHANGELOG = Path(
-    "CHANGELOG.md"
+    "addons/airsend/CHANGELOG.md"
 )
 
 

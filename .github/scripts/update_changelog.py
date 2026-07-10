@@ -3,7 +3,7 @@ import os
 import re
 
 
-CHANGELOG = Path("CHANGELOG.md")
+CHANGELOG = Path("addons/airsend/CHANGELOG.md")
 
 
 title = os.environ["PR_TITLE"]
