@@ -136,7 +136,7 @@ class CallbackServer:
             return False
         return RuntimeSettings.RELIABILITY_MIN < reliability < RuntimeSettings.RELIABILITY_MAX
 
-    async def _handle_event(self, box_slug: str, event: dict) -> None:
+    def _handle_event(self, box_slug: str, event: dict) -> None:
         channel = event.get("channel") or {}
         thingnotes = event.get("thingnotes") or {}
         notes = thingnotes.get("notes") or []
