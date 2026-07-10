@@ -7,6 +7,7 @@
 ### Fixed
 
 ### Dependencies
+- Update main.py
 
 ## 0.5.0 - 2026-07-10
 
