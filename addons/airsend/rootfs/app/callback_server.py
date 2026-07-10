@@ -91,7 +91,7 @@ class CallbackServer:
             await self._runner.cleanup()
             self._runner = None
 
-    def _handle_callback(self, request: web.Request) -> web.Response:
+    async def _handle_callback(self, request: web.Request) -> web.Response:
         box_slug = request.match_info["box_slug"]
         try:
             payload = await request.json()
