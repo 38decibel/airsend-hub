@@ -105,13 +105,13 @@ class MqttBridge:
     # Connexion
     # ------------------------------------------------------------------ #
 
-    async def start(self) -> None:
+    def start(self) -> None:
         self._mqtt.connect_async(self._host, self._port)
         self._mqtt.loop_start()
         self._candidates_task = asyncio.create_task(self._candidates_publisher_loop())
         self._health_task = asyncio.create_task(self._health_poll_loop())
 
-    async def stop(self) -> None:
+    def stop(self) -> None:
         if self._health_task is not None:
             self._health_task.cancel()
         if self._candidates_task is not None:
