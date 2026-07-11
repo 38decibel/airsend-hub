@@ -7,6 +7,16 @@
 ### Fixed
 
 ### Dependencies
+
+## 0.8.0 - 2026-07-11
+
+### Added
+
+### Changed
+
+### Fixed
+
+### Dependencies
 - Update callback_server.py
 
 ## 0.7.0 - 2026-07-10
