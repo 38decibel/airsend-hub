@@ -28,10 +28,20 @@ Deux categories de ThingEvent, distinguees par la presence de thingnotes.uid :
     borne [6, 71] ne sert donc qu'a ne retenir qu'une seule retransmission
     par appui, pas a juger la qualite RF. Ne plus etendre cette plage sans
     nouvelle preuve empirique concrete.
+
+Log `raw_event_body` (2026-07-11) : releve empirique montrant que
+channel_id/channel_source restent identiques entre plusieurs boutons d'une
+meme telecommande (ex: HPD 25454/12238991 vu en continu sur 10s malgre
+plusieurs appuis distincts). Le match_key actuel (channel_id, channel_source)
+ne peut donc PAS distinguer les boutons d'une telecommande a lui seul -
+l'identite du bouton doit venir de thingnotes.notes (STATE UP/DOWN/STOP,
+cf. thing_notes.py), jamais logue jusqu'ici. Ce log expose le body JSON
+complet de chaque event non sollicite pour verifier cette hypothese.
 """
 
 from __future__ import annotations
 
+import json
 import logging
 from typing import Callable
 
@@ -106,7 +116,7 @@ class CallbackServer:
 
         for event in events:
             try:
-                self._handle_event(box_slug, event)
+                await self._handle_event(box_slug, event)
             except Exception:
                 _LOGGER.exception("Error processing event from box %s: %r", box_slug, event)
 
@@ -136,7 +146,7 @@ class CallbackServer:
             return False
         return RuntimeSettings.RELIABILITY_MIN < reliability < RuntimeSettings.RELIABILITY_MAX
 
-    def _handle_event(self, box_slug: str, event: dict) -> None:
+    async def _handle_event(self, box_slug: str, event: dict) -> None:
         channel = event.get("channel") or {}
         thingnotes = event.get("thingnotes") or {}
         notes = thingnotes.get("notes") or []
@@ -156,6 +166,15 @@ class CallbackServer:
                 thingnotes.get("uid"), event_type, box_slug, channel_id, channel_source,
             )
             return
+
+        # Body brut complet, INCONDITIONNEL (avant tout filtrage sur type ou
+        # reliability), pour voir le contenu thingnotes.notes - le
+        # channel_id/channel_source reste identique entre plusieurs boutons
+        # d'une meme telecommande (releve empirique du 2026-07-11), donc
+        # l'identite du bouton presse ne peut venir que d'ici. Log en INFO
+        # (visible sans LOG_LEVEL=DEBUG), sur les evenements non sollicites
+        # uniquement (pas de spam sur les acks de nos propres commandes).
+        _LOGGER.info("raw_event_body box=%s channel=%s/%s body=%s", box_slug, channel_id, channel_source, json.dumps(event))
 
         if event_type != 3:  # GOT uniquement
             _LOGGER.debug(
