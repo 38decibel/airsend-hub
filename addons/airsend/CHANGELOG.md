@@ -7,6 +7,16 @@
 ### Fixed
 
 ### Dependencies
+
+## 0.9.0 - 2026-07-11
+
+### Added
+
+### Changed
+
+### Fixed
+
+### Dependencies
 - chore(ci): généralise le changelog automatique et ajoute le lint de titre
 
 ## 0.8.0 - 2026-07-11
