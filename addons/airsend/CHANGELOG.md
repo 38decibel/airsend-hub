@@ -5,6 +5,7 @@
 ### Changed
 
 ### Fixed
+- **client:** serialize /airsend/transfer to avoid 500 under burst commands (#27)
 
 ### Dependencies
 
