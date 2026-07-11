@@ -5,6 +5,16 @@
 ### Changed
 
 ### Fixed
+
+### Dependencies
+
+## 0.9.1 - 2026-07-11
+
+### Added
+
+### Changed
+
+### Fixed
 - **readme:** add little precision in final step (#26)
 
 ### Dependencies
