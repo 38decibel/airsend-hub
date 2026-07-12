@@ -5,6 +5,7 @@
 ### Changed
 
 ### Fixed
+- **cover:** stop publishing unsupported "unknown" MQTT state (#28)
 
 ### Dependencies
 
