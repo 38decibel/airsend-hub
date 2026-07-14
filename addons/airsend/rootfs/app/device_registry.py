@@ -117,3 +117,24 @@ class DeviceRegistry:
             self._by_match.pop(device.match_key(), None)
             self.save()
         return device
+
+    def update(
+        self,
+        key: str,
+        friendly_name: str | None = None,
+        options: dict[str, Any] | None = None,
+    ) -> Device | None:
+        """Edition limitee a friendly_name/options (cf. UI Ingress) : ne touche
+        jamais a channel_id/channel_source/kind/domain, qui restent geres via
+        suppression + reinclusion pour eviter tout risque de desynchronisation
+        entre le registre et les topics MQTT discovery deja publies (dont le
+        composant depend du domain)."""
+        device = self._devices.get(key)
+        if device is None:
+            return None
+        if friendly_name is not None:
+            device.friendly_name = friendly_name
+        if options is not None:
+            device.options = options
+        self.save()
+        return device

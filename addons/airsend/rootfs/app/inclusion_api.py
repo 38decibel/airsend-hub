@@ -129,6 +129,8 @@ class InclusionApi:
         self.app.router.add_get("/api/listen/{session_id}", self._handle_poll_listen)
         self.app.router.add_post("/api/devices", self._handle_confirm_device)
         self.app.router.add_post("/api/devices/manual", self._handle_manual_device)
+        self.app.router.add_patch("/api/devices/{key}", self._handle_update_device)
+        self.app.router.add_delete("/api/devices/{key}", self._handle_delete_device)
         self.app.router.add_get("/{tail:.*}", self._handle_static)
 
     # ------------------------------------------------------------------ #
@@ -166,6 +168,7 @@ class InclusionApi:
                     "domain": d.domain,
                     "protocol_name": d.protocol_name,
                     "box": d.box,
+                    "options": d.options,
                 }
                 for d in self._registry.all()
             ]
@@ -429,6 +432,55 @@ class InclusionApi:
             source_of_creation="manual",
         )
         return web.json_response({"key": device.key})
+
+    async def _handle_update_device(self, request: web.Request) -> web.Response:
+        """Edition limitee a friendly_name/options (cf. reponse utilisateur :
+        pas de changement de kind/protocole/canal via cette route - cela
+        reviendrait a re-inclure un appareil different sous une identite
+        existante, avec le risque de desync device_registry <-> discovery
+        MQTT deja publiee que ca implique)."""
+        key = request.match_info["key"]
+        device = self._registry.get(key)
+        if device is None:
+            raise web.HTTPNotFound(text="appareil inconnu")
+
+        body = await request.json()
+
+        friendly_name = body.get("friendly_name")
+        if friendly_name is not None:
+            friendly_name = str(friendly_name).strip()
+            if not friendly_name:
+                raise web.HTTPBadRequest(text="friendly_name vide")
+
+        options = body.get("options")
+        if options is not None and not isinstance(options, dict):
+            raise web.HTTPBadRequest(text="options invalide")
+
+        updated = self._registry.update(key, friendly_name=friendly_name, options=options)
+        # Meme domain/topics qu'a la creation (kind non modifiable ici) : un
+        # republish suffit, pas besoin de remove_discovery prealable.
+        self._mqtt_bridge.publish_discovery(updated)
+        _LOGGER.info(
+            "Device %s updated via ingress UI (friendly_name=%s options=%s)",
+            key, friendly_name, options,
+        )
+        return web.json_response(
+            {"key": updated.key, "friendly_name": updated.friendly_name, "options": updated.options}
+        )
+
+    async def _handle_delete_device(self, request: web.Request) -> web.Response:
+        key = request.match_info["key"]
+        device = self._registry.get(key)
+        if device is None:
+            raise web.HTTPNotFound(text="appareil inconnu")
+
+        # Payload vide retenu sur le topic discovery = suppression cote HA
+        # (cf. mqtt_bridge.remove_discovery) - a faire AVANT de retirer du
+        # registre, sinon plus moyen de retrouver le domain/topics du device.
+        self._mqtt_bridge.remove_discovery(device)
+        self._registry.remove(key)
+        _LOGGER.info("Device %s removed via ingress UI", key)
+        return web.json_response({"key": key, "deleted": True})
 
 
 def create_ingress_app(
