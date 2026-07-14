@@ -1,6 +1,7 @@
 ## Unreleased
 
 ### Added
+- **inclusion-ui:** allow renaming, editing options and deleting devices (#30)
 
 ### Changed
 
