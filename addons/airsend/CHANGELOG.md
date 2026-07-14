@@ -1,6 +1,7 @@
 ## Unreleased
 
 ### Added
+- **ingress:** New Ingress UI for device search and addition (#29)
 
 ### Changed
 
