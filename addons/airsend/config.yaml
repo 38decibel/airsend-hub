@@ -13,6 +13,14 @@ startup: services
 init: false
 boot: auto
 homeassistant_api: true
+# UI Ingress : formulaire d'ajout d'appareil (cf. inclusion_api.py). Revient
+# sur la decision initiale "no Ingress UI" (cf. suivi de conception),
+# uniquement pour ce flow de confirmation - le reste (etats, commandes)
+# continue de passer entierement par MQTT discovery.
+ingress: true
+ingress_port: 8127
+panel_icon: mdi:remote
+panel_title: AirSend
 ports:
   33863/tcp: null
 ports_description:

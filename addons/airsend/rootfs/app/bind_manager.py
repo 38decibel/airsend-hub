@@ -61,6 +61,48 @@ class BoxBindHandle:
                     exc,
                 )
 
+    async def start_targeted_listen(self, channel_id: int, duration: float) -> None:
+        """
+        Interrompt temporairement le bind global permanent pour ecouter UN
+        SEUL canal (mirroir de ce que fait l'app cloud lors de l'etape
+        d'ecoute a l'inclusion, cf. discussion de conception). Necessaire
+        car /airsend/close indique explicitement "stop listening too" - tout
+        porte a croire qu'une seule session de bind est active a la fois
+        cote AirSendWebService, donc un bind cible REMPLACE le bind global le
+        temps de l'ecoute plutot que de s'y ajouter.
+
+        Pendant cette fenetre, les evenements des AUTRES appareils deja
+        connus ne sont PAS captes (pas juste retardes - perdus). Le bind
+        global est TOUJOURS relance a la fin (succes, echec ou exception),
+        pour ne jamais laisser une box sans ecoute active.
+
+        Question ouverte non tranchee (cf. suivi de conception) : si
+        l'identite du bouton physique presse s'avere deductible de
+        thingnotes.notes de facon fiable, il pourrait devenir preferable de
+        garder un bind cible permanent par device plutot que de toujours
+        revenir au bind global apres l'inclusion - pas implemente ici tant
+        que cette investigation n'a pas conclu, pour ne pas degrader le
+        state tracking des devices existants sur une hypothese non validee.
+        """
+        if self._task is not None:
+            self._task.cancel()
+            try:
+                await self._task
+            except asyncio.CancelledError:
+                pass
+            self._task = None
+
+        try:
+            await self._client.bind(
+                self.box,
+                callback_url=self._callback_url,
+                duration=duration,
+                channel={"id": channel_id},
+            )
+            await asyncio.sleep(duration)
+        finally:
+            self.start()  # relance systematiquement la boucle de bind global
+
     async def _run(self) -> None:
         """Boucle de (re)bind avec backoff simple en cas d'echec (box offline,
         mot de passe invalide, etc.) - ne doit jamais planter tout le process."""

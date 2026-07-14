@@ -1,0 +1,1326 @@
+{
+  "A-OK Motors": [
+    {
+      "protocol": "AOK",
+      "channel_id": 880
+    }
+  ],
+  "AMC Production": [
+    {
+      "protocol": "RTW",
+      "channel_id": 13921
+    }
+  ],
+  "Adyx": [
+    {
+      "protocol": "GNS",
+      "channel_id": 25481
+    }
+  ],
+  "Aldomo": [
+    {
+      "protocol": "DC",
+      "channel_id": 832
+    }
+  ],
+  "Allmatic": [
+    {
+      "protocol": "AMC",
+      "channel_id": 25458
+    },
+    {
+      "protocol": "BNA",
+      "channel_id": 25461
+    }
+  ],
+  "Altron": [
+    {
+      "protocol": "EWV",
+      "channel_id": 48
+    }
+  ],
+  "Aluprof": [
+    {
+      "protocol": "AOK",
+      "channel_id": 880
+    },
+    {
+      "protocol": "DC",
+      "channel_id": 832
+    }
+  ],
+  "Apil": [
+    {
+      "protocol": "APL",
+      "channel_id": 25459
+    }
+  ],
+  "Asamotor": [
+    {
+      "protocol": "RTW",
+      "channel_id": 13921
+    }
+  ],
+  "Asp": [
+    {
+      "protocol": "AOK_1",
+      "channel_id": 881
+    }
+  ],
+  "Ati": [
+    {
+      "protocol": "ATR",
+      "channel_id": 1312
+    }
+  ],
+  "Avidsen": [
+    {
+      "protocol": "AVD",
+      "channel_id": 13152
+    },
+    {
+      "protocol": "DC",
+      "channel_id": 832
+    }
+  ],
+  "Avosdim": [
+    {
+      "protocol": "DC",
+      "channel_id": 832
+    },
+    {
+      "protocol": "DD",
+      "channel_id": 26800
+    }
+  ],
+  "Becker": [
+    {
+      "protocol": "PLN",
+      "channel_id": 1648
+    }
+  ],
+  "Beninc\\xe0": [
+    {
+      "protocol": "BNA",
+      "channel_id": 25461
+    },
+    {
+      "protocol": "BNAA",
+      "channel_id": 25568
+    }
+  ],
+  "Berker": [
+    {
+      "protocol": "FKBS",
+      "channel_id": 1872
+    }
+  ],
+  "Berner": [
+    {
+      "protocol": "BHS",
+      "channel_id": 817
+    }
+  ],
+  "Bft": [
+    {
+      "protocol": "BFT",
+      "channel_id": 25464
+    }
+  ],
+  "Blyss": [
+    {
+      "protocol": "AVD",
+      "channel_id": 13152
+    },
+    {
+      "protocol": "BLY",
+      "channel_id": 2193
+    }
+  ],
+  "Brennenstuhl": [
+    {
+      "protocol": "PT2262",
+      "channel_id": 808
+    }
+  ],
+  "Bubendorff": [
+    {
+      "protocol": "BID",
+      "channel_id": 10416
+    },
+    {
+      "protocol": "BID868",
+      "channel_id": 14016
+    },
+    {
+      "protocol": "X3D",
+      "channel_id": 10720
+    }
+  ],
+  "Came": [
+    {
+      "protocol": "B12",
+      "channel_id": 4872
+    },
+    {
+      "protocol": "B12868",
+      "channel_id": 4875
+    },
+    {
+      "protocol": "B24",
+      "channel_id": 4896
+    },
+    {
+      "protocol": "B24868",
+      "channel_id": 4897
+    },
+    {
+      "protocol": "CME",
+      "channel_id": 13928
+    },
+    {
+      "protocol": "EBR",
+      "channel_id": 26806
+    }
+  ],
+  "Cardin": [
+    {
+      "protocol": "CRD",
+      "channel_id": 25463
+    },
+    {
+      "protocol": "CRD868",
+      "channel_id": 25485
+    },
+    {
+      "protocol": "CRDS",
+      "channel_id": 9840
+    },
+    {
+      "protocol": "RTR",
+      "channel_id": 13136
+    }
+  ],
+  "Celinsa": [
+    {
+      "protocol": "CLS",
+      "channel_id": 25468
+    }
+  ],
+  "Chacon": [
+    {
+      "protocol": "DIO1",
+      "channel_id": 1393
+    },
+    {
+      "protocol": "KGT",
+      "channel_id": 812
+    }
+  ],
+  "Chamberlain": [
+    {
+      "protocol": "B18",
+      "channel_id": 4879
+    },
+    {
+      "protocol": "CBK",
+      "channel_id": 14416
+    },
+    {
+      "protocol": "CBL",
+      "channel_id": 13904
+    },
+    {
+      "protocol": "CHM",
+      "channel_id": 25493
+    },
+    {
+      "protocol": "CHP",
+      "channel_id": 25487
+    },
+    {
+      "protocol": "WSR",
+      "channel_id": 25488
+    }
+  ],
+  "Cherubini": [
+    {
+      "protocol": "CBN",
+      "channel_id": 25462
+    }
+  ],
+  "Cibofer": [
+    {
+      "protocol": "CBF",
+      "channel_id": 26801
+    },
+    {
+      "protocol": "V2E",
+      "channel_id": 13184
+    }
+  ],
+  "Conrad": [
+    {
+      "protocol": "GT7000",
+      "channel_id": 4880
+    }
+  ],
+  "Coplaning": [
+    {
+      "protocol": "HPD",
+      "channel_id": 25454
+    }
+  ],
+  "Dea": [
+    {
+      "protocol": "DEA",
+      "channel_id": 25477
+    }
+  ],
+  "DeltaDore": [
+    {
+      "protocol": "X2D868",
+      "channel_id": 14177
+    },
+    {
+      "protocol": "X3D",
+      "channel_id": 10720
+    }
+  ],
+  "Deprat": [
+    {
+      "protocol": "DPT",
+      "channel_id": 1344
+    }
+  ],
+  "DiO": [
+    {
+      "protocol": "DIO1",
+      "channel_id": 1393
+    },
+    {
+      "protocol": "DIO2",
+      "channel_id": 2200
+    }
+  ],
+  "Diagral": [
+    {
+      "protocol": "DGL",
+      "channel_id": 13929
+    }
+  ],
+  "Dickert": [
+    {
+      "protocol": "DKT",
+      "channel_id": 25496
+    },
+    {
+      "protocol": "DKT868",
+      "channel_id": 25497
+    }
+  ],
+  "Ditec": [
+    {
+      "protocol": "DTC",
+      "channel_id": 13168
+    },
+    {
+      "protocol": "DTS",
+      "channel_id": 4952
+    }
+  ],
+  "Dooya": [
+    {
+      "protocol": "DC",
+      "channel_id": 832
+    },
+    {
+      "protocol": "DD",
+      "channel_id": 26800
+    }
+  ],
+  "Doxa Motorisation": [
+    {
+      "protocol": "DC",
+      "channel_id": 832
+    },
+    {
+      "protocol": "HTR",
+      "channel_id": 1152
+    }
+  ],
+  "EatOn": [
+    {
+      "protocol": "XCF",
+      "channel_id": 1744
+    }
+  ],
+  "Eckermann": [
+    {
+      "protocol": "RTW",
+      "channel_id": 13921
+    }
+  ],
+  "EcoStar": [
+    {
+      "protocol": "ECS",
+      "channel_id": 25465
+    }
+  ],
+  "Ecran system": [
+    {
+      "protocol": "RF1",
+      "channel_id": 1840
+    }
+  ],
+  "Edisio": [
+    {
+      "protocol": "DIO2",
+      "channel_id": 2200
+    }
+  ],
+  "Eldat": [
+    {
+      "protocol": "EWV",
+      "channel_id": 48
+    }
+  ],
+  "Elero": [
+    {
+      "protocol": "PLN",
+      "channel_id": 1648
+    },
+    {
+      "protocol": "PLN2",
+      "channel_id": 10976
+    }
+  ],
+  "Elro": [
+    {
+      "protocol": "PT2262",
+      "channel_id": 808
+    }
+  ],
+  "Ematronic": [
+    {
+      "protocol": "AOK",
+      "channel_id": 880
+    }
+  ],
+  "Enjoy Motors": [
+    {
+      "protocol": "WST",
+      "channel_id": 13936
+    }
+  ],
+  "Enocean": [
+    {
+      "protocol": "ERP1",
+      "channel_id": 56
+    }
+  ],
+  "Entrematic": [
+    {
+      "protocol": "DTC",
+      "channel_id": 13168
+    },
+    {
+      "protocol": "DTS",
+      "channel_id": 4952
+    }
+  ],
+  "Equation": [
+    {
+      "protocol": "EQT",
+      "channel_id": 4928
+    }
+  ],
+  "Erone": [
+    {
+      "protocol": "CDV",
+      "channel_id": 25501
+    }
+  ],
+  "Eurotronic Motors": [
+    {
+      "protocol": "ERC",
+      "channel_id": 25440
+    },
+    {
+      "protocol": "ERCA",
+      "channel_id": 882
+    }
+  ],
+  "Eveno": [
+    {
+      "protocol": "GOJCM",
+      "channel_id": 14273
+    },
+    {
+      "protocol": "PFX",
+      "channel_id": 25455
+    },
+    {
+      "protocol": "TCO",
+      "channel_id": 25712
+    },
+    {
+      "protocol": "TLC",
+      "channel_id": 25490
+    }
+  ],
+  "Everflourish": [
+    {
+      "protocol": "EVF",
+      "channel_id": 1360
+    },
+    {
+      "protocol": "PT2262",
+      "channel_id": 808
+    }
+  ],
+  "Evology": [
+    {
+      "protocol": "EGY",
+      "channel_id": 25479
+    },
+    {
+      "protocol": "ERP1",
+      "channel_id": 56
+    }
+  ],
+  "Extel": [
+    {
+      "protocol": "AVD",
+      "channel_id": 13152
+    }
+  ],
+  "Faac": [
+    {
+      "protocol": "B12",
+      "channel_id": 4872
+    },
+    {
+      "protocol": "CBN",
+      "channel_id": 25462
+    },
+    {
+      "protocol": "FCK",
+      "channel_id": 25474
+    },
+    {
+      "protocol": "FTM",
+      "channel_id": 25489
+    },
+    {
+      "protocol": "SLH",
+      "channel_id": 29552
+    },
+    {
+      "protocol": "SLH868",
+      "channel_id": 29553
+    }
+  ],
+  "Fadini": [
+    {
+      "protocol": "B14",
+      "channel_id": 4874
+    },
+    {
+      "protocol": "FDN",
+      "channel_id": 25499
+    },
+    {
+      "protocol": "FDN868",
+      "channel_id": 25500
+    }
+  ],
+  "Ferport": [
+    {
+      "protocol": "B20",
+      "channel_id": 4881
+    }
+  ],
+  "Fitem": [
+    {
+      "protocol": "FIT",
+      "channel_id": 13968
+    }
+  ],
+  "FliP": [
+    {
+      "protocol": "PFX",
+      "channel_id": 25455
+    }
+  ],
+  "France combi": [
+    {
+      "protocol": "CCS",
+      "channel_id": 2240
+    },
+    {
+      "protocol": "WVN",
+      "channel_id": 25478
+    }
+  ],
+  "France fermetures": [
+    {
+      "protocol": "PFX",
+      "channel_id": 25455
+    },
+    {
+      "protocol": "SML",
+      "channel_id": 25484
+    },
+    {
+      "protocol": "X3D",
+      "channel_id": 10720
+    }
+  ],
+  "FranciaFlex": [
+    {
+      "protocol": "PFX",
+      "channel_id": 25455
+    },
+    {
+      "protocol": "X3D",
+      "channel_id": 10720
+    }
+  ],
+  "Futurol": [
+    {
+      "protocol": "FTR",
+      "channel_id": 26809
+    }
+  ],
+  "Gaposa": [
+    {
+      "protocol": "GSA",
+      "channel_id": 4976
+    },
+    {
+      "protocol": "GSA868",
+      "channel_id": 4977
+    },
+    {
+      "protocol": "GSA868_1",
+      "channel_id": 4978
+    }
+  ],
+  "Gaviota": [
+    {
+      "protocol": "DC",
+      "channel_id": 832
+    },
+    {
+      "protocol": "DD",
+      "channel_id": 26800
+    }
+  ],
+  "Gefradis": [
+    {
+      "protocol": "DC",
+      "channel_id": 832
+    },
+    {
+      "protocol": "V2E",
+      "channel_id": 13184
+    }
+  ],
+  "Geiger": [
+    {
+      "protocol": "GF0",
+      "channel_id": 40
+    }
+  ],
+  "Genius": [
+    {
+      "protocol": "GNS",
+      "channel_id": 25481
+    }
+  ],
+  "Gibidi": [
+    {
+      "protocol": "GBD",
+      "channel_id": 25469
+    }
+  ],
+  "Gira": [
+    {
+      "protocol": "FKBS",
+      "channel_id": 1872
+    }
+  ],
+  "Globaltronics": [
+    {
+      "protocol": "GT7000",
+      "channel_id": 4880
+    }
+  ],
+  "Globmatic": [
+    {
+      "protocol": "GBM",
+      "channel_id": 2288
+    }
+  ],
+  "Griesser": [
+    {
+      "protocol": "PLN",
+      "channel_id": 1648
+    },
+    {
+      "protocol": "PLN2",
+      "channel_id": 10976
+    }
+  ],
+  "Hauss Elektronik": [
+    {
+      "protocol": "CLS",
+      "channel_id": 25468
+    }
+  ],
+  "Heicko": [
+    {
+      "protocol": "DC",
+      "channel_id": 832
+    },
+    {
+      "protocol": "DD",
+      "channel_id": 26800
+    },
+    {
+      "protocol": "WST",
+      "channel_id": 13936
+    }
+  ],
+  "Home Confort Smart Home": [
+    {
+      "protocol": "HCTEL",
+      "channel_id": 4944
+    },
+    {
+      "protocol": "PT2262",
+      "channel_id": 808
+    }
+  ],
+  "Home Easy": [
+    {
+      "protocol": "HES",
+      "channel_id": 9000
+    },
+    {
+      "protocol": "PT2262",
+      "channel_id": 808
+    }
+  ],
+  "Homentry": [
+    {
+      "protocol": "CHM",
+      "channel_id": 25493
+    }
+  ],
+  "Hormann": [
+    {
+      "protocol": "ECS",
+      "channel_id": 25465
+    },
+    {
+      "protocol": "HBS",
+      "channel_id": 26864
+    },
+    {
+      "protocol": "HSM",
+      "channel_id": 855
+    }
+  ],
+  "Hualite": [
+    {
+      "protocol": "HTR",
+      "channel_id": 1152
+    },
+    {
+      "protocol": "HUA",
+      "channel_id": 824
+    }
+  ],
+  "Inel": [
+    {
+      "protocol": "INL",
+      "channel_id": 25480
+    }
+  ],
+  "Insta": [
+    {
+      "protocol": "FKBS",
+      "channel_id": 1872
+    }
+  ],
+  "Intertechno": [
+    {
+      "protocol": "PT2262",
+      "channel_id": 808
+    }
+  ],
+  "Isea": [
+    {
+      "protocol": "SKM",
+      "channel_id": 25473
+    }
+  ],
+  "Jarolift": [
+    {
+      "protocol": "WSR",
+      "channel_id": 25488
+    }
+  ],
+  "Jolly Motor": [
+    {
+      "protocol": "JLY",
+      "channel_id": 25491
+    }
+  ],
+  "Jung": [
+    {
+      "protocol": "FKBS",
+      "channel_id": 1872
+    }
+  ],
+  "K-line": [
+    {
+      "protocol": "X3D",
+      "channel_id": 10720
+    }
+  ],
+  "KINGgates": [
+    {
+      "protocol": "DTC",
+      "channel_id": 13168
+    },
+    {
+      "protocol": "KGF",
+      "channel_id": 5040
+    },
+    {
+      "protocol": "KGS",
+      "channel_id": 13232
+    }
+  ],
+  "La toulousaine": [
+    {
+      "protocol": "SML",
+      "channel_id": 25484
+    }
+  ],
+  "Leb": [
+    {
+      "protocol": "LEB",
+      "channel_id": 25471
+    }
+  ],
+  "Legrand": [
+    {
+      "protocol": "IOBL",
+      "channel_id": 80
+    }
+  ],
+  "Lifedom": [
+    {
+      "protocol": "LFD",
+      "channel_id": 840
+    }
+  ],
+  "Liftmaster": [
+    {
+      "protocol": "CBK",
+      "channel_id": 14416
+    },
+    {
+      "protocol": "CBL",
+      "channel_id": 13904
+    }
+  ],
+  "Livolo": [
+    {
+      "protocol": "LVO",
+      "channel_id": 1824
+    }
+  ],
+  "Loratap": [
+    {
+      "protocol": "LTP",
+      "channel_id": 2528
+    }
+  ],
+  "MSoft2": [
+    {
+      "protocol": "PLN",
+      "channel_id": 1648
+    },
+    {
+      "protocol": "PLN2",
+      "channel_id": 10976
+    }
+  ],
+  "Mantion SMT": [
+    {
+      "protocol": "EXM",
+      "channel_id": 25486
+    }
+  ],
+  "Marantec": [
+    {
+      "protocol": "MTC",
+      "channel_id": 1632
+    }
+  ],
+  "Meiantech": [
+    {
+      "protocol": "MTH",
+      "channel_id": 4915
+    }
+  ],
+  "Mhouse": [
+    {
+      "protocol": "MVO",
+      "channel_id": 25460
+    }
+  ],
+  "Monarch": [
+    {
+      "protocol": "CDV",
+      "channel_id": 25501
+    }
+  ],
+  "Monseigneur": [
+    {
+      "protocol": "B12",
+      "channel_id": 4872
+    }
+  ],
+  "Moovo": [
+    {
+      "protocol": "MVO",
+      "channel_id": 25460
+    }
+  ],
+  "MotionBlinds": [
+    {
+      "protocol": "MBL",
+      "channel_id": 26802
+    }
+  ],
+  "Motorisation Plus": [
+    {
+      "protocol": "B24_1",
+      "channel_id": 4898
+    }
+  ],
+  "Motorline": [
+    {
+      "protocol": "MLN",
+      "channel_id": 25483
+    }
+  ],
+  "Motoroll": [
+    {
+      "protocol": "WSR",
+      "channel_id": 25488
+    }
+  ],
+  "Motostar": [
+    {
+      "protocol": "B24",
+      "channel_id": 4896
+    }
+  ],
+  "Nice": [
+    {
+      "protocol": "B12_1",
+      "channel_id": 4873
+    },
+    {
+      "protocol": "FLOX",
+      "channel_id": 9057
+    },
+    {
+      "protocol": "MVO",
+      "channel_id": 25460
+    },
+    {
+      "protocol": "SMO",
+      "channel_id": 25466
+    }
+  ],
+  "Niko": [
+    {
+      "protocol": "EWV",
+      "channel_id": 48
+    }
+  ],
+  "Normstahl": [
+    {
+      "protocol": "NSL",
+      "channel_id": 25476
+    }
+  ],
+  "Novoferm": [
+    {
+      "protocol": "TMC",
+      "channel_id": 25470
+    }
+  ],
+  "Orixal (Axirol)": [
+    {
+      "protocol": "WST",
+      "channel_id": 13936
+    }
+  ],
+  "Orno": [
+    {
+      "protocol": "DIO",
+      "channel_id": 1392
+    }
+  ],
+  "Otio": [
+    {
+      "protocol": "DIO",
+      "channel_id": 1392
+    },
+    {
+      "protocol": "OTI",
+      "channel_id": 816
+    }
+  ],
+  "Ozroll": [
+    {
+      "protocol": "OZR",
+      "channel_id": 13952
+    }
+  ],
+  "Persax": [
+    {
+      "protocol": "DC",
+      "channel_id": 832
+    },
+    {
+      "protocol": "DD",
+      "channel_id": 26800
+    }
+  ],
+  "Powertech": [
+    {
+      "protocol": "PTC",
+      "channel_id": 25482
+    }
+  ],
+  "Prastel": [
+    {
+      "protocol": "PRT",
+      "channel_id": 4960
+    }
+  ],
+  "Proem": [
+    {
+      "protocol": "PRM",
+      "channel_id": 25498
+    }
+  ],
+  "Profalux": [
+    {
+      "protocol": "PFX",
+      "channel_id": 25455
+    }
+  ],
+  "Proteco": [
+    {
+      "protocol": "B12_2",
+      "channel_id": 4876
+    }
+  ],
+  "Rademacher": [
+    {
+      "protocol": "DFN",
+      "channel_id": 9936
+    },
+    {
+      "protocol": "SKM",
+      "channel_id": 25473
+    }
+  ],
+  "Remocon": [
+    {
+      "protocol": "B28",
+      "channel_id": 4912
+    }
+  ],
+  "Roger": [
+    {
+      "protocol": "B28",
+      "channel_id": 4912
+    }
+  ],
+  "SLID'UP by Mantion": [
+    {
+      "protocol": "EXM",
+      "channel_id": 25486
+    }
+  ],
+  "Schartec": [
+    {
+      "protocol": "DC",
+      "channel_id": 832
+    },
+    {
+      "protocol": "TMC",
+      "channel_id": 25470
+    }
+  ],
+  "Scs Sentinel": [
+    {
+      "protocol": "LEB",
+      "channel_id": 25471
+    },
+    {
+      "protocol": "PT2262_1",
+      "channel_id": 809
+    },
+    {
+      "protocol": "PTC",
+      "channel_id": 25482
+    },
+    {
+      "protocol": "STN",
+      "channel_id": 25467
+    }
+  ],
+  "Seateam": [
+    {
+      "protocol": "SEA",
+      "channel_id": 25492
+    }
+  ],
+  "Seav": [
+    {
+      "protocol": "B18",
+      "channel_id": 4879
+    }
+  ],
+  "Selve": [
+    {
+      "protocol": "CMO",
+      "channel_id": 10464
+    },
+    {
+      "protocol": "PLN",
+      "channel_id": 1648
+    },
+    {
+      "protocol": "TLC",
+      "channel_id": 25490
+    }
+  ],
+  "Siemens": [
+    {
+      "protocol": "ERP1",
+      "channel_id": 56
+    }
+  ],
+  "Silent Gliss": [
+    {
+      "protocol": "PLN2",
+      "channel_id": 10976
+    }
+  ],
+  "Silvercrest": [
+    {
+      "protocol": "KGT",
+      "channel_id": 812
+    }
+  ],
+  "Simu": [
+    {
+      "protocol": "IOU",
+      "channel_id": 26848
+    },
+    {
+      "protocol": "RFY",
+      "channel_id": 13920
+    }
+  ],
+  "Skymaster": [
+    {
+      "protocol": "SKM",
+      "channel_id": 25473
+    }
+  ],
+  "Smartwares": [
+    {
+      "protocol": "DIO",
+      "channel_id": 1392
+    }
+  ],
+  "Somfy": [
+    {
+      "protocol": "IOU",
+      "channel_id": 26848
+    },
+    {
+      "protocol": "RFY",
+      "channel_id": 13920
+    },
+    {
+      "protocol": "RTR",
+      "channel_id": 13136
+    }
+  ],
+  "Sommer": [
+    {
+      "protocol": "SML",
+      "channel_id": 25484
+    },
+    {
+      "protocol": "SML2",
+      "channel_id": 26320
+    }
+  ],
+  "Stiltz": [
+    {
+      "protocol": "STL",
+      "channel_id": 2256
+    }
+  ],
+  "TTgo": [
+    {
+      "protocol": "TGO",
+      "channel_id": 9064
+    }
+  ],
+  "Telco": [
+    {
+      "protocol": "WST",
+      "channel_id": 13936
+    }
+  ],
+  "Teleco": [
+    {
+      "protocol": "TCO",
+      "channel_id": 25712
+    },
+    {
+      "protocol": "TLC",
+      "channel_id": 25490
+    }
+  ],
+  "Thomson": [
+    {
+      "protocol": "ARW",
+      "channel_id": 2192
+    },
+    {
+      "protocol": "AVD",
+      "channel_id": 13152
+    }
+  ],
+  "Tormatic": [
+    {
+      "protocol": "TMC",
+      "channel_id": 25470
+    }
+  ],
+  "Tousek": [
+    {
+      "protocol": "TLC",
+      "channel_id": 25490
+    },
+    {
+      "protocol": "TLC868",
+      "channel_id": 25494
+    }
+  ],
+  "Tubauto": [
+    {
+      "protocol": "ECS",
+      "channel_id": 25465
+    },
+    {
+      "protocol": "HBS",
+      "channel_id": 26864
+    }
+  ],
+  "V2": [
+    {
+      "protocol": "V2",
+      "channel_id": 13158
+    },
+    {
+      "protocol": "V2868",
+      "channel_id": 13159
+    },
+    {
+      "protocol": "V2E",
+      "channel_id": 13184
+    }
+  ],
+  "Velux": [
+    {
+      "protocol": "IOU",
+      "channel_id": 26848
+    },
+    {
+      "protocol": "RFY",
+      "channel_id": 13920
+    }
+  ],
+  "Voltec": [
+    {
+      "protocol": "EWV",
+      "channel_id": 48
+    }
+  ],
+  "Wayne Dalton": [
+    {
+      "protocol": "CBK",
+      "channel_id": 14416
+    },
+    {
+      "protocol": "TMC",
+      "channel_id": 25470
+    },
+    {
+      "protocol": "TX43",
+      "channel_id": 25495
+    },
+    {
+      "protocol": "WDB",
+      "channel_id": 25475
+    },
+    {
+      "protocol": "WDI",
+      "channel_id": 25472
+    }
+  ],
+  "Weinor": [
+    {
+      "protocol": "PLN2",
+      "channel_id": 10976
+    }
+  ],
+  "Wistar": [
+    {
+      "protocol": "WST",
+      "channel_id": 13936
+    }
+  ],
+  "X10": [
+    {
+      "protocol": "X10",
+      "channel_id": 1328
+    }
+  ],
+  "Zaffer": [
+    {
+      "protocol": "ZFR",
+      "channel_id": 912
+    }
+  ]
+}

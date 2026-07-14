@@ -3,14 +3,14 @@ Point d'entree de l'addon.
 
 Chaine complete : ecoute RF (bind_manager) -> callback (callback_server,
 filtre reliability) -> decodage (thing_notes) -> etat/discovery/commandes
-(mqtt_bridge) -> Home Assistant via MQTT discovery. Le mode inclusion est
-pilotable depuis HA via l'entite switch "AirSend - Mode inclusion" (plus de
-force-start de dev), la confirmation des candidats detectes (nom/kind/options
--> ecriture dans devices.json) reste en revanche a construire : pour l'instant
-les candidats sont uniquement publies en lecture sur `airsend/inclusion/candidates`
-(JSON), consultables mais pas encore actionnables depuis HA. Prochaine etape
-naturelle plutot que de bricoler ca en MQTT pur : exposer un service HA cote
-addon (Supervisor API / webhook) pour ce formulaire de confirmation.
+(mqtt_bridge) -> Home Assistant via MQTT discovery. Le mode inclusion "large"
+reste pilotable depuis HA via l'entite switch "AirSend - Mode inclusion" (les
+candidats detectes restent aussi publies en lecture sur
+`airsend/inclusion/candidates`), mais la confirmation d'un appareil (nom +
+kind + options -> ecriture dans devices.json) se fait desormais via le
+formulaire Ingress (cf. inclusion_api.py) plutot qu'en MQTT pur - changement
+d'architecture assume qui revient sur la decision initiale "no Ingress UI"
+(cf. suivi de conception), specifiquement pour ce flow.
 """
 
 from __future__ import annotations
@@ -20,11 +20,14 @@ import json
 import logging
 import os
 
+from aiohttp import web
+
 from airsend_client import AirSendClient, BoxConfig
 from bind_manager import BindManager
 from callback_server import CallbackServer
 from device_registry import DeviceRegistry
 from inclusion import InclusionState
+from inclusion_api import create_ingress_app
 from mqtt_bridge import MqttBridge
 from net_utils import mac_from_link_local
 from protocol_catalog import ProtocolCatalog
@@ -38,6 +41,14 @@ CALLBACK_PORT = 8126
 # callback - pas besoin (et pas souhaitable) de deviner une IP via une
 # connexion sortante vers un serveur externe (8.8.8.8).
 CALLBACK_HOST = "127.0.0.1"
+
+# Port du formulaire web Ingress (ajout d'appareils, cf. inclusion_api.py) -
+# DOIT correspondre a "ingress_port" dans config.yaml. Contrairement au
+# callback server, ce serveur doit ecouter sur toutes les interfaces
+# (0.0.0.0) : c'est le Supervisor qui proxy les requetes Ingress depuis
+# l'exterieur du conteneur vers ce port, pas un simple usage loopback.
+INGRESS_PORT = 8127
+INGRESS_HOST = "0.0.0.0"
 
 # Valeur par defaut du champ "name" dans config.yaml : si l'utilisateur ne l'a
 # pas modifie, on derive un nom lisible depuis la MAC de la box plutot que de
@@ -179,13 +190,30 @@ async def async_main() -> None:
     for box in boxes:
         bind_manager.add_box(box)
 
+    ingress_app = create_ingress_app(
+        boxes_by_slug=boxes_by_slug,
+        client=client,
+        bind_manager=bind_manager,
+        inclusion=inclusion,
+        registry=registry,
+        catalog=catalog,
+        mqtt_bridge=mqtt_bridge,
+    )
+    ingress_runner = web.AppRunner(ingress_app)
+    await ingress_runner.setup()
+    ingress_site = web.TCPSite(ingress_runner, INGRESS_HOST, INGRESS_PORT)
+    await ingress_site.start()
+    _LOGGER.info("Ingress device-inclusion form listening on %s:%s", INGRESS_HOST, INGRESS_PORT)
+
     _LOGGER.info(
-        "Ready. Toggle 'AirSend - Mode inclusion' in HA to start detecting new devices."
+        "Ready. Use the 'AirSend' Ingress panel to add devices, or toggle "
+        "'AirSend - Mode inclusion' in HA to monitor unknown RF traffic."
     )
 
     try:
         await asyncio.Event().wait()  # tourne indefiniment
     finally:
+        await ingress_runner.cleanup()
         await bind_manager.stop_all()
         await callback_server.stop()
         mqtt_bridge.stop()

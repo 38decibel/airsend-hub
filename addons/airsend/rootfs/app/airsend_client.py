@@ -184,14 +184,24 @@ class AirSendClient:
         utilise par defaut par bind_manager : le filtrage se fait cote addon sur
         (channel.id, channel.source) plutot que de multiplier les bind cibles
         (evite la latence d'un round-robin, cf. decision Phase 1).
+
+        BUG CORRIGE (2026-07-14) : cette methode ignorait purement et
+        simplement le parametre `channel` et envoyait TOUJOURS un bind cible
+        sur {"id": 25455} (PFX), quel que soit l'appelant. Consequence
+        pratique : le "bind global" cense tourner en permanence
+        (bind_manager.py) etait en realite scope sur PFX depuis le debut -
+        les evenements RF entrants sur tout autre protocole (IOU/Somfy,
+        etc.) n'ont donc jamais ete recus via bind, seul l'envoi de commandes
+        (transfer, qui ne depend pas du bind) fonctionnait normalement pour
+        ces appareils. A surveiller apres deploiement : le state tracking de
+        devices non-PFX peut se mettre a fonctionner different qu'avant.
         """
         body: dict[str, Any] = {
             "duration": duration,
             "callback": callback_url,
-            "channel": {
-                "id": 25455,
-            },
         }
+        if channel is not None:
+            body["channel"] = channel
         return await self._request("POST", "/airsend/bind", box=box, json_body=body)
 
     async def unbind(self, box: BoxConfig) -> None:

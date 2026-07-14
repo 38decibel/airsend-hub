@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AirSend - Ajouter un appareil</title>
+<style>
+  :root {
+    --bg: #111318; --card: #1b1e26; --border: #2a2e38; --text: #e8eaed;
+    --muted: #9aa0ac; --accent: #4d8aff; --accent-hover: #6b9dff;
+    --danger: #e05555; --ok: #3fbf6f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--text); padding: 16px;
+  }
+  h1 { font-size: 1.3rem; margin: 0 0 16px; }
+  h2 { font-size: 1.05rem; margin: 0 0 12px; color: var(--muted); font-weight: 600; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; margin-bottom: 14px;
+  }
+  .btn {
+    display: inline-block; background: var(--accent); color: #fff; border: none;
+    border-radius: 8px; padding: 11px 18px; font-size: 0.95rem; cursor: pointer;
+    margin: 4px 6px 4px 0; text-align: center;
+  }
+  .btn:hover { background: var(--accent-hover); }
+  .btn.secondary { background: #2a2e38; color: var(--text); }
+  .btn.secondary:hover { background: #343946; }
+  .btn:disabled { opacity: 0.5; cursor: default; }
+  .btn-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .choice-box {
+    flex: 1 1 140px; background: #23262f; border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px; text-align: center; cursor: pointer; min-width: 120px;
+  }
+  .choice-box:hover { border-color: var(--accent); }
+  .choice-box.selected { border-color: var(--accent); background: #1e2a44; }
+  input[type=text], input[type=number] {
+    width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);
+    background: #14161c; color: var(--text); font-size: 0.95rem; margin-bottom: 8px;
+  }
+  label.field-label { display: block; font-size: 0.85rem; color: var(--muted); margin: 10px 0 4px; }
+  .suggestions { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-top: -4px; }
+  .suggestion-item { padding: 9px 12px; cursor: pointer; border-bottom: 1px solid var(--border); }
+  .suggestion-item:last-child { border-bottom: none; }
+  .suggestion-item:hover { background: #23262f; }
+  .muted { color: var(--muted); font-size: 0.88rem; }
+  .banner { padding: 10px 12px; border-radius: 8px; margin: 8px 0; font-size: 0.88rem; }
+  .banner.warn { background: #3a2f14; border: 1px solid #6b5420; color: #e8c977; }
+  .banner.error { background: #3a1414; border: 1px solid #6b2020; color: #ff9a9a; }
+  .banner.ok { background: #123a22; border: 1px solid #1f6b3a; color: #7ee0a0; }
+  .candidate {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px;
+  }
+  .device-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+  .device-row:last-child { border-bottom: none; }
+  .spinner {
+    display: inline-block; width: 14px; height: 14px; border: 2px solid var(--muted);
+    border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite;
+    vertical-align: middle; margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .hidden { display: none !important; }
+  .checkbox-row { display: flex; align-items: center; gap: 8px; margin: 10px 0; }
+</style>
+</head>
+<body>
+
+<h1>AirSend</h1>
+
+<div id="screen-home" class="card">
+  <h2>Appareils</h2>
+  <div id="device-list" class="muted">Chargement…</div>
+  <div style="margin-top:14px;">
+    <button class="btn" id="btn-add-device">+ Ajouter un appareil</button>
+  </div>
+</div>
+
+<div id="screen-wizard" class="card hidden">
+  <button class="btn secondary" id="btn-cancel">&larr; Annuler</button>
+
+  <div id="step-branch" class="hidden" style="margin-top:14px;">
+    <h2>Comment souhaitez-vous ajouter cet appareil ?</h2>
+    <div class="btn-grid">
+      <div class="choice-box" data-branch="A">
+        <strong>J'ai la télécommande</strong>
+        <div class="muted">On écoute la trame RF réelle</div>
+      </div>
+      <div class="choice-box" data-branch="B">
+        <strong>Je n'ai pas la télécommande</strong>
+        <div class="muted">Saisie manuelle de l'identifiant</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="step-catalog" class="hidden" style="margin-top:14px;">
+    <h2>Marque / modèle / protocole</h2>
+    <label class="field-label" for="brand-input">Chercher une marque</label>
+    <input type="text" id="brand-input" placeholder="ex: Somfy, Profalux…" autocomplete="off">
+    <div id="brand-suggestions" class="suggestions hidden"></div>
+
+    <div id="protocol-picker" class="hidden" style="margin-top:12px;">
+      <label class="field-label">Plusieurs protocoles disponibles pour cette marque :</label>
+      <div class="btn-grid" id="protocol-choices"></div>
+    </div>
+
+    <div id="rolling-code-banner" class="banner warn hidden"></div>
+
+    <div style="margin-top:14px;">
+      <button class="btn" id="btn-catalog-next" disabled>Continuer</button>
+    </div>
+  </div>
+
+  <div id="step-listen" class="hidden" style="margin-top:14px;">
+    <h2>Écoute radio</h2>
+    <p class="muted">Sur votre télécommande d'origine, appuyez sur le bouton à copier pendant quelques secondes, dès que vous lancez l'écoute ci-dessous. Répétez l'appui 2 ou 3 fois si rien n'apparaît.</p>
+    <button class="btn" id="btn-listen-play">▶ Écouter (20s)</button>
+    <div id="listen-status" class="muted" style="margin-top:10px;"></div>
+    <div id="listen-candidates" style="margin-top:10px;"></div>
+  </div>
+
+  <div id="step-manual" class="hidden" style="margin-top:14px;">
+    <h2>Identifiant de l'appareil</h2>
+    <label class="field-label" for="manual-source">Identifiant unique (channel_source)</label>
+    <input type="number" id="manual-source" placeholder="ex: 24679">
+    <div class="muted">Cette valeur n'est pas devinable : elle doit provenir d'un export existant (ex. import cloud) ou d'une capture RF antérieure.</div>
+    <div style="margin-top:14px;">
+      <button class="btn" id="btn-manual-next">Continuer</button>
+    </div>
+  </div>
+
+  <div id="step-kind" class="hidden" style="margin-top:14px;">
+    <h2>Type de matériel</h2>
+    <div class="btn-grid" id="kind-choices">
+      <div class="choice-box" data-kind="1_bouton"><strong>1 bouton</strong></div>
+      <div class="choice-box" data-kind="on_off"><strong>On / Off</strong></div>
+      <div class="choice-box" data-kind="volet_roulant"><strong>Volet roulant</strong></div>
+      <div class="choice-box" data-kind="niveau"><strong>Niveau (position)</strong></div>
+    </div>
+
+    <div id="invert-row" class="checkbox-row hidden">
+      <input type="checkbox" id="invert-checkbox">
+      <label for="invert-checkbox">Inverser le sens (câblage à l'envers)</label>
+    </div>
+
+    <label class="field-label" for="name-input">Nom de l'appareil</label>
+    <input type="text" id="name-input" placeholder="ex: Volet salon terrasse">
+
+    <div id="confirm-banner" class="banner hidden"></div>
+
+    <div style="margin-top:14px;">
+      <button class="btn" id="btn-confirm" disabled>Ajouter l'appareil</button>
+    </div>
+  </div>
+
+  <div id="step-done" class="hidden" style="margin-top:14px;">
+    <div class="banner ok">✓ Appareil ajouté avec succès.</div>
+    <button class="btn" id="btn-done-back">Retour</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var state = {
+    branch: null,           // "A" | "B"
+    box: null,               // box slug
+    brand: null,
+    channelId: null,
+    protocolName: null,
+    sessionId: null,
+    listenPoll: null,
+    candidate: null,         // {channel_id, channel_source, protocol_name}
+    kind: null,
+  };
+
+  var boxesCache = [];
+
+  function $(id) { return document.getElementById(id); }
+  function show(id) { $(id).classList.remove("hidden"); }
+  function hide(id) { $(id).classList.add("hidden"); }
+  function showOnly(ids) {
+    ["step-branch", "step-catalog", "step-listen", "step-manual", "step-kind", "step-done"]
+      .forEach(function (s) { ids.indexOf(s) === -1 ? hide(s) : show(s); });
+  }
+
+  function api(path, opts) {
+    return fetch(path, opts).then(function (r) {
+      return r.json().then(function (body) { return { ok: r.ok, status: r.status, body: body }; });
+    });
+  }
+
+  // ---------------------------------------------------------------- home
+
+  function loadDevices() {
+    api("/api/devices").then(function (res) {
+      var list = $("device-list");
+      if (!res.ok || !res.body.length) {
+        list.textContent = "Aucun appareil pour le moment.";
+        return;
+      }
+      list.innerHTML = "";
+      res.body.forEach(function (d) {
+        var row = document.createElement("div");
+        row.className = "device-row";
+        row.innerHTML = "<span>" + d.friendly_name + "</span><span class='muted'>" +
+          d.kind + " · " + (d.protocol_name || "?") + "</span>";
+        list.appendChild(row);
+      });
+    });
+  }
+
+  function loadBoxes() {
+    return api("/api/boxes").then(function (res) {
+      boxesCache = res.body || [];
+      state.box = boxesCache.length ? boxesCache[0].slug : null;
+    });
+  }
+
+  // ---------------------------------------------------------------- wizard nav
+
+  function resetWizard() {
+    state.branch = null;
+    state.brand = null;
+    state.channelId = null;
+    state.protocolName = null;
+    state.sessionId = null;
+    state.candidate = null;
+    state.kind = null;
+    if (state.listenPoll) { clearInterval(state.listenPoll); state.listenPoll = null; }
+    $("brand-input").value = "";
+    $("brand-suggestions").innerHTML = "";
+    hide("brand-suggestions");
+    $("protocol-choices").innerHTML = "";
+    hide("protocol-picker");
+    hide("rolling-code-banner");
+    $("btn-catalog-next").disabled = true;
+    $("manual-source").value = "";
+    $("name-input").value = "";
+    $("invert-checkbox").checked = false;
+    hide("invert-row");
+    hide("confirm-banner");
+    $("btn-confirm").disabled = true;
+    document.querySelectorAll(".choice-box").forEach(function (b) { b.classList.remove("selected"); });
+    $("listen-status").textContent = "";
+    $("listen-candidates").innerHTML = "";
+  }
+
+  $("btn-add-device").addEventListener("click", function () {
+    resetWizard();
+    show("screen-wizard");
+    hide("screen-home");
+    showOnly(["step-branch"]);
+  });
+
+  $("btn-cancel").addEventListener("click", backToHome);
+  $("btn-done-back").addEventListener("click", backToHome);
+
+  function backToHome() {
+    if (state.listenPoll) { clearInterval(state.listenPoll); state.listenPoll = null; }
+    hide("screen-wizard");
+    show("screen-home");
+    loadDevices();
+  }
+
+  // ---------------------------------------------------------------- branch choice
+
+  document.querySelectorAll('[data-branch]').forEach(function (box) {
+    box.addEventListener("click", function () {
+      document.querySelectorAll('[data-branch]').forEach(function (b) { b.classList.remove("selected"); });
+      box.classList.add("selected");
+      state.branch = box.getAttribute("data-branch");
+      showOnly(["step-catalog"]);
+    });
+  });
+
+  // ---------------------------------------------------------------- catalog / brand search
+
+  var brandDebounce = null;
+  $("brand-input").addEventListener("input", function () {
+    var q = this.value;
+    clearTimeout(brandDebounce);
+    if (q.trim().length < 2) { hide("brand-suggestions"); return; }
+    brandDebounce = setTimeout(function () {
+      api("/api/brands?q=" + encodeURIComponent(q)).then(function (res) {
+        var box = $("brand-suggestions");
+        box.innerHTML = "";
+        if (!res.body.length) { hide(box.id); return; }
+        res.body.forEach(function (entry) {
+          var item = document.createElement("div");
+          item.className = "suggestion-item";
+          item.textContent = entry.brand;
+          item.addEventListener("click", function () { selectBrand(entry); });
+          box.appendChild(item);
+        });
+        show("brand-suggestions");
+      });
+    }, 200);
+  });
+
+  function selectBrand(entry) {
+    state.brand = entry.brand;
+    $("brand-input").value = entry.brand;
+    hide("brand-suggestions");
+    var choices = $("protocol-choices");
+    choices.innerHTML = "";
+
+    if (entry.protocols.length <= 1) {
+      hide("protocol-picker");
+      applyProtocol(entry.protocols[0]);
+      return;
+    }
+
+    show("protocol-picker");
+    entry.protocols.forEach(function (p) {
+      var box = document.createElement("div");
+      box.className = "choice-box";
+      box.innerHTML = "<strong>" + p.protocol + "</strong>";
+      box.addEventListener("click", function () {
+        choices.querySelectorAll(".choice-box").forEach(function (b) { b.classList.remove("selected"); });
+        box.classList.add("selected");
+        applyProtocol(p);
+      });
+      choices.appendChild(box);
+    });
+  }
+
+  function applyProtocol(p) {
+    if (!p) { $("btn-catalog-next").disabled = true; return; }
+    state.channelId = p.channel_id;
+    state.protocolName = p.protocol;
+    $("btn-catalog-next").disabled = false;
+
+    // Info anticipee (surtout utile en branche B) sur le risque rolling-code.
+    api("/api/channel/" + p.channel_id + "?box=" + encodeURIComponent(state.box)).then(function (res) {
+      var banner = $("rolling-code-banner");
+      if (res.body && res.body.rolling_code_risk) {
+        banner.textContent = "Protocole à code tournant : " +
+          (state.branch === "B"
+            ? "sans télécommande, l'ajout risque d'échouer (voir avertissement à la confirmation)."
+            : "l'écoute RF réelle est fortement recommandée pour ce protocole.");
+        show("rolling-code-banner");
+      } else {
+        hide("rolling-code-banner");
+      }
+    });
+  }
+
+  $("btn-catalog-next").addEventListener("click", function () {
+    if (state.branch === "A") {
+      showOnly(["step-listen"]);
+    } else {
+      showOnly(["step-manual"]);
+    }
+  });
+
+  // ---------------------------------------------------------------- branch A: listen
+
+  $("btn-listen-play").addEventListener("click", function () {
+    $("btn-listen-play").disabled = true;
+    $("listen-candidates").innerHTML = "";
+    api("/api/listen", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ box: state.box, channel_id: state.channelId, duration: 20 }),
+    }).then(function (res) {
+      if (!res.ok) {
+        $("listen-status").textContent = "Erreur: " + (res.body.text || "impossible de démarrer l'écoute");
+        $("btn-listen-play").disabled = false;
+        return;
+      }
+      state.sessionId = res.body.session_id;
+      pollListen();
+    });
+  });
+
+  function pollListen() {
+    if (state.listenPoll) clearInterval(state.listenPoll);
+    state.listenPoll = setInterval(function () {
+      api("/api/listen/" + state.sessionId).then(function (res) {
+        if (!res.ok) { clearInterval(state.listenPoll); return; }
+        var body = res.body;
+        $("listen-status").innerHTML = body.status === "listening"
+          ? "<span class='spinner'></span>Écoute en cours… (" + body.remaining_s + "s restantes)"
+          : (body.error ? "Erreur : " + body.error : "Écoute terminée.");
+
+        renderCandidates(body.candidates || []);
+
+        if (body.status !== "listening") {
+          clearInterval(state.listenPoll);
+          state.listenPoll = null;
+          $("btn-listen-play").disabled = false;
+          $("btn-listen-play").textContent = "▶ Réessayer (20s)";
+        }
+      });
+    }, 1200);
+  }
+
+  function renderCandidates(list) {
+    var box = $("listen-candidates");
+    box.innerHTML = "";
+    if (!list.length) return;
+    list.forEach(function (c) {
+      var row = document.createElement("div");
+      row.className = "candidate";
+      row.innerHTML = "<span>" + (c.protocol_name || ("canal " + c.channel_id)) +
+        " <span class='muted'>(id " + c.channel_source + ")</span></span>";
+      var btn = document.createElement("button");
+      btn.className = "btn";
+      btn.textContent = "Utiliser celui-ci";
+      btn.addEventListener("click", function () {
+        state.candidate = c;
+        if (state.listenPoll) { clearInterval(state.listenPoll); state.listenPoll = null; }
+        showOnly(["step-kind"]);
+      });
+      row.appendChild(btn);
+      box.appendChild(row);
+    });
+  }
+
+  // ---------------------------------------------------------------- branch B: manual
+
+  $("btn-manual-next").addEventListener("click", function () {
+    var val = parseInt($("manual-source").value, 10);
+    if (isNaN(val)) { return; }
+    state.candidate = { channel_id: state.channelId, channel_source: val, protocol_name: state.protocolName };
+    showOnly(["step-kind"]);
+  });
+
+  // ---------------------------------------------------------------- kind + name + confirm
+
+  document.querySelectorAll('[data-kind]').forEach(function (box) {
+    box.addEventListener("click", function () {
+      document.querySelectorAll('[data-kind]').forEach(function (b) { b.classList.remove("selected"); });
+      box.classList.add("selected");
+      state.kind = box.getAttribute("data-kind");
+      if (state.kind === "volet_roulant" || state.kind === "niveau") {
+        show("invert-row");
+      } else {
+        hide("invert-row");
+      }
+      updateConfirmEnabled();
+    });
+  });
+
+  $("name-input").addEventListener("input", updateConfirmEnabled);
+
+  function updateConfirmEnabled() {
+    $("btn-confirm").disabled = !(state.kind && $("name-input").value.trim());
+  }
+
+  $("btn-confirm").addEventListener("click", function () {
+    submitDevice(false);
+  });
+
+  function submitDevice(confirmRollingCodeRisk) {
+    var options = {};
+    if (state.kind === "volet_roulant" || state.kind === "niveau") {
+      options.invert = $("invert-checkbox").checked;
+    }
+    var friendlyName = $("name-input").value.trim();
+    var banner = $("confirm-banner");
+    hide(banner.id);
+
+    var payload, url;
+    if (state.branch === "A") {
+      url = "/api/devices";
+      payload = {
+        session_id: state.sessionId,
+        channel_source: state.candidate.channel_source,
+        kind: state.kind,
+        friendly_name: friendlyName,
+        options: options,
+      };
+    } else {
+      url = "/api/devices/manual";
+      payload = {
+        box: state.box,
+        channel_id: state.candidate.channel_id,
+        channel_source: state.candidate.channel_source,
+        kind: state.kind,
+        friendly_name: friendlyName,
+        options: options,
+        confirm_rolling_code_risk: !!confirmRollingCodeRisk,
+      };
+    }
+
+    $("btn-confirm").disabled = true;
+    api(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }).then(function (res) {
+      if (res.status === 409 && res.body.warning === "rolling_code_risk") {
+        banner.className = "banner warn";
+        banner.textContent = res.body.message;
+        show(banner.id);
+        var retryBtn = document.createElement("button");
+        retryBtn.className = "btn";
+        retryBtn.style.marginTop = "8px";
+        retryBtn.textContent = "Continuer quand même";
+        retryBtn.addEventListener("click", function () { submitDevice(true); });
+        banner.appendChild(document.createElement("br"));
+        banner.appendChild(retryBtn);
+        $("btn-confirm").disabled = false;
+        return;
+      }
+      if (!res.ok) {
+        banner.className = "banner error";
+        banner.textContent = "Erreur lors de la création de l'appareil.";
+        show(banner.id);
+        $("btn-confirm").disabled = false;
+        return;
+      }
+      showOnly(["step-done"]);
+    });
+  }
+
+  // ---------------------------------------------------------------- init
+
+  loadBoxes().then(loadDevices);
+})();
+</script>
+</body>
+</html>
