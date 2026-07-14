@@ -1,6 +1,16 @@
 ## Unreleased
 
 ### Added
+
+### Changed
+
+### Fixed
+
+### Dependencies
+
+## 0.13.0 - 2026-07-14
+
+### Added
 - **inclusion-ui:** allow renaming, editing options and deleting devices (#30)
 
 ### Changed
