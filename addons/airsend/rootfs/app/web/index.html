@@ -197,7 +197,7 @@
   // ---------------------------------------------------------------- home
 
   function loadDevices() {
-    api("/api/devices").then(function (res) {
+    api("api/devices").then(function (res) {
       var list = $("device-list");
       if (!res.ok || !res.body.length) {
         list.textContent = "Aucun appareil pour le moment.";
@@ -215,7 +215,7 @@
   }
 
   function loadBoxes() {
-    return api("/api/boxes").then(function (res) {
+    return api("api/boxes").then(function (res) {
       boxesCache = res.body || [];
       state.box = boxesCache.length ? boxesCache[0].slug : null;
     });
@@ -286,7 +286,7 @@
     clearTimeout(brandDebounce);
     if (q.trim().length < 2) { hide("brand-suggestions"); return; }
     brandDebounce = setTimeout(function () {
-      api("/api/brands?q=" + encodeURIComponent(q)).then(function (res) {
+      api("api/brands?q=" + encodeURIComponent(q)).then(function (res) {
         var box = $("brand-suggestions");
         box.innerHTML = "";
         if (!res.body.length) { hide(box.id); return; }
@@ -336,7 +336,7 @@
     $("btn-catalog-next").disabled = false;
 
     // Info anticipee (surtout utile en branche B) sur le risque rolling-code.
-    api("/api/channel/" + p.channel_id + "?box=" + encodeURIComponent(state.box)).then(function (res) {
+    api("api/channel/" + p.channel_id + "?box=" + encodeURIComponent(state.box)).then(function (res) {
       var banner = $("rolling-code-banner");
       if (res.body && res.body.rolling_code_risk) {
         banner.textContent = "Protocole à code tournant : " +
@@ -363,7 +363,7 @@
   $("btn-listen-play").addEventListener("click", function () {
     $("btn-listen-play").disabled = true;
     $("listen-candidates").innerHTML = "";
-    api("/api/listen", {
+    api("api/listen", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ box: state.box, channel_id: state.channelId, duration: 20 }),
@@ -381,7 +381,7 @@
   function pollListen() {
     if (state.listenPoll) clearInterval(state.listenPoll);
     state.listenPoll = setInterval(function () {
-      api("/api/listen/" + state.sessionId).then(function (res) {
+      api("api/listen/" + state.sessionId).then(function (res) {
         if (!res.ok) { clearInterval(state.listenPoll); return; }
         var body = res.body;
         $("listen-status").innerHTML = body.status === "listening"
@@ -468,7 +468,7 @@
 
     var payload, url;
     if (state.branch === "A") {
-      url = "/api/devices";
+      url = "api/devices";
       payload = {
         session_id: state.sessionId,
         channel_source: state.candidate.channel_source,
@@ -477,7 +477,7 @@
         options: options,
       };
     } else {
-      url = "/api/devices/manual";
+      url = "api/devices/manual";
       payload = {
         box: state.box,
         channel_id: state.candidate.channel_id,
