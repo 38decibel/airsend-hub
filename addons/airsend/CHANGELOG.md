@@ -5,6 +5,7 @@
 ### Changed
 
 ### Fixed
+- **inclusion:** fix premature end of targeted RF listen session (#46)
 
 ### Dependencies
 
