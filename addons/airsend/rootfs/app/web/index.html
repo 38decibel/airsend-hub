@@ -37,10 +37,12 @@
   }
   .choice-box:hover { border-color: var(--accent); }
   .choice-box.selected { border-color: var(--accent); background: #1e2a44; }
-  input[type=text], input[type=number] {
+  input[type=text], input[type=number], textarea, select {
     width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);
     background: #14161c; color: var(--text); font-size: 0.95rem; margin-bottom: 8px;
+    font-family: inherit;
   }
+  textarea { font-family: ui-monospace, monospace; font-size: 0.82rem; }
   label.field-label { display: block; font-size: 0.85rem; color: var(--muted); margin: 10px 0 4px; }
   .suggestions { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-top: -4px; }
   .suggestion-item { padding: 9px 12px; cursor: pointer; border-bottom: 1px solid var(--border); }
@@ -73,6 +75,15 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   .hidden { display: none !important; }
   .checkbox-row { display: flex; align-items: center; gap: 8px; margin: 10px 0; }
+
+  .import-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .import-table th { text-align: left; color: var(--muted); font-weight: 500; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  .import-table td { padding: 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .import-table select { margin-bottom: 0; padding: 6px; font-size: 0.85rem; }
+  .status-pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; }
+  .status-pill.new { background: #123a22; color: #7ee0a0; }
+  .status-pill.conflict { background: #3a2f14; color: #e8c977; }
+  .status-pill.unknown_protocol { background: #3a1414; color: #ff9a9a; }
 </style>
 </head>
 <body>
@@ -84,6 +95,7 @@
   <div id="device-list" class="muted">Chargement…</div>
   <div style="margin-top:14px;">
     <button class="btn" id="btn-add-device">+ Ajouter un appareil</button>
+    <button class="btn secondary" id="btn-open-import">Importer depuis YAML</button>
   </div>
 </div>
 
@@ -185,6 +197,35 @@
   <div id="step-done" class="hidden" style="margin-top:14px;">
     <div class="banner ok">✓ Appareil ajouté avec succès.</div>
     <button class="btn" id="btn-done-back">Retour</button>
+  </div>
+</div>
+
+<div id="screen-import" class="card hidden">
+  <button class="btn secondary" id="btn-import-cancel">&larr; Annuler</button>
+
+  <div id="import-step-input" style="margin-top:14px;">
+    <h2>Importer depuis le YAML de l'ancienne intégration</h2>
+    <p class="muted">Colle le contenu de ton fichier (ex. <code>airsend.yaml</code>), ou choisis un fichier. Rien n'est modifié tant que tu n'as pas confirmé à l'étape suivante.</p>
+    <input type="file" id="import-file-input" accept=".yaml,.yml">
+    <textarea id="import-yaml-textarea" rows="10" placeholder="devices:&#10;  Volet Celyan:&#10;    type: 4098&#10;    channel:&#10;      id: 25455&#10;      source: 233575"></textarea>
+    <div id="import-error" class="banner error hidden"></div>
+    <button class="btn" id="import-preview-btn">Analyser</button>
+  </div>
+
+  <div id="import-step-preview" class="hidden" style="margin-top:14px;">
+    <h2>Vérifier avant import</h2>
+    <table class="import-table">
+      <thead>
+        <tr>
+          <th></th><th>Nom</th><th>Protocole</th><th>Statut</th><th>Domain</th><th>Kind</th><th>Si conflit</th>
+        </tr>
+      </thead>
+      <tbody id="import-table-body"></tbody>
+    </table>
+    <div style="margin-top:14px;">
+      <button class="btn" id="import-commit-btn">Importer la sélection</button>
+    </div>
+    <div id="import-result" class="banner hidden" style="margin-top:10px;"></div>
   </div>
 </div>
 
@@ -385,6 +426,7 @@
   function backToHome() {
     if (state.listenPoll) { clearInterval(state.listenPoll); state.listenPoll = null; }
     hide("screen-wizard");
+    hide("screen-import");
     show("screen-home");
     loadDevices();
   }
@@ -641,6 +683,156 @@
       showOnly(["step-done"]);
     });
   }
+
+  // ---------------------------------------------------------------- import YAML
+
+  var KIND_LABELS = {
+    "1_bouton": "1 bouton", "on_off": "On / Off",
+    "volet_roulant": "Volet roulant", "niveau": "Niveau (position)",
+  };
+  var DOMAIN_TO_KINDS = { button: ["1_bouton"], switch: ["on_off"], cover: ["volet_roulant", "niveau"] };
+  var currentImportRows = [];
+
+  function resetImportScreen() {
+    currentImportRows = [];
+    $("import-yaml-textarea").value = "";
+    $("import-file-input").value = "";
+    hide("import-error");
+    hide("import-step-preview");
+    show("import-step-input");
+    $("import-table-body").innerHTML = "";
+    hide("import-result");
+  }
+
+  $("btn-open-import").addEventListener("click", function () {
+    resetImportScreen();
+    hide("screen-home");
+    show("screen-import");
+  });
+  $("btn-import-cancel").addEventListener("click", backToHome);
+
+  $("import-file-input").addEventListener("change", function () {
+    var file = this.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function (e) { $("import-yaml-textarea").value = e.target.result; };
+    reader.readAsText(file);
+  });
+
+  function domainSelectHtml(row) {
+    var opts = Object.keys(DOMAIN_TO_KINDS).map(function (d) {
+      return "<option value='" + d + "'" + (row.domain === d ? " selected" : "") + ">" + d + "</option>";
+    }).join("");
+    return "<select data-field='domain'><option value=''>--</option>" + opts + "</select>";
+  }
+
+  function kindSelectHtml(row) {
+    var kinds = row.domain ? (DOMAIN_TO_KINDS[row.domain] || []) : [];
+    var opts = kinds.map(function (k) {
+      return "<option value='" + k + "'" + (row.kind === k ? " selected" : "") + ">" + KIND_LABELS[k] + "</option>";
+    }).join("");
+    return "<select data-field='kind'><option value=''>--</option>" + opts + "</select>";
+  }
+
+  function conflictSelectHtml(row) {
+    if (row.status !== "conflict") return "-";
+    return "<select data-field='conflict_action'>" +
+      "<option value='keep_existing'>garder existant</option>" +
+      "<option value='overwrite'>écraser</option>" +
+      "</select>";
+  }
+
+  function renderImportTable() {
+    $("import-table-body").innerHTML = currentImportRows.map(function (row, i) {
+      var checked = row.status !== "unknown_protocol" ? "checked" : "";
+      var disabled = row.status === "unknown_protocol" ? "disabled" : "";
+      var translatedNote = row.kind_translated
+        ? "<div class='muted' style='font-size:0.75em'>kind traduit depuis l'ancien format</div>" : "";
+      return "<tr data-index='" + i + "'>" +
+        "<td><input type='checkbox' class='import-check' " + checked + " " + disabled + "></td>" +
+        "<td>" + row.friendly_name + "<div class='muted' style='font-size:0.8em'>" + row.key + "</div></td>" +
+        "<td>" + row.protocol_name + "</td>" +
+        "<td><span class='status-pill " + row.status + "'>" + row.status + "</span></td>" +
+        "<td>" + domainSelectHtml(row) + "</td>" +
+        "<td>" + kindSelectHtml(row) + translatedNote + "</td>" +
+        "<td>" + conflictSelectHtml(row) + "</td>" +
+        "</tr>";
+    }).join("");
+  }
+
+  $("import-preview-btn").addEventListener("click", function () {
+    hide("import-error");
+    var yamlText = $("import-yaml-textarea").value;
+    if (!yamlText.trim()) return;
+    api("api/import/preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ yaml_text: yamlText, box: state.box }),
+    }).then(function (res) {
+      if (!res.ok) {
+        var err = $("import-error");
+        err.textContent = res.body.text || res.body.error || "Erreur lors de l'analyse du YAML.";
+        show(err.id);
+        return;
+      }
+      currentImportRows = res.body.rows;
+      renderImportTable();
+      hide("import-step-input");
+      show("import-step-preview");
+    });
+  });
+
+  $("import-table-body").addEventListener("change", function (e) {
+    var tr = e.target.closest("tr");
+    if (!tr) return;
+    var idx = parseInt(tr.getAttribute("data-index"), 10);
+    var field = e.target.getAttribute("data-field");
+    if (!field) return;
+    if (field === "conflict_action") {
+      currentImportRows[idx].conflict_action = e.target.value;
+      return;
+    }
+    currentImportRows[idx][field] = e.target.value;
+    if (field === "domain") {
+      currentImportRows[idx].kind = null;
+      renderImportTable();
+    }
+  });
+
+  $("import-commit-btn").addEventListener("click", function () {
+    var checks = document.querySelectorAll(".import-check");
+    var rowsToCommit = currentImportRows.map(function (row, i) {
+      var checked = checks[i].checked;
+      var action = "skip";
+      if (checked) {
+        action = row.status === "conflict" ? (row.conflict_action || "keep_existing") : "import";
+      }
+      var copy = Object.assign({}, row);
+      copy.action = action;
+      return copy;
+    });
+
+    $("import-commit-btn").disabled = true;
+    api("api/import/commit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rows: rowsToCommit }),
+    }).then(function (res) {
+      $("import-commit-btn").disabled = false;
+      var result = $("import-result");
+      if (!res.ok) {
+        result.className = "banner error";
+        result.textContent = res.body.text || "Erreur lors de l'import.";
+        show(result.id);
+        return;
+      }
+      var body = res.body;
+      result.className = body.errors.length ? "banner warn" : "banner ok";
+      result.textContent = body.added + " ajoutés, " + body.overwritten + " écrasés, " +
+        body.skipped + " ignorés." + (body.errors.length ? " Erreurs: " + body.errors.join(" | ") : "");
+      show(result.id);
+    });
+  });
 
   // ---------------------------------------------------------------- init
 
