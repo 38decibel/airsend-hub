@@ -89,7 +89,7 @@ class BoxBindHandle:
             try:
                 await self._task
             except asyncio.CancelledError:
-                pass
+                raise
             self._task = None
 
         try:

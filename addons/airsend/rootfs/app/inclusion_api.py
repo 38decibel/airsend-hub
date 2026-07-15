@@ -67,6 +67,8 @@ _DEFAULT_LISTEN_DURATION_S = 20.0
 _MAX_LISTEN_DURATION_S = 60.0
 _SESSION_TTL_S = 600.0  # purge des sessions non confirmees au-dela de 10 min
 
+_FRIENDLY_NAME_EMPTY = "friendly_name vide"
+
 # kind (choisi dans le formulaire) -> domain HA / MQTT (cf. domains/*.py et
 # device_registry.Device.kind/domain). "1_bouton" -> "button" existe deja
 # comme domaine command-only cote domains/button.py.
@@ -268,7 +270,7 @@ class InclusionApi:
                 session.done = True
                 self._listening_boxes.discard(box_slug)
 
-        asyncio.create_task(_run())
+        _listen_task = asyncio.create_task(_run())
         return web.json_response({"session_id": session.id, "duration": duration})
 
     async def _handle_poll_listen(self, request: web.Request) -> web.Response:
@@ -289,9 +291,16 @@ class InclusionApi:
             and c.last_seen >= session.started_at
         ]
 
+        if session.error:
+            status = "error"
+        elif session.done:
+            status = "done"
+        else:
+            status = "listening"
+
         return web.json_response(
             {
-                "status": "error" if session.error else ("done" if session.done else "listening"),
+                "status": status,
                 "error": session.error,
                 "remaining_s": round(session.remaining_s, 1),
                 "candidates": candidates,
@@ -360,7 +369,7 @@ class InclusionApi:
             raise web.HTTPBadRequest(text="champs manquants ou invalides")
 
         if not friendly_name:
-            raise web.HTTPBadRequest(text="friendly_name vide")
+            raise web.HTTPBadRequest(text=_FRIENDLY_NAME_EMPTY)
 
         candidate = next(
             (
@@ -420,7 +429,7 @@ class InclusionApi:
         if box_slug not in self._boxes:
             raise web.HTTPBadRequest(text="box inconnue")
         if not friendly_name:
-            raise web.HTTPBadRequest(text="friendly_name vide")
+            raise web.HTTPBadRequest(text=_FRIENDLY_NAME_EMPTY)
 
         entry = self._catalog.entry_for(box_slug, channel_id)
         rolling_code_risk = bool(entry.get("counter")) if entry else False
@@ -467,7 +476,7 @@ class InclusionApi:
         if friendly_name is not None:
             friendly_name = str(friendly_name).strip()
             if not friendly_name:
-                raise web.HTTPBadRequest(text="friendly_name vide")
+                raise web.HTTPBadRequest(text=_FRIENDLY_NAME_EMPTY)
 
         options = body.get("options")
         if options is not None and not isinstance(options, dict):
@@ -541,6 +550,61 @@ class InclusionApi:
         )
         return web.json_response({"rows": rows, "available_kinds": list(KIND_TO_DOMAIN.keys())})
 
+    def _process_import_row(self, row: dict[str, Any]) -> tuple[str, str | None]:
+        """Process a single import row and return (outcome, error_message).
+
+        outcome is one of "added", "overwritten", "skipped".
+        error_message is non-None when the row could not be processed.
+        """
+        action = row.get("action", "skip")
+        row_key = row.get("key", "?")
+
+        if action in ("skip", "keep_existing"):
+            return "skipped", None
+
+        if action not in ("import", "overwrite"):
+            return "error", f"{row_key}: action inconnue '{action}'"
+
+        kind = row.get("kind")
+        friendly_name = str(row.get("friendly_name", "")).strip()
+        if not kind or not friendly_name:
+            return "error", f"{row_key}: kind/friendly_name manquant"
+
+        removed_existing = self._maybe_remove_existing(row, row_key, action)
+
+        try:
+            self._create_device(
+                box_slug=row.get("box"),
+                channel_id=row["channel_id"],
+                channel_source=row["channel_source"],
+                protocol_name=row.get("protocol_name"),
+                kind=kind,
+                friendly_name=friendly_name,
+                options=row.get("options") or {},
+                source_of_creation="yaml_import",
+            )
+        except web.HTTPBadRequest as exc:
+            return "error", f"{row_key}: {exc.text}"
+
+        return "overwritten" if removed_existing else "added", None
+
+    def _maybe_remove_existing(self, row: dict[str, Any], row_key: str, action: str) -> bool:
+        """Remove the existing device when action is 'overwrite'. Returns True if removed."""
+        if action != "overwrite":
+            return False
+        existing_key = row.get("conflict_with") or row_key
+        existing = self._registry.get(existing_key)
+        if existing is None:
+            return False
+        # Meme chemin que _handle_delete_device : on retire
+        # d'abord la discovery MQTT de l'ancien device avant de
+        # recreer, plutot qu'une mise a jour en place (cf.
+        # _handle_update_device : channel/kind ne sont pas
+        # editables sur un device existant par design).
+        self._mqtt_bridge.remove_discovery(existing)
+        self._registry.remove(existing_key)
+        return True
+
     async def _handle_import_commit(self, request: web.Request) -> web.Response:
         body = await request.json()
         rows = body.get("rows")
@@ -551,56 +615,15 @@ class InclusionApi:
         errors: list[str] = []
 
         for row in rows:
-            action = row.get("action", "skip")
-            row_key = row.get("key", "?")
-
-            if action in ("skip", "keep_existing"):
-                skipped += 1
-                continue
-
-            if action not in ("import", "overwrite"):
-                errors.append(f"{row_key}: action inconnue '{action}'")
-                continue
-
-            kind = row.get("kind")
-            friendly_name = str(row.get("friendly_name", "")).strip()
-            if not kind or not friendly_name:
-                errors.append(f"{row_key}: kind/friendly_name manquant")
-                continue
-
-            removed_existing = False
-            if action == "overwrite":
-                existing_key = row.get("conflict_with") or row_key
-                existing = self._registry.get(existing_key)
-                if existing is not None:
-                    # Meme chemin que _handle_delete_device : on retire
-                    # d'abord la discovery MQTT de l'ancien device avant de
-                    # recreer, plutot qu'une mise a jour en place (cf.
-                    # _handle_update_device : channel/kind ne sont pas
-                    # editables sur un device existant par design).
-                    self._mqtt_bridge.remove_discovery(existing)
-                    self._registry.remove(existing_key)
-                    removed_existing = True
-
-            try:
-                self._create_device(
-                    box_slug=row.get("box"),
-                    channel_id=row["channel_id"],
-                    channel_source=row["channel_source"],
-                    protocol_name=row.get("protocol_name"),
-                    kind=kind,
-                    friendly_name=friendly_name,
-                    options=row.get("options") or {},
-                    source_of_creation="yaml_import",
-                )
-            except web.HTTPBadRequest as exc:
-                errors.append(f"{row_key}: {exc.text}")
-                continue
-
-            if removed_existing:
+            outcome, error = self._process_import_row(row)
+            if error is not None:
+                errors.append(error)
+            elif outcome == "added":
+                added += 1
+            elif outcome == "overwritten":
                 overwritten += 1
             else:
-                added += 1
+                skipped += 1
 
         return web.json_response(
             {"added": added, "overwritten": overwritten, "skipped": skipped, "errors": errors}

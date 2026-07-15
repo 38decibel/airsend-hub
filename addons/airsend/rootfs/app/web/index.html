@@ -206,8 +206,8 @@
   <div id="import-step-input" style="margin-top:14px;">
     <h2>Importer depuis le YAML de l'ancienne intégration</h2>
     <p class="muted">Colle le contenu de ton fichier (ex. <code>airsend.yaml</code>), ou choisis un fichier. Rien n'est modifié tant que tu n'as pas confirmé à l'étape suivante.</p>
-    <input type="file" id="import-file-input" accept=".yaml,.yml">
-    <textarea id="import-yaml-textarea" rows="10" placeholder="devices:&#10;  Volet Celyan:&#10;    type: 4098&#10;    channel:&#10;      id: 25455&#10;      source: 233575"></textarea>
+    <input type="file" id="import-file-input" accept=".yaml,.yml" aria-label="Fichier YAML à importer">
+    <textarea id="import-yaml-textarea" rows="10" placeholder="devices:&#10;  Volet Celyan:&#10;    type: 4098&#10;    channel:&#10;      id: 25455&#10;      source: 233575" aria-label="Contenu YAML"></textarea>
     <div id="import-error" class="banner error hidden"></div>
     <button class="btn" id="import-preview-btn">Analyser</button>
   </div>
@@ -264,43 +264,47 @@
 
   // ---------------------------------------------------------------- home
 
+  function buildDeviceRow(d) {
+    var row = document.createElement("div");
+    row.className = "device-row";
+
+    var info = document.createElement("span");
+    info.className = "device-info";
+    info.innerHTML = "<span>" + d.friendly_name + "</span><span class='muted'> · " +
+      d.kind + " · " + (d.protocol_name || "?") + "</span>";
+
+    var actions = document.createElement("span");
+    actions.className = "device-actions";
+
+    var editBtn = document.createElement("button");
+    editBtn.className = "icon-btn";
+    editBtn.textContent = "Modifier";
+    editBtn.addEventListener("click", function () { openEditDevice(d); });
+
+    var delBtn = document.createElement("button");
+    delBtn.className = "icon-btn danger";
+    delBtn.textContent = "Supprimer";
+    delBtn.addEventListener("click", function () { deleteDevice(d); });
+
+    actions.appendChild(editBtn);
+    actions.appendChild(delBtn);
+    row.appendChild(info);
+    row.appendChild(actions);
+    return row;
+  }
+
+  function populateDeviceList(res) {
+    var list = $("device-list");
+    if (!res.ok || !res.body.length) {
+      list.textContent = "Aucun appareil pour le moment.";
+      return;
+    }
+    list.innerHTML = "";
+    res.body.forEach(function (d) { list.appendChild(buildDeviceRow(d)); });
+  }
+
   function loadDevices() {
-    api("api/devices").then(function (res) {
-      var list = $("device-list");
-      if (!res.ok || !res.body.length) {
-        list.textContent = "Aucun appareil pour le moment.";
-        return;
-      }
-      list.innerHTML = "";
-      res.body.forEach(function (d) {
-        var row = document.createElement("div");
-        row.className = "device-row";
-
-        var info = document.createElement("span");
-        info.className = "device-info";
-        info.innerHTML = "<span>" + d.friendly_name + "</span><span class='muted'> · " +
-          d.kind + " · " + (d.protocol_name || "?") + "</span>";
-
-        var actions = document.createElement("span");
-        actions.className = "device-actions";
-
-        var editBtn = document.createElement("button");
-        editBtn.className = "icon-btn";
-        editBtn.textContent = "Modifier";
-        editBtn.addEventListener("click", function () { openEditDevice(d); });
-
-        var delBtn = document.createElement("button");
-        delBtn.className = "icon-btn danger";
-        delBtn.textContent = "Supprimer";
-        delBtn.addEventListener("click", function () { deleteDevice(d); });
-
-        actions.appendChild(editBtn);
-        actions.appendChild(delBtn);
-        row.appendChild(info);
-        row.appendChild(actions);
-        list.appendChild(row);
-      });
-    });
+    api("api/devices").then(populateDeviceList);
   }
 
   function openEditDevice(d) {
@@ -338,7 +342,7 @@
       // Fusion avec les options existantes : cette UI ne modifie que
       // "invert", les autres cles eventuelles (device_class, event_types...)
       // ne doivent pas etre perdues.
-      payload.options = Object.assign({}, d.options, { invert: $("edit-invert-checkbox").checked });
+      payload.options = { ...d.options, invert: $("edit-invert-checkbox").checked };
     }
 
     $("btn-edit-save").disabled = true;
@@ -437,12 +441,26 @@
     box.addEventListener("click", function () {
       document.querySelectorAll('[data-branch]').forEach(function (b) { b.classList.remove("selected"); });
       box.classList.add("selected");
-      state.branch = box.getAttribute("data-branch");
+      state.branch = box.dataset.branch;
       showOnly(["step-catalog"]);
     });
   });
 
   // ---------------------------------------------------------------- catalog / brand search
+
+  function showBrandSuggestions(res) {
+    var box = $("brand-suggestions");
+    box.innerHTML = "";
+    if (!res.body.length) { hide(box.id); return; }
+    res.body.forEach(function (entry) {
+      var item = document.createElement("div");
+      item.className = "suggestion-item";
+      item.textContent = entry.brand;
+      item.addEventListener("click", function () { selectBrand(entry); });
+      box.appendChild(item);
+    });
+    show("brand-suggestions");
+  }
 
   var brandDebounce = null;
   $("brand-input").addEventListener("input", function () {
@@ -450,21 +468,11 @@
     clearTimeout(brandDebounce);
     if (q.trim().length < 2) { hide("brand-suggestions"); return; }
     brandDebounce = setTimeout(function () {
-      api("api/brands?q=" + encodeURIComponent(q)).then(function (res) {
-        var box = $("brand-suggestions");
-        box.innerHTML = "";
-        if (!res.body.length) { hide(box.id); return; }
-        res.body.forEach(function (entry) {
-          var item = document.createElement("div");
-          item.className = "suggestion-item";
-          item.textContent = entry.brand;
-          item.addEventListener("click", function () { selectBrand(entry); });
-          box.appendChild(item);
-        });
-        show("brand-suggestions");
-      });
+      api("api/brands?q=" + encodeURIComponent(q)).then(showBrandSuggestions);
     }, 200);
   });
+
+  function clearChoiceBoxSelection(b) { b.classList.remove("selected"); }
 
   function selectBrand(entry) {
     state.brand = entry.brand;
@@ -485,7 +493,7 @@
       box.className = "choice-box";
       box.innerHTML = "<strong>" + p.protocol + "</strong>";
       box.addEventListener("click", function () {
-        choices.querySelectorAll(".choice-box").forEach(function (b) { b.classList.remove("selected"); });
+        choices.querySelectorAll(".choice-box").forEach(clearChoiceBoxSelection);
         box.classList.add("selected");
         applyProtocol(p);
       });
@@ -589,8 +597,8 @@
   // ---------------------------------------------------------------- branch B: manual
 
   $("btn-manual-next").addEventListener("click", function () {
-    var val = parseInt($("manual-source").value, 10);
-    if (isNaN(val)) { return; }
+    var val = Number.parseInt($("manual-source").value, 10);
+    if (Number.isNaN(val)) { return; }
     state.candidate = { channel_id: state.channelId, channel_source: val, protocol_name: state.protocolName };
     showOnly(["step-kind"]);
   });
@@ -601,7 +609,7 @@
     box.addEventListener("click", function () {
       document.querySelectorAll('[data-kind]').forEach(function (b) { b.classList.remove("selected"); });
       box.classList.add("selected");
-      state.kind = box.getAttribute("data-kind");
+      state.kind = box.dataset.kind;
       if (state.kind === "volet_roulant" || state.kind === "niveau") {
         show("invert-row");
       } else {
@@ -714,9 +722,7 @@
   $("import-file-input").addEventListener("change", function () {
     var file = this.files[0];
     if (!file) return;
-    var reader = new FileReader();
-    reader.onload = function (e) { $("import-yaml-textarea").value = e.target.result; };
-    reader.readAsText(file);
+    file.text().then(function (text) { $("import-yaml-textarea").value = text; });
   });
 
   function domainSelectHtml(row) {
@@ -785,8 +791,8 @@
   $("import-table-body").addEventListener("change", function (e) {
     var tr = e.target.closest("tr");
     if (!tr) return;
-    var idx = parseInt(tr.getAttribute("data-index"), 10);
-    var field = e.target.getAttribute("data-field");
+    var idx = Number.parseInt(tr.dataset.index, 10);
+    var field = e.target.dataset.field;
     if (!field) return;
     if (field === "conflict_action") {
       currentImportRows[idx].conflict_action = e.target.value;
@@ -807,7 +813,7 @@
       if (checked) {
         action = row.status === "conflict" ? (row.conflict_action || "keep_existing") : "import";
       }
-      var copy = Object.assign({}, row);
+      var copy = { ...row };
       copy.action = action;
       return copy;
     });
