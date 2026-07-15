@@ -3,6 +3,7 @@
 ### Added
 
 ### Changed
+- [WIP] Fix all currently open issues in repository (#45)
 
 ### Fixed
 
