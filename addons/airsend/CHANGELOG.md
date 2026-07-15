@@ -1,6 +1,7 @@
 ## Unreleased
 
 ### Added
+- **inclusion:** ajoute l'import YAML depuis l'ancienne intégration hass_airsend (#31)
 
 ### Changed
 
