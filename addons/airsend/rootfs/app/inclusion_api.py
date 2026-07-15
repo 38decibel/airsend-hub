@@ -21,6 +21,20 @@ l'app cloud officielle (cf. historique de conception) :
 Cette API ne fait AUCUNE creation automatique/silencieuse d'entite : la
 confirmation utilisateur (nom + kind, cf. principe acte Phase 1) reste
 obligatoire dans tous les cas, y compris branche B.
+
+  Import YAML (migration depuis l'ancienne integration hass_airsend) :
+    -> l'utilisateur colle le contenu de son airsend.yaml
+    -> /api/import/preview : parsing + detection des conflits (meme
+       channel_id+channel_source qu'un device existant) - RIEN n'est ecrit
+    -> pour les conflits, kind/domain/options sont repris de l'existant
+       (PAS derives du protocole - cf. channel_id 26848 qui produit a la
+       fois des devices cover et switch selon l'appareil physique)
+    -> pour les devices vraiment nouveaux, l'utilisateur choisit kind/domain
+       manuellement (memes choix que le wizard normal, step-kind)
+    -> /api/import/commit : reutilise _create_device (donc meme generation
+       de cle, meme discovery MQTT, memes logs que le flow d'inclusion
+       normal) ; "overwrite" retire d'abord l'ancien device via le meme
+       chemin que _handle_delete_device avant de recreer
 """
 
 from __future__ import annotations
@@ -43,6 +57,7 @@ from device_registry import Device, DeviceRegistry
 from inclusion import InclusionState
 from mqtt_bridge import MqttBridge
 from protocol_catalog import ProtocolCatalog
+from yaml_import import load_yaml_devices, parse_airsend_yaml
 
 _LOGGER = logging.getLogger("airsend.inclusion_api")
 
@@ -131,6 +146,8 @@ class InclusionApi:
         self.app.router.add_post("/api/devices/manual", self._handle_manual_device)
         self.app.router.add_patch("/api/devices/{key}", self._handle_update_device)
         self.app.router.add_delete("/api/devices/{key}", self._handle_delete_device)
+        self.app.router.add_post("/api/import/preview", self._handle_import_preview)
+        self.app.router.add_post("/api/import/commit", self._handle_import_commit)
         self.app.router.add_get("/{tail:.*}", self._handle_static)
 
     # ------------------------------------------------------------------ #
@@ -282,7 +299,7 @@ class InclusionApi:
         )
 
     # ------------------------------------------------------------------ #
-    # Creation d'appareil (commun aux deux branches)
+    # Creation d'appareil (commun aux deux branches + import YAML)
     # ------------------------------------------------------------------ #
 
     def _create_device(
@@ -481,6 +498,113 @@ class InclusionApi:
         self._registry.remove(key)
         _LOGGER.info("Device %s removed via ingress UI", key)
         return web.json_response({"key": key, "deleted": True})
+
+    # ------------------------------------------------------------------ #
+    # Import YAML (migration depuis hass_airsend / config legacy)
+    # ------------------------------------------------------------------ #
+
+    async def _handle_import_preview(self, request: web.Request) -> web.Response:
+        body = await request.json()
+        yaml_text = body.get("yaml_text", "")
+        if not yaml_text.strip():
+            raise web.HTTPBadRequest(text="yaml_text vide")
+
+        box_slug = body.get("box") or next(iter(self._boxes), None)
+        if box_slug not in self._boxes:
+            raise web.HTTPBadRequest(text="box inconnue")
+
+        try:
+            yaml_devices = load_yaml_devices(yaml_text)
+        except ValueError as exc:
+            raise web.HTTPBadRequest(text=str(exc))
+
+        existing_devices = {
+            d.key: {
+                "channel_id": d.channel_id,
+                "channel_source": d.channel_source,
+                "domain": d.domain,
+                "kind": d.kind,
+                "options": d.options,
+            }
+            for d in self._registry.all()
+        }
+
+        def protocol_name_for(channel_id: int) -> str | None:
+            return self._catalog.protocol_name_for(box_slug, channel_id)
+
+        rows = parse_airsend_yaml(
+            yaml_devices,
+            protocol_name_for,
+            existing_devices,
+            box_slug,
+            KIND_TO_DOMAIN,
+        )
+        return web.json_response({"rows": rows, "available_kinds": list(KIND_TO_DOMAIN.keys())})
+
+    async def _handle_import_commit(self, request: web.Request) -> web.Response:
+        body = await request.json()
+        rows = body.get("rows")
+        if not isinstance(rows, list):
+            raise web.HTTPBadRequest(text="'rows' doit etre une liste")
+
+        added = overwritten = skipped = 0
+        errors: list[str] = []
+
+        for row in rows:
+            action = row.get("action", "skip")
+            row_key = row.get("key", "?")
+
+            if action in ("skip", "keep_existing"):
+                skipped += 1
+                continue
+
+            if action not in ("import", "overwrite"):
+                errors.append(f"{row_key}: action inconnue '{action}'")
+                continue
+
+            kind = row.get("kind")
+            friendly_name = str(row.get("friendly_name", "")).strip()
+            if not kind or not friendly_name:
+                errors.append(f"{row_key}: kind/friendly_name manquant")
+                continue
+
+            removed_existing = False
+            if action == "overwrite":
+                existing_key = row.get("conflict_with") or row_key
+                existing = self._registry.get(existing_key)
+                if existing is not None:
+                    # Meme chemin que _handle_delete_device : on retire
+                    # d'abord la discovery MQTT de l'ancien device avant de
+                    # recreer, plutot qu'une mise a jour en place (cf.
+                    # _handle_update_device : channel/kind ne sont pas
+                    # editables sur un device existant par design).
+                    self._mqtt_bridge.remove_discovery(existing)
+                    self._registry.remove(existing_key)
+                    removed_existing = True
+
+            try:
+                self._create_device(
+                    box_slug=row.get("box"),
+                    channel_id=row["channel_id"],
+                    channel_source=row["channel_source"],
+                    protocol_name=row.get("protocol_name"),
+                    kind=kind,
+                    friendly_name=friendly_name,
+                    options=row.get("options") or {},
+                    source_of_creation="yaml_import",
+                )
+            except web.HTTPBadRequest as exc:
+                errors.append(f"{row_key}: {exc.text}")
+                continue
+
+            if removed_existing:
+                overwritten += 1
+            else:
+                added += 1
+
+        return web.json_response(
+            {"added": added, "overwritten": overwritten, "skipped": skipped, "errors": errors}
+        )
 
 
 def create_ingress_app(
