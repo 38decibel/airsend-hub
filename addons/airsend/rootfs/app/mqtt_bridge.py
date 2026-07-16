@@ -26,28 +26,33 @@ from domains.topics import (
     DeviceTopics,
     build_device_info,
 )
-from inclusion import InclusionState
 from net_utils import mac_from_link_local
 from protocol_catalog import ProtocolCatalog
 from runtime_settings import RuntimeSettings
 
 _LOGGER = logging.getLogger("airsend.mqtt_bridge")
 
-# Entites systeme (mode inclusion, reglages), independantes du device_registry
-# (pas des appareils AirSend, mais des modes/reglages de l'addon lui-meme).
-# Rattachees au device de la PREMIERE box configuree (limitation actuelle :
-# le mode inclusion et les reglages sont partages entre toutes les box s'il y
-# en a plusieurs - a revisiter si besoin de reglages par-box).
-_INCLUSION_COMMAND_TOPIC = "airsend/inclusion/set"
-_INCLUSION_STATE_TOPIC = "airsend/inclusion/state"
-_INCLUSION_DISCOVERY_TOPIC = "homeassistant/switch/inclusion_mode_airsend/config"
-_INCLUSION_CANDIDATES_TOPIC = "airsend/inclusion/candidates"
-
 _RELIABILITY_COMMAND_TOPIC = "airsend/settings/reliability_min/set"
 
 _BIND_DURATION_COMMAND_TOPIC = "airsend/settings/bind_duration/set"
 _BIND_DURATION_STATE_TOPIC = "airsend/settings/bind_duration/state"
 _BIND_DURATION_DISCOVERY_TOPIC = "homeassistant/number/bind_duration_airsend/config"
+
+# Legacy : le switch "Mode inclusion" (switch.mode_inclusion) a existe
+# jusqu'a la restructuration "1 device HA par element RF + inclusion
+# exclusivement via l'UI Ingress" - retire car il n'exposait plus de flow
+# utilisable seul (la confirmation d'un candidat en device est desormais
+# verrouillee a une session d'ecoute Ingress, cf. inclusion_api.py). Le
+# mecanisme interne (InclusionState.active, candidats) reste utilise par
+# inclusion_api.py + callback_server.py, seule l'exposition MQTT disparait.
+# On garde ces anciens topics ici UNIQUEMENT pour les vider au demarrage
+# (retrait propre chez les utilisateurs deja installes), comme pour
+# _LEGACY_RELIABILITY_DISCOVERY_TOPICS ci-dessous.
+_LEGACY_INCLUSION_DISCOVERY_TOPICS = (
+    "homeassistant/switch/inclusion_mode_airsend/config",
+    "homeassistant/switch/airsend_inclusion_mode/config",  # forme encore plus ancienne
+)
+_LEGACY_INCLUSION_STATE_TOPIC = "airsend/inclusion/state"
 
 # Legacy : l'entite "fiabilite minimale" (number.reliability_min) a existe
 # jusqu'a la v0.1.11 puis a ete retiree (cf. callback_server.py - la borne
@@ -74,7 +79,6 @@ class MqttBridge:
         registry: DeviceRegistry,
         client: AirSendClient,
         boxes_by_slug: dict[str, BoxConfig],
-        inclusion: InclusionState,
         catalog: ProtocolCatalog,
         settings: RuntimeSettings,
         host: str,
@@ -86,11 +90,9 @@ class MqttBridge:
         self._registry = registry
         self._client = client
         self._boxes_by_slug = boxes_by_slug
-        self._inclusion = inclusion
         self._catalog = catalog
         self._settings = settings
         self._loop = asyncio.get_event_loop()
-        self._candidates_task: asyncio.Task | None = None
         self._health_task: asyncio.Task | None = None
 
         self._mqtt = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="airsend-addon")
@@ -112,44 +114,20 @@ class MqttBridge:
     async def start(self) -> None:
         self._mqtt.connect_async(self._host, self._port)
         self._mqtt.loop_start()
-        self._candidates_task = asyncio.create_task(self._candidates_publisher_loop())
         self._health_task = asyncio.create_task(self._health_poll_loop())
 
     def stop(self) -> None:
         if self._health_task is not None:
             self._health_task.cancel()
-        if self._candidates_task is not None:
-            self._candidates_task.cancel()
         self._mqtt.publish(AVAILABILITY_TOPIC, AVAILABILITY_OFFLINE, retain=True)
         self._mqtt.loop_stop()
         self._mqtt.disconnect()
-
-    async def _candidates_publisher_loop(self) -> None:
-        """Republie la liste des candidats d'inclusion en continu pendant que
-        le mode est actif. Implementation volontairement simple (polling),
-        suffisante tant que la fenetre d'inclusion reste courte (quelques
-        minutes) - a event-driver si besoin plus tard."""
-        while True:
-            if self._inclusion.active:
-                candidates = [
-                    {
-                        "box": c.box,
-                        "channel_id": c.channel_id,
-                        "channel_source": c.channel_source,
-                        "protocol_name": c.protocol_name,
-                        "suggested_kind": c.suggested_kind,
-                    }
-                    for c in self._inclusion.list_candidates()
-                ]
-                self._mqtt.publish(_INCLUSION_CANDIDATES_TOPIC, json.dumps(candidates), retain=False)
-            await asyncio.sleep(2.0)
 
     def _on_connect(self, client, userdata, flags, reason_code, properties=None) -> None:
         _LOGGER.info("MQTT connected (reason_code=%s)", reason_code)
         client.publish(AVAILABILITY_TOPIC, AVAILABILITY_ONLINE, retain=True)
         client.subscribe("airsend/+/set")
         client.subscribe("airsend/+/set_position")
-        client.subscribe(_INCLUSION_COMMAND_TOPIC)
         client.subscribe(_RELIABILITY_COMMAND_TOPIC)  # entite retiree, cf. constante
         client.subscribe(_BIND_DURATION_COMMAND_TOPIC)
         self._cleanup_legacy_discovery_topics()
@@ -157,8 +135,6 @@ class MqttBridge:
         # chaque (re)connexion : couvre le cas d'un broker/HA redemarre.
         for device in self._registry.all():
             self.publish_discovery(device)
-        self._publish_inclusion_discovery()
-        self._publish_inclusion_state()
         self._publish_bind_duration_discovery()
         self._publish_bind_duration_state()
         for box in self._boxes_by_slug.values():
@@ -167,12 +143,14 @@ class MqttBridge:
     def _cleanup_legacy_discovery_topics(self) -> None:
         """
         Migration ponctuelle : efface les topics de discovery de l'ANCIEN
-        schema (avant l'inversion "airsend_X" -> "X_airsend"). Publier un
-        payload vide et retenu sur un topic de discovery MQTT est la methode
-        standard pour supprimer une entite decouverte cote HA - on l'utilise
-        ici pour eviter d'avoir a supprimer les anciennes entites a la main
-        a chaque fois qu'on change le schema. Sans danger a rejouer : publier
-        un payload vide sur un topic deja vide ne fait rien.
+        schema (avant l'inversion "airsend_X" -> "X_airsend"), ainsi que les
+        entites completement retirees (switch "Mode inclusion", fiabilite
+        minimale). Publier un payload vide et retenu sur un topic de
+        discovery MQTT est la methode standard pour supprimer une entite
+        decouverte cote HA - on l'utilise ici pour eviter d'avoir a supprimer
+        les anciennes entites a la main a chaque fois qu'on change le schema.
+        Sans danger a rejouer : publier un payload vide sur un topic deja
+        vide ne fait rien.
         """
         for device in self._registry.all():
             module = get_domain_module(device.domain)
@@ -181,7 +159,9 @@ class MqttBridge:
             legacy_topic = f"homeassistant/{module.COMPONENT}/airsend_{device.key}/config"
             self._mqtt.publish(legacy_topic, "", retain=True)
 
-        self._mqtt.publish("homeassistant/switch/airsend_inclusion_mode/config", "", retain=True)
+        for legacy_topic in _LEGACY_INCLUSION_DISCOVERY_TOPICS:
+            self._mqtt.publish(legacy_topic, "", retain=True)
+        self._mqtt.publish(_LEGACY_INCLUSION_STATE_TOPIC, "", retain=True)
         for legacy_topic in _LEGACY_RELIABILITY_DISCOVERY_TOPICS:
             self._mqtt.publish(legacy_topic, "", retain=True)
         self._mqtt.publish("airsend/settings/reliability_min/state", "", retain=True)
@@ -226,47 +206,13 @@ class MqttBridge:
         )
 
     def _primary_box_slug(self) -> str | None:
-        """cf. limitation notee plus haut : le mode inclusion et les reglages
-        sont rattaches a la premiere box configuree tant qu'on ne gere qu'un
-        etat global (pas encore per-box)."""
+        """L'entite reglage "Duree du bind" est rattachee a la premiere box
+        configuree tant qu'on ne gere qu'un etat global (pas encore per-box)."""
         return next(iter(self._boxes_by_slug), None)
 
     # ------------------------------------------------------------------ #
-    # Entite systeme : mode inclusion (bloc "Configuration")
+    # Entite systeme : reglages (bloc "Configuration")
     # ------------------------------------------------------------------ #
-
-    def _publish_inclusion_discovery(self) -> None:
-        box_slug = self._primary_box_slug()
-        device_info = (
-            self._device_info_for_box(box_slug)
-            if box_slug
-            else build_device_info("airsend_addon", "AirSend")
-        )
-        config = {
-            "name": "Mode inclusion",
-            "default_entity_id": "switch.mode_inclusion",
-            "has_entity_name": True,
-            "unique_id": "inclusion_mode_airsend",
-            "entity_category": "config",
-            "command_topic": _INCLUSION_COMMAND_TOPIC,
-            "state_topic": _INCLUSION_STATE_TOPIC,
-            "payload_on": "ON",
-            "payload_off": "OFF",
-            "state_on": "ON",
-            "state_off": "OFF",
-            "availability_topic": AVAILABILITY_TOPIC,
-            "payload_available": AVAILABILITY_ONLINE,
-            "payload_not_available": AVAILABILITY_OFFLINE,
-            "device": device_info,
-        }
-        self._mqtt.publish(_INCLUSION_DISCOVERY_TOPIC, json.dumps(config), retain=True)
-
-    def _publish_inclusion_state(self) -> None:
-        self._mqtt.publish(
-            _INCLUSION_STATE_TOPIC,
-            "ON" if self._inclusion.active else "OFF",
-            retain=True,
-        )
 
     def _publish_bind_duration_discovery(self) -> None:
         box_slug = self._primary_box_slug()
@@ -350,7 +296,7 @@ class MqttBridge:
         self._mqtt.publish(status_topics.discovery, json.dumps(status_config), retain=True)
 
         version_topics, version_config = self._diagnostic_sensor_topics_and_config(
-            box, "service_version", "Version du service", extra={"state_class": "measurement"}
+            box, "service_version", "Version du service"
         )
         self._mqtt.publish(version_topics.discovery, json.dumps(version_config), retain=True)
 
@@ -428,13 +374,6 @@ class MqttBridge:
         # asyncio pour pouvoir faire l'appel HTTP vers AirSendWebService.
         asyncio.run_coroutine_threadsafe(self._handle_command(msg.topic, msg.payload.decode()), self._loop)
 
-    def _handle_inclusion_command(self, payload: str) -> None:
-        if payload.upper() == "ON":
-            self._inclusion.start()
-        else:
-            self._inclusion.stop()
-        self._publish_inclusion_state()
-
     def _handle_bind_duration_command(self, payload: str) -> None:
         try:
             value = max(60.0, min(86400.0, float(payload)))
@@ -492,9 +431,7 @@ class MqttBridge:
                 _LOGGER.debug("Published optimistic state %s = %s", state_topic, state_payload)
 
     async def _handle_command(self, topic: str, payload: str) -> None:
-        if topic == _INCLUSION_COMMAND_TOPIC:
-            self._handle_inclusion_command(payload)
-        elif topic == _RELIABILITY_COMMAND_TOPIC:
+        if topic == _RELIABILITY_COMMAND_TOPIC:
             # Entite retiree (cf. constante ci-dessus) : un message peut
             # encore arriver une seule fois si HA avait un payload retenu
             # sur ce topic avant la mise a jour. On l'ignore sciemment.

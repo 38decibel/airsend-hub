@@ -5,6 +5,7 @@
 ### Changed
 
 ### Fixed
+- **mqtt:** remove stale version state_class and retire the inclusion-mode switch (#51)
 
 ### Dependencies
 
