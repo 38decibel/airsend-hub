@@ -5,6 +5,7 @@
 ### Changed
 
 ### Fixed
+- **mqtt:** define missing constants in diagnostic sensor helper (#49)
 
 ### Dependencies
 
