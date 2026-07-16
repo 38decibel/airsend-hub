@@ -5,6 +5,7 @@
 ### Changed
 
 ### Fixed
+- **inclusion:** Targeted RF task subject to premature garbage collection (#48)
 
 ### Dependencies
 

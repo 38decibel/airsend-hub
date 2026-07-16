@@ -285,6 +285,31 @@ class MqttBridge:
     # Diagnostics par box (IPv4) - bloc "Diagnostic"
     # ------------------------------------------------------------------ #
 
+    def _diagnostic_sensor_topics_and_config(
+        self, box: BoxConfig, suffix: str, name: str, extra: dict | None = None
+    ) -> tuple[DeviceTopics, dict]:
+        """Construit (topics, config discovery) pour une entite sensor
+        diagnostic de box (IPv4/statut/version partagent tous la meme forme,
+        cf. publish_box_diagnostics) - evite de repeter les 8 memes cles
+        (dont les literaux "sensor"/"diagnostic") trois fois."""
+        object_id = f"{box.slug}_{suffix}"
+        topics = DeviceTopics.for_device(_SENSOR_COMPONENT, object_id)
+        config = {
+            "name": name,
+            "default_entity_id": f"{_SENSOR_COMPONENT}.{object_id}",
+            "has_entity_name": True,
+            "unique_id": f"{object_id}_airsend",
+            "entity_category": _DIAGNOSTIC_CATEGORY,
+            "state_topic": topics.state,
+            "availability_topic": AVAILABILITY_TOPIC,
+            "payload_available": AVAILABILITY_ONLINE,
+            "payload_not_available": AVAILABILITY_OFFLINE,
+            "device": self._device_info_for_box(box.slug),
+        }
+        if extra:
+            config.update(extra)
+        return topics, config
+
     def publish_box_diagnostics(self, box: BoxConfig) -> None:
         """Publie les entites sensor (categorie diagnostic) : IPv4, statut et
         version du service AirSendWebService. La MAC, elle, est exposee
@@ -298,54 +323,18 @@ class MqttBridge:
         pour toutes (c'est le meme service qui les sert toutes, cf.
         airsend_client.py). Rattache quand meme au diagnostic de chaque box
         pour rester visible sans introduire un device "addon" a part."""
-        ipv4_object_id = f"{box.slug}_ipv4"
-        ipv4_topics = DeviceTopics.for_device("sensor", ipv4_object_id)
-        ipv4_config = {
-            "name": "Adresse IPv4",
-            "default_entity_id": f"sensor.{ipv4_object_id}",
-            "has_entity_name": True,
-            "unique_id": f"{ipv4_object_id}_airsend",
-            "entity_category": "diagnostic",
-            "state_topic": ipv4_topics.state,
-            "availability_topic": AVAILABILITY_TOPIC,
-            "payload_available": AVAILABILITY_ONLINE,
-            "payload_not_available": AVAILABILITY_OFFLINE,
-            "device": self._device_info_for_box(box.slug),
-        }
+        ipv4_topics, ipv4_config = self._diagnostic_sensor_topics_and_config(box, "ipv4", "Adresse IPv4")
         self._mqtt.publish(ipv4_topics.discovery, json.dumps(ipv4_config), retain=True)
         self._mqtt.publish(ipv4_topics.state, box.ipv4, retain=True)
 
-        status_object_id = f"{box.slug}_service_status"
-        status_topics = DeviceTopics.for_device("sensor", status_object_id)
-        status_config = {
-            "name": "Statut du service",
-            "default_entity_id": f"sensor.{status_object_id}",
-            "has_entity_name": True,
-            "unique_id": f"{status_object_id}_airsend",
-            "entity_category": "diagnostic",
-            "state_topic": status_topics.state,
-            "availability_topic": AVAILABILITY_TOPIC,
-            "payload_available": AVAILABILITY_ONLINE,
-            "payload_not_available": AVAILABILITY_OFFLINE,
-            "device": self._device_info_for_box(box.slug),
-        }
+        status_topics, status_config = self._diagnostic_sensor_topics_and_config(
+            box, "service_status", "Statut du service"
+        )
         self._mqtt.publish(status_topics.discovery, json.dumps(status_config), retain=True)
 
-        version_object_id = f"{box.slug}_service_version"
-        version_topics = DeviceTopics.for_device("sensor", version_object_id)
-        version_config = {
-            "name": "Version du service",
-            "default_entity_id": f"sensor.{version_object_id}",
-            "has_entity_name": True,
-            "unique_id": f"{version_object_id}_airsend",
-            "entity_category": "diagnostic",
-            "state_class": "measurement",
-            "state_topic": version_topics.state,
-            "availability_topic": AVAILABILITY_TOPIC,
-            "payload_available": AVAILABILITY_ONLINE,
-            "payload_not_available": AVAILABILITY_OFFLINE,
-            "device": self._device_info_for_box(box.slug),
-        }
+        version_topics, version_config = self._diagnostic_sensor_topics_and_config(
+            box, "service_version", "Version du service", extra={"state_class": "measurement"}
+        )
         self._mqtt.publish(version_topics.discovery, json.dumps(version_config), retain=True)
 
     async def _refresh_box_service_health(self) -> None:

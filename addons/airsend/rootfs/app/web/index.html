@@ -253,7 +253,7 @@
   function hide(id) { $(id).classList.add("hidden"); }
   function showOnly(ids) {
     ["step-branch", "step-catalog", "step-listen", "step-manual", "step-kind", "step-done"]
-      .forEach(function (s) { ids.indexOf(s) === -1 ? hide(s) : show(s); });
+      .forEach(function (s) { ids.includes(s) ? show(s) : hide(s); });
   }
 
   function api(path, opts) {
@@ -725,11 +725,16 @@
     file.text().then(function (text) { $("import-yaml-textarea").value = text; });
   });
 
+  function escapeAttr(text) {
+    return String(text).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
   function domainSelectHtml(row) {
     var opts = Object.keys(DOMAIN_TO_KINDS).map(function (d) {
       return "<option value='" + d + "'" + (row.domain === d ? " selected" : "") + ">" + d + "</option>";
     }).join("");
-    return "<select data-field='domain'><option value=''>--</option>" + opts + "</select>";
+    var label = "Domaine pour " + escapeAttr(row.friendly_name);
+    return "<select data-field='domain' aria-label='" + label + "'><option value=''>--</option>" + opts + "</select>";
   }
 
   function kindSelectHtml(row) {
@@ -737,12 +742,14 @@
     var opts = kinds.map(function (k) {
       return "<option value='" + k + "'" + (row.kind === k ? " selected" : "") + ">" + KIND_LABELS[k] + "</option>";
     }).join("");
-    return "<select data-field='kind'><option value=''>--</option>" + opts + "</select>";
+    var label = "Type de materiel pour " + escapeAttr(row.friendly_name);
+    return "<select data-field='kind' aria-label='" + label + "'><option value=''>--</option>" + opts + "</select>";
   }
 
   function conflictSelectHtml(row) {
     if (row.status !== "conflict") return "-";
-    return "<select data-field='conflict_action'>" +
+    var label = "Action en cas de conflit pour " + escapeAttr(row.friendly_name);
+    return "<select data-field='conflict_action' aria-label='" + label + "'>" +
       "<option value='keep_existing'>garder existant</option>" +
       "<option value='overwrite'>écraser</option>" +
       "</select>";
@@ -754,8 +761,9 @@
       var disabled = row.status === "unknown_protocol" ? "disabled" : "";
       var translatedNote = row.kind_translated
         ? "<div class='muted' style='font-size:0.75em'>kind traduit depuis l'ancien format</div>" : "";
+      var checkboxLabel = "Importer " + escapeAttr(row.friendly_name);
       return "<tr data-index='" + i + "'>" +
-        "<td><input type='checkbox' class='import-check' " + checked + " " + disabled + "></td>" +
+        "<td><input type='checkbox' class='import-check' aria-label='" + checkboxLabel + "' " + checked + " " + disabled + "></td>" +
         "<td>" + row.friendly_name + "<div class='muted' style='font-size:0.8em'>" + row.key + "</div></td>" +
         "<td>" + row.protocol_name + "</td>" +
         "<td><span class='status-pill " + row.status + "'>" + row.status + "</span></td>" +

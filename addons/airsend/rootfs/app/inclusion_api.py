@@ -136,6 +136,14 @@ class InclusionApi:
         # parallele sur la meme box se ferait donc couper l'herbe sous le
         # pied par la 1ere sans ce garde-fou.
         self._listening_boxes: set[str] = set()
+        # Reference forte sur les tasks "ecoute ciblee" en cours (cf.
+        # _handle_start_listen). Sans ca, asyncio ne garde qu'une reference
+        # faible sur une task creee via create_task() : rien n'empeche le
+        # garbage collector de la couper avant sa fin (le `finally` de _run
+        # ne s'executerait alors jamais, laissant potentiellement la box
+        # sans bind global relance). Nettoyee automatiquement a la fin de
+        # chaque task via add_done_callback.
+        self._background_tasks: set[asyncio.Task] = set()
 
         self.app = web.Application()
         self.app.router.add_get("/api/boxes", self._handle_boxes)
@@ -270,7 +278,9 @@ class InclusionApi:
                 session.done = True
                 self._listening_boxes.discard(box_slug)
 
-        _listen_task = asyncio.create_task(_run())
+        listen_task = asyncio.create_task(_run())
+        self._background_tasks.add(listen_task)
+        listen_task.add_done_callback(self._background_tasks.discard)
         return web.json_response({"session_id": session.id, "duration": duration})
 
     async def _handle_poll_listen(self, request: web.Request) -> web.Response:
