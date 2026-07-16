@@ -5,6 +5,16 @@
 ### Changed
 
 ### Fixed
+
+### Dependencies
+
+## 0.17.0 - 2026-07-16
+
+### Added
+
+### Changed
+
+### Fixed
 - **inclusion:** Targeted RF task subject to premature garbage collection (#48)
 
 ### Dependencies
