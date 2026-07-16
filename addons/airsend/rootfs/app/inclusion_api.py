@@ -659,3 +659,4 @@ def create_ingress_app(
         mqtt_bridge=mqtt_bridge,
     )
     return api.app
+
