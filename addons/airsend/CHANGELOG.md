@@ -7,6 +7,16 @@
 ### Fixed
 
 ### Dependencies
+
+## 0.16.1 - 2026-07-16
+
+### Added
+
+### Changed
+
+### Fixed
+
+### Dependencies
 - chore(deps): update pyyaml requirement from <7,>=6.0 to >=6.0.3,<7 in /addons/airsend/rootfs/app in the python-dependencies group (#47)
 
 ## 0.16.0 - 2026-07-15
