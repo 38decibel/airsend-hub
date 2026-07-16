@@ -63,6 +63,10 @@ _LEGACY_RELIABILITY_DISCOVERY_TOPICS = (
     "homeassistant/number/airsend_reliability_min/config",
 )
 
+# Utilisees par _diagnostic_sensor_topics_and_config (cf. publish_box_diagnostics).
+_SENSOR_COMPONENT = "sensor"
+_DIAGNOSTIC_CATEGORY = "diagnostic"
+
 
 class MqttBridge:
     def __init__(
