@@ -22,7 +22,7 @@ _STATE_TOGGLE = 18
 
 def discovery_config(device, topics: DeviceTopics, device_info: dict) -> dict:
     return {
-        "name": device.friendly_name,
+        "name": None,
         "default_entity_id": f"button.{device.key}",
         "has_entity_name": True,
         "unique_id": f"{device.key}_airsend",

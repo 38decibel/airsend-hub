@@ -212,6 +212,19 @@ class MqttBridge:
             mac=mac,
         )
 
+    def _device_info_for_element(self, device: Device) -> dict:
+        """Device HA dedie a un element RF (1 par device.key), rattache au
+        device box via `via_device` - cf. discussion "1 device par element"
+        remplacant l'ancien schema ou tous les elements partageaient le
+        device box, ce qui empechait de nommer/zoner chaque volet/switch
+        individuellement (le nom affiche heritait du prefixe du device box,
+        et l'assignation de zone se faisait entite par entite)."""
+        return build_device_info(
+            identifier=device.key,
+            name=device.friendly_name,
+            via_device=device.box,
+        )
+
     def _primary_box_slug(self) -> str | None:
         """cf. limitation notee plus haut : le mode inclusion et les reglages
         sont rattaches a la premiere box configuree tant qu'on ne gere qu'un
@@ -376,7 +389,7 @@ class MqttBridge:
             _LOGGER.warning("Unknown domain '%s' for device %s, skipping discovery", device.domain, device.key)
             return
         topics = DeviceTopics.for_device(module.COMPONENT, device.key)
-        device_info = self._device_info_for_box(device.box)
+        device_info = self._device_info_for_element(device)
         config = module.discovery_config(device, topics, device_info)
         self._mqtt.publish(topics.discovery, json.dumps(config), retain=True)
         _LOGGER.info("Published discovery for %s (%s) on %s", device.key, device.domain, topics.discovery)

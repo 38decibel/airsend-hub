@@ -5,6 +5,7 @@
 ### Changed
 
 ### Fixed
+- **mqtt:** give each RF element its own HA device instead of sharing the box device (#50)
 
 ### Dependencies
 
