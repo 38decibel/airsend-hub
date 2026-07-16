@@ -5,6 +5,16 @@
 ### Changed
 
 ### Fixed
+
+### Dependencies
+
+## 0.20.0 - 2026-07-16
+
+### Added
+
+### Changed
+
+### Fixed
 - **mqtt:** remove stale version state_class and retire the inclusion-mode switch (#51)
 
 ### Dependencies
