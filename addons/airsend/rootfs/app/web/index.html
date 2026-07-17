@@ -135,10 +135,15 @@
   </div>
 
   <div id="step-catalog" class="hidden" style="margin-top:14px;">
-    <h2>Marque / modèle / protocole</h2>
+    <h2>Marque</h2>
     <label class="field-label" for="brand-input">Chercher une marque</label>
     <input type="text" id="brand-input" placeholder="ex: Somfy, Profalux…" autocomplete="off">
     <div id="brand-suggestions" class="suggestions hidden"></div>
+
+    <div id="skip-brand-row" class="hidden" style="margin-top:10px;">
+      <button class="btn secondary" id="btn-skip-brand" type="button">Passer cette étape (recherche générique 433MHz)</button>
+      <div class="muted" style="margin-top:6px;">À utiliser si vous ne connaissez ni la marque ni le protocole : l'écoute captera toute trame 433MHz, sans filtrage. Moins précis, en dernier recours.</div>
+    </div>
 
     <div id="protocol-picker" class="hidden" style="margin-top:12px;">
       <label class="field-label">Plusieurs protocoles disponibles pour cette marque :</label>
@@ -155,6 +160,7 @@
   <div id="step-listen" class="hidden" style="margin-top:14px;">
     <h2>Écoute radio</h2>
     <p class="muted">Sur votre télécommande d'origine, appuyez sur le bouton à copier pendant quelques secondes, dès que vous lancez l'écoute ci-dessous. Répétez l'appui 2 ou 3 fois si rien n'apparaît.</p>
+    <p class="muted">💡 Idéalement, placez-vous à environ 1 mètre du boîtier AirSend pendant l'appui, pour optimiser la qualité du signal reçu.</p>
     <button class="btn" id="btn-listen-play">▶ Écouter (20s)</button>
     <div id="listen-status" class="muted" style="margin-top:10px;"></div>
     <div id="listen-candidates" style="margin-top:10px;"></div>
@@ -402,6 +408,7 @@
     $("brand-input").value = "";
     $("brand-suggestions").innerHTML = "";
     hide("brand-suggestions");
+    hide("skip-brand-row");
     $("protocol-choices").innerHTML = "";
     hide("protocol-picker");
     hide("rolling-code-banner");
@@ -442,8 +449,24 @@
       document.querySelectorAll('[data-branch]').forEach(function (b) { b.classList.remove("selected"); });
       box.classList.add("selected");
       state.branch = box.dataset.branch;
+      // "Passer cette etape" n'a de sens qu'en branche A : en branche B
+      // (pas de telecommande), il n'y a de toute facon aucune ecoute RF
+      // possible, la marque/protocole reste indispensable pour connaitre
+      // le channel_id a associer au channel_source saisi manuellement.
+      if (state.branch === "A") { show("skip-brand-row"); } else { hide("skip-brand-row"); }
       showOnly(["step-catalog"]);
     });
+  });
+
+  $("btn-skip-brand").addEventListener("click", function () {
+    state.brand = null;
+    state.channelId = null;
+    state.protocolName = null;
+    $("brand-input").value = "";
+    hide("brand-suggestions");
+    hide("protocol-picker");
+    hide("rolling-code-banner");
+    showOnly(["step-listen"]);
   });
 
   // ---------------------------------------------------------------- catalog / brand search

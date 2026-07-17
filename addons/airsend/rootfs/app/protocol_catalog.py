@@ -29,6 +29,12 @@ _LOGGER = logging.getLogger("airsend.protocol_catalog")
 
 _CACHE_TTL_S = 3600.0
 
+# Valeur du champ "band" renvoyee par GET /channels pour un protocole 868MHz.
+# Toute autre valeur (typiquement 1) est traitee comme du 433MHz. Exportee
+# pour eviter de dupliquer ce nombre magique ailleurs (cf. inclusion_api.py,
+# recherche generique 433MHz).
+BAND_868_MHZ = 2
+
 
 class ProtocolCatalog:
     def __init__(self, client: AirSendClient) -> None:
@@ -77,5 +83,5 @@ class ProtocolCatalog:
         channels = self._get_cached(box_slug)
         if not channels:
             return None
-        return any(entry.get("band") == 2 for entry in channels)
+        return any(entry.get("band") == BAND_868_MHZ for entry in channels)
 

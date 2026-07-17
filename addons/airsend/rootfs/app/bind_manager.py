@@ -61,7 +61,7 @@ class BoxBindHandle:
                     exc,
                 )
 
-    async def start_targeted_listen(self, channel_id: int, duration: float) -> None:
+    async def start_targeted_listen(self, channel_id: int | None, duration: float) -> None:
         """
         Interrompt temporairement le bind global permanent pour ecouter UN
         SEUL canal (mirroir de ce que fait l'app cloud lors de l'etape
@@ -70,6 +70,14 @@ class BoxBindHandle:
         porte a croire qu'une seule session de bind est active a la fois
         cote AirSendWebService, donc un bind cible REMPLACE le bind global le
         temps de l'ecoute plutot que de s'y ajouter.
+
+        channel_id=None => recherche generique "j'ai passe l'etape marque"
+        (cf. inclusion_api.py) : bind SANS filtre de canal, exactement comme
+        le bind permanent, mais borne dans le temps par `duration`. Le
+        filtrage sur la bande 433MHz se fait cote inclusion_api.py au moment
+        du polling des candidats (protocol_catalog.entry_for(...).band), pas
+        ici - l'API AirSend elle-meme ne sait filtrer un bind QUE par un
+        channel.id precis, jamais par bande.
 
         Pendant cette fenetre, les evenements des AUTRES appareils deja
         connus ne sont PAS captes (pas juste retardes - perdus). Le bind
@@ -103,7 +111,7 @@ class BoxBindHandle:
                 self.box,
                 callback_url=self._callback_url,
                 duration=duration,
-                channel={"id": channel_id},
+                channel={"id": channel_id} if channel_id is not None else None,
             )
             await asyncio.sleep(duration)
         finally:

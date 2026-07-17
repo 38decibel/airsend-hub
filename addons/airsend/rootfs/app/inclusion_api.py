@@ -4,11 +4,15 @@ l'app cloud officielle (cf. historique de conception) :
 
   Ajouter un appareil
     -> A: "J'ai la telecommande" ou B: "Je n'ai pas la telecommande"
-    -> recherche marque/modele/protocole (autocompletion, cf. catalog_data.py)
+    -> recherche marque (autocompletion, cf. catalog_data.py) - branche A
+       uniquement : bouton "Passer cette etape" pour une recherche generique
+       433MHz sans marque connue (channel_id=None, cf. plus bas)
     -> si plusieurs protocoles pour la marque choisie: choix explicite
        (ex. Somfy -> IOU/RFY/RTR)
     -> A uniquement: bouton "Play" -> ecoute RF ciblee (cf.
-       bind_manager.start_targeted_listen) -> candidat(s) detecte(s)
+       bind_manager.start_targeted_listen), ou generique si marque passee
+       (bind sans filtre, candidats filtres a posteriori sur band != 2, cf.
+       _is_433) -> candidat(s) detecte(s)
     -> choix du type de materiel (kind) + nom -> creation du device
        (device_registry + discovery MQTT immediate)
 
@@ -56,7 +60,7 @@ from channel_aliases import expected_receive_channels
 from device_registry import Device, DeviceRegistry
 from inclusion import InclusionState
 from mqtt_bridge import MqttBridge
-from protocol_catalog import ProtocolCatalog
+from protocol_catalog import BAND_868_MHZ, ProtocolCatalog
 from yaml_import import load_yaml_devices, parse_airsend_yaml
 
 _LOGGER = logging.getLogger("airsend.inclusion_api")
@@ -93,11 +97,14 @@ class ListenSession:
         "started_at", "duration", "done", "error",
     )
 
-    def __init__(self, box_slug: str, channel_id: int, duration: float) -> None:
+    def __init__(self, box_slug: str, channel_id: int | None, duration: float) -> None:
         self.id = uuid.uuid4().hex[:12]
         self.box_slug = box_slug
+        # None => "j'ai passe l'etape marque" (recherche generique 433MHz,
+        # cf. InclusionApi._session_accepts_channel) : pas de canal declare
+        # a partir duquel deriver des alias de reception.
         self.channel_id = channel_id
-        self.expected_channels = expected_receive_channels(channel_id)
+        self.expected_channels = expected_receive_channels(channel_id) if channel_id is not None else set()
         self.started_at = time.time()
         self.duration = duration
         self.done = False
@@ -236,6 +243,20 @@ class InclusionApi:
         for sid in [sid for sid, s in self._sessions.items() if s.is_stale]:
             self._sessions.pop(sid, None)
 
+    def _is_433(self, box_slug: str, channel_id: int) -> bool:
+        """Utilise pour la recherche generique (etape marque passee) : on ne
+        peut pas filtrer le bind lui-meme par bande (cf. bind_manager.py), on
+        filtre donc les candidats a posteriori. Une entree absente du
+        catalogue (protocole non identifie) est gardee plutot que rejetee -
+        c'est justement le cas d'usage de ce mode."""
+        entry = self._catalog.entry_for(box_slug, channel_id)
+        return entry is None or entry.get("band") != BAND_868_MHZ
+
+    def _session_accepts_channel(self, session: "ListenSession", channel_id: int) -> bool:
+        if session.channel_id is None:
+            return self._is_433(session.box_slug, channel_id)
+        return channel_id in session.expected_channels
+
     async def _handle_start_listen(self, request: web.Request) -> web.Response:
         self._prune_stale_sessions()
         body = await request.json()
@@ -247,8 +268,14 @@ class InclusionApi:
             duration = _DEFAULT_LISTEN_DURATION_S
 
         box = self._boxes.get(box_slug)
-        if box is None or not isinstance(channel_id, int):
-            raise web.HTTPBadRequest(text="box ou channel_id invalide")
+        if box is None:
+            raise web.HTTPBadRequest(text="box invalide")
+        # channel_id=None (absent ou null cote JSON) => recherche generique
+        # 433MHz suite au bouton "Passer cette etape" (cf. web/index.html) :
+        # pas d'erreur, on demarre juste un bind sans filtre (cf.
+        # bind_manager.start_targeted_listen).
+        if channel_id is not None and not isinstance(channel_id, int):
+            raise web.HTTPBadRequest(text="channel_id invalide")
 
         if box_slug in self._listening_boxes:
             raise web.HTTPConflict(text="Une ecoute est deja en cours sur cette box")
@@ -297,7 +324,7 @@ class InclusionApi:
             }
             for c in self._inclusion.list_candidates()
             if c.box == session.box_slug
-            and c.channel_id in session.expected_channels
+            and self._session_accepts_channel(session, c.channel_id)
             and c.last_seen >= session.started_at
         ]
 
@@ -386,7 +413,7 @@ class InclusionApi:
                 c for c in self._inclusion.list_candidates()
                 if c.box == session.box_slug
                 and c.channel_source == channel_source
-                and c.channel_id in session.expected_channels
+                and self._session_accepts_channel(session, c.channel_id)
             ),
             None,
         )
