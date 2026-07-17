@@ -5,6 +5,7 @@
 ### Changed
 
 ### Fixed
+- **catalog:** Add missing brands from official catalog (#53)
 
 ### Dependencies
 
