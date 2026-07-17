@@ -1,6 +1,7 @@
 ## Unreleased
 
 ### Added
+- **inclusion:** add brand-less generic 433MHz search (#52)
 
 ### Changed
 
