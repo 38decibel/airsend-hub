@@ -1,6 +1,16 @@
 ## Unreleased
 
 ### Added
+
+### Changed
+
+### Fixed
+
+### Dependencies
+
+## 0.21.0 - 2026-07-17
+
+### Added
 - **inclusion:** add brand-less generic 433MHz search (#52)
 
 ### Changed
