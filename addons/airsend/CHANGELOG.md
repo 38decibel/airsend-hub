@@ -3,6 +3,16 @@
 ### Added
 
 ### Changed
+
+### Fixed
+
+### Dependencies
+
+## 0.21.2 - 2026-07-18
+
+### Added
+
+### Changed
 - add third-party licensing section for Devmel SDK (#54)
 
 ### Fixed
