@@ -6,7 +6,7 @@ AirSend controller for Home Assistant.
 
 ## About
 
-You can use this app (formerly known as add-on) to use the AirSend (RF433) or AirSend Duo (RF433 & RF868) in transmission and reception. An Airsend device is created in MQTT. Each newly discovered device is pushed as a new entity. For more information, please see [devmel].
+You can use this app (formerly known as add-on) to use the AirSend (RF433) or AirSend Duo (RF433 & RF868) in transmission and reception. An Airsend device is created in MQTT. Each newly discovered device is pushed as a new device and linked to Airsend RF gateway. For more information, please see [devmel].
 
 ## Installation
 <p align="center">
@@ -19,12 +19,39 @@ You can use this app (formerly known as add-on) to use the AirSend (RF433) or Ai
 
 To get the app running:
 
+0. Disable (or uninstall) the official `hass_airsend-addon` and the
+   official `hass_airsend` integration first, to avoid both addons
+   controlling the same AirSend box or publishing conflicting MQTT
+   entities at the same time. If you want to keep the same entitie's name, delete them at this step.
 1. Fill 'Boxes Airsend' fields in configuration tab
-2. Optional : add MQTT informations to connect an external MQTT broker. Leave blank will use the built-in MQTT broker of HA.
+2. Optional: add MQTT informations to connect an external MQTT broker. Leave blank will use the built-in MQTT broker of HA.
 3. Run the app
-5. Check your MQTT broker to see the AirSend device.
-6. Toggle the inclusion switch and push a button on your RF remote
-7. ...Next steps need to be written ! Coding in progress...
+4. Check your MQTT broker to see the AirSend device.
+5. Devices already known to the addon (e.g. imported from a previous setup) are automatically discovered by Home Assistant as covers, switches, or other entities via MQTT.
+6. To add a new device, open the **AirSend** panel from the Home Assistant sidebar (Ingress UI). See below for import airsend.yaml file.
+7. Choose the inclusion method depending on what you have on hand:
+   - **With the original remote**: select it from the catalog, then follow the on-screen steps to trigger the RF listening window and press the remote's button.
+   - **Without the remote**: enter the channel source manually. If a conflict is detected (HTTP 409), the addon will warn you about rolling-code resynchronization before proceeding.
+8. Once included, the new device appears automatically in Home Assistant via MQTT discovery — no restart required.
+9. Repeat step 6-8 for each additional device.
+
+## How to import airsend.yaml from the official addon
+
+If you were previously using Devmel's official `hass_airsend-addon`, you can
+import your existing devices instead of re-configuring them from scratch.
+
+1. Locate your `airsend.yaml` file. It is stored in your Home Assistant
+   main config folder (the same folder as `configuration.yaml`).
+2. Open the **AirSend** panel from the Home Assistant sidebar (Ingress UI).
+3. Go to the **Import** section and choose one of the two options:
+   - **Upload file**: select your `airsend.yaml` directly.
+   - **Paste content**: open `airsend.yaml` in a text editor, copy its
+     content, and paste it into the text field provided.
+4. Confirm the import. Devices found in the file are added to this addon's
+   device list and will appear in Home Assistant via MQTT discovery.
+5. Review the imported devices in the AirSend panel — some fields (e.g.
+   friendly names) may need adjustment depending on differences between the
+   official addon's format and this addon's device model.
 
 ### App configuration
 
