@@ -6,7 +6,7 @@ AirSend controller for Home Assistant.
 
 ## About
 
-You can use this app (formerly known as add-on) to use the AirSend (RF433) or AirSend Duo (RF433 & RF868) in transmission and reception. An Airsend device is created in MQTT. Each newly discovered device is pushed as a new device and linked to Airsend RF gateway. For more information, please see [devmel].
+You can use this app (formerly known as add-on) to use the AirSend (RF433) or AirSend Duo (RF433 & RF868) in transmission and reception. An Airsend box device is created in MQTT. Each newly discovered device is pushed as a new device and linked to Airsend box. For more information, please see [devmel].
 
 ## Installation
 <p align="center">
@@ -21,8 +21,7 @@ To get the app running:
 
 0. Disable (or uninstall) the official `hass_airsend-addon` and the
    official `hass_airsend` integration first, to avoid both addons
-   controlling the same AirSend box or publishing conflicting MQTT
-   entities at the same time. If you want to keep the same entitie's name, delete them at this step.
+   controlling the same AirSend box and to keep the same entitie's name (they will be recreated by this new app)
 1. Fill 'Boxes Airsend' fields in configuration tab
 2. Optional: add MQTT informations to connect an external MQTT broker. Leave blank will use the built-in MQTT broker of HA.
 3. Run the app
