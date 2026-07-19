@@ -5,6 +5,7 @@
 ### Changed
 
 ### Fixed
+- **cover:** estimate assumed state from elapsed travel time on STOP instead of relying on MQTT's flawed stopped-state resolution (#57)
 
 ### Dependencies
 
