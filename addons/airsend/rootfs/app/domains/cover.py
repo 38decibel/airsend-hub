@@ -48,6 +48,14 @@ _STATE_UP = 35
 _STATE_DOWN = 34
 _STATE_STOP = 17
 
+# Duree de course (secondes) par defaut pour un "volet_roulant" sans retour
+# de position RF, utilisee par mqtt_bridge.py pour simuler la fin de course
+# (cf. travel_time_s ci-dessous et _cover_motion_timer). Editable par device
+# via l'option "travel_time" (UI Ingress).
+DEFAULT_TRAVEL_TIME_S = 20.0
+_MIN_TRAVEL_TIME_S = 1.0
+_MAX_TRAVEL_TIME_S = 180.0
+
 
 def discovery_config(device, topics: DeviceTopics, device_info: dict) -> dict:
     payload = base_discovery_payload(device, COMPONENT, topics, device_info)
@@ -186,4 +194,48 @@ def decode_command(device, topic: str, payload: str) -> dict | None:
             return None
         return {"notes": [{"method": 1, "type": 0, "value": value}]}
 
+    return None
+
+
+def travel_time_s(device) -> float:
+    """
+    Duree de course (secondes) a utiliser pour simuler la fin de course
+    d'un "volet_roulant" (cf. motion_command / mqtt_bridge._cover_motion_timer).
+    Valeur par device, option "travel_time" editable via l'UI Ingress ;
+    retombe sur DEFAULT_TRAVEL_TIME_S si absente ou invalide, et est bornee
+    pour eviter un minuteur degenere (0s, ou une duree demesuree en cas de
+    saisie erronee).
+    """
+    try:
+        value = float(device.options.get("travel_time", DEFAULT_TRAVEL_TIME_S))
+    except (TypeError, ValueError):
+        return DEFAULT_TRAVEL_TIME_S
+    return max(_MIN_TRAVEL_TIME_S, min(_MAX_TRAVEL_TIME_S, value))
+
+
+def motion_command(device, topic: str, payload: str) -> str | None:
+    """
+    Traduit une commande MQTT entrante en mouvement pour le minuteur de fin
+    de course simulee (cf. mqtt_bridge._start_cover_motion / _cancel_cover_motion) :
+    "opening"/"closing" pour lancer un minuteur, "stop" pour l'annuler sans en
+    relancer, None si non concerne.
+
+    Uniquement pertinent pour "volet_roulant" : "niveau" a une position reelle
+    deja publiee de facon synchrone (cf. encode_optimistic_state), pas de fin
+    de course a simuler.
+    """
+    if device.kind != "volet_roulant":
+        return None
+
+    topics = DeviceTopics.for_device(COMPONENT, device.key)
+    if topic != topics.command:
+        return None
+
+    cmd = payload.upper()
+    if cmd == "OPEN":
+        return "opening"
+    if cmd == "CLOSE":
+        return "closing"
+    if cmd == "STOP":
+        return "stop"
     return None
