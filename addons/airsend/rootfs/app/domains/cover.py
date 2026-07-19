@@ -31,11 +31,13 @@ homeassistant/components/mqtt/cover.py) : "unknown" y est rejete (log
 "Payload is not supported"). Pour un volet_roulant sans confirmation RF
 fiable de la position finale, la bonne reponse cote HA est donc de NE RIEN
 PUBLIER sur `state` plutot que de publier une valeur inventee ou invalide -
-le dernier etat connu reste affiche, et `assumed_state: true` (cf.
+le dernier etat connu reste affiche, et `optimistic: true` (cf.
 discovery_config) garde deja les boutons Ouvrir/Fermer/Stop actifs
-independamment de cet etat affiche. Ne pas reintroduire de publication
-"unknown" ici sans avoir d'abord verifie la liste des payloads acceptes par
-le composant HA cible.
+independamment de cet etat affiche (PAS `assumed_state`, qui n'existe pas
+dans le schema MQTT Cover et est silencieusement ignore par HA - verifie sur
+la doc officielle, cf. commentaire dans discovery_config). Ne pas
+reintroduire de publication "unknown" ici sans avoir d'abord verifie la
+liste des payloads acceptes par le composant HA cible.
 """
 
 from __future__ import annotations
@@ -79,10 +81,19 @@ def discovery_config(device, topics: DeviceTopics, device_info: dict) -> dict:
         )
     else:
         # volet_roulant : pas de position fiable, HA doit se contenter du
-        # dernier etat open/closed connu, sans feedback continu. Les boutons
-        # restent actifs grace a assumed_state (pas besoin de publier
-        # "unknown" pour ca, cf. note de module plus haut).
-        payload["assumed_state"] = True
+        # dernier etat open/closed connu, sans feedback continu. IMPORTANT :
+        # "assumed_state" n'existe PAS dans le schema MQTT Cover (verifie sur
+        # la doc officielle a jour - liste complete des champs de config) et
+        # est donc silencieusement ignore par HA, sans erreur ni log. Le vrai
+        # levier est "optimistic" : sans lui (valeur par defaut False des que
+        # state_topic est defini, cf. doc), HA desactive le bouton correspondant
+        # a l'etat courant (ex. "fermer" grise si is_closed=true), quelle que
+        # soit la carte utilisee (tuile ou entites) - confirme empiriquement
+        # sur le terrain (cf. discussion PR travel_time). "optimistic: true"
+        # reste compatible avec un state_topic deja defini (documente
+        # explicitement : "Optimistic mode can be forced, even if a
+        # state_topic / position_topic is defined").
+        payload["optimistic"] = True
 
     return payload
 
