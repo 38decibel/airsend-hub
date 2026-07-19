@@ -5,6 +5,7 @@
 ### Changed
 
 ### Fixed
+- **cover:** use MQTT "optimistic" instead of non-existent "assumed_state" to keep volet_roulant buttons active (#56)
 
 ### Dependencies
 
