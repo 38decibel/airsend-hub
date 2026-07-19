@@ -8,6 +8,16 @@
 
 ### Dependencies
 
+## 0.22.0 - 2026-07-19
+
+### Added
+
+### Changed
+
+### Fixed
+
+### Dependencies
+
 ## 0.21.3 - 2026-07-18
 
 ### Added
