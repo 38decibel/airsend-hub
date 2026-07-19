@@ -148,9 +148,16 @@ def encode_optimistic_state(device, topic: str, payload: str) -> list[tuple[str,
     Publie un état optimiste après une commande réussie.
 
     Pour les volets roulants sans retour de position :
-    - OPEN  => état supposé open
-    - CLOSE => état supposé closed
-    - STOP  => on conserve le dernier état connu
+    - OPEN  => état supposé opening (cf. mqtt_bridge._cover_motion_timer pour
+      la transition vers "open" au bout de travel_time)
+    - CLOSE => état supposé closing (idem, vers "closed")
+    - STOP  => rien n'est publié ici. IMPORTANT : ne PAS publier "stopped" -
+      le composant MQTT Cover de HA resout ce payload en interne en "closed"
+      si l'etat precedent etait "closing", "open" sinon, et ce QUELLE QUE
+      SOIT la duree de course deja ecoulee (verifie empiriquement : un STOP
+      apres 1s de fermeture affichait quand meme "closed"). C'est donc
+      mqtt_bridge._handle_cover_stop qui calcule et publie l'etat final,
+      a partir du temps ecoule vs travel_time (cf. discussion PR travel_time).
 
     La position réelle reste inconnue.
     """
@@ -165,9 +172,6 @@ def encode_optimistic_state(device, topic: str, payload: str) -> list[tuple[str,
 
         if cmd == "CLOSE":
             return [(topics.state, "closing")]
-
-        if cmd == "STOP":
-            return [(topics.state, "stopped")]
 
     if topic == topics.set_position and device.kind == "niveau":
         try:
@@ -227,9 +231,10 @@ def travel_time_s(device) -> float:
 def motion_command(device, topic: str, payload: str) -> str | None:
     """
     Traduit une commande MQTT entrante en mouvement pour le minuteur de fin
-    de course simulee (cf. mqtt_bridge._start_cover_motion / _cancel_cover_motion) :
-    "opening"/"closing" pour lancer un minuteur, "stop" pour l'annuler sans en
-    relancer, None si non concerne.
+    de course simulee : "opening"/"closing" pour lancer un minuteur (cf.
+    mqtt_bridge._start_cover_motion), "stop" pour l'annuler et calculer
+    l'etat final a partir du temps de course ecoule (cf.
+    mqtt_bridge._handle_cover_stop), None si non concerne.
 
     Uniquement pertinent pour "volet_roulant" : "niveau" a une position reelle
     deja publiee de facon synchrone (cf. encode_optimistic_state), pas de fin
