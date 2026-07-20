@@ -1,11 +1,5 @@
 """
-Cycle de vie du "bind" RF par box.
-
-Decision actee : UN SEUL bind permanent et large par box (pas de "channel"
-dans le body => ecoute globale), renouvele avant expiration. Le filtrage par
-appareil connu se fait cote callback_server.py sur (channel.id, channel.source),
-pas ici. Ca evite le compromis latence/nombre-d'appareils d'un bind en
-round-robin façon Jeedom (cf. discussion Phase 1).
+RF "bind" lifecycle per box.
 """
 
 from __future__ import annotations
@@ -22,7 +16,6 @@ _RENEW_MARGIN_S = 60.0
 
 
 class BoxBindHandle:
-    """Represente le bind actif (ou en cours de (re)tentative) pour une box."""
 
     def __init__(self, client: AirSendClient, box: BoxConfig, callback_base_url: str, settings: RuntimeSettings) -> None:
         self._client = client
@@ -61,36 +54,7 @@ class BoxBindHandle:
                 )
 
     async def start_targeted_listen(self, channel_id: int | None, duration: float) -> None:
-        """
-        Interrompt temporairement le bind global permanent pour ecouter UN
-        SEUL canal (mirroir de ce que fait l'app cloud lors de l'etape
-        d'ecoute a l'inclusion, cf. discussion de conception). Necessaire
-        car /airsend/close indique explicitement "stop listening too" - tout
-        porte a croire qu'une seule session de bind est active a la fois
-        cote AirSendWebService, donc un bind cible REMPLACE le bind global le
-        temps de l'ecoute plutot que de s'y ajouter.
 
-        channel_id=None => recherche generique "j'ai passe l'etape marque"
-        (cf. inclusion_api.py) : bind SANS filtre de canal, exactement comme
-        le bind permanent, mais borne dans le temps par `duration`. Le
-        filtrage sur la bande 433MHz se fait cote inclusion_api.py au moment
-        du polling des candidats (protocol_catalog.entry_for(...).band), pas
-        ici - l'API AirSend elle-meme ne sait filtrer un bind QUE par un
-        channel.id precis, jamais par bande.
-
-        Pendant cette fenetre, les evenements des AUTRES appareils deja
-        connus ne sont PAS captes (pas juste retardes - perdus). Le bind
-        global est TOUJOURS relance a la fin (succes, echec ou exception),
-        pour ne jamais laisser une box sans ecoute active.
-
-        Question ouverte non tranchee (cf. suivi de conception) : si
-        l'identite du bouton physique presse s'avere deductible de
-        thingnotes.notes de facon fiable, il pourrait devenir preferable de
-        garder un bind cible permanent par device plutot que de toujours
-        revenir au bind global apres l'inclusion - pas implemente ici tant
-        que cette investigation n'a pas conclu, pour ne pas degrader le
-        state tracking des devices existants sur une hypothese non validee.
-        """
         if self._task is not None:
             self._task.cancel()
             try:
@@ -111,8 +75,6 @@ class BoxBindHandle:
             self.start()
 
     async def _run(self) -> None:
-        """Boucle de (re)bind avec backoff simple en cas d'echec (box offline,
-        mot de passe invalide, etc.) - ne doit jamais planter tout le process."""
         backoff = 5.0
         while not self._stopped.is_set():
             duration = self._settings.bind_duration_s
@@ -145,7 +107,6 @@ class BoxBindHandle:
 
 
 class BindManager:
-    """Orchestre un BoxBindHandle par box configuree."""
 
     def __init__(self, client: AirSendClient, callback_base_url: str, settings: RuntimeSettings) -> None:
         self._client = client
