@@ -1,16 +1,12 @@
 """
-Decodage des `thingnotes.notes[]` d'un ThingEvent en (type_derive, valeur).
+Decoding `thingnotes.notes[]` from a ThingEvent into (derived_type, value).
 
-Port fidele de HassAPI::convertNotesToStates() (hassapi.class.php), qui est du
-savoir-faire de terrain confirme, pas une reconstruction depuis le spec seul.
-On ne reinvente pas cette logique, on la traduit en Python.
+note.type (integer; see AirSendWebService.yaml ThingNotes.notes[].type):
+0 = STATE, 1 = DATA, 2 = TEMPERATURE, 3 = ILLUMINANCE, 4 = R_HUMIDITY, 9 = LEVEL
 
-note.type (entier, cf. AirSendWebService.yaml ThingNotes.notes[].type) :
-  0 = STATE, 1 = DATA, 2 = TEMPERATURE, 3 = ILLUMINANCE, 4 = R_HUMIDITY, 9 = LEVEL
-
-note.value quand type == STATE, valeurs entieres rencontrees en pratique :
-  17=STOP 18=TOGGLE 19=OFF 20=ON 21=CLOSE 22=OPEN 33=MIDDLE 34=DOWN 35=UP
-  36=LEFT 37=RIGHT 38=USERPOSITION
+note.value when type == STATE; integer values ​​encountered in practice:
+17=STOP 18=TOGGLE 19=OFF 20=ON 21=CLOSE 22=OPEN 33=MIDDLE 34=DOWN 35=UP
+36=LEFT 37=RIGHT 38=USERPOSITION
 """
 
 from __future__ import annotations
@@ -112,7 +108,7 @@ _NOTE_DECODERS = {
 
 def convert_notes_to_states(notes: list[dict]) -> list[tuple[str, object]]:
     """
-    Retourne une liste de (stype, svalue) exploitables par les modules domains/*.
+    Returns a list of (stype, svalue) pairs that can be used by the domains/* modules.
 
     stype in {"toggle", "level", "state", "data", "temperature", "illuminance",
               "r_humidity"}
