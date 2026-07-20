@@ -1,5 +1,5 @@
 """
-YAML import parsing for airsend-addon-dev.
+YAML import parsing for airsend-hub.
 
 Converts a legacy hass_airsend integration YAML config (devices: {...})
 into devices.json-shaped preview rows, to be reviewed/edited by the user

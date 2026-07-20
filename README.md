@@ -1,6 +1,6 @@
-# Home Assistant App: AirSend
+# Home Assistant App: AirSend-Hub
 
-AirSend controller for Home Assistant.
+All-in-one AirSend controller for Home Assistant: device inclusion, MQTT bridge and web UI in a single add-on.
 
 ![Supports aarch64 Architecture][aarch64-shield] ![Supports armhf Architecture][armhf-shield] ![Supports arm Architecture][arm-shield] ![Supports x86_64 Architecture][x86_64-shield] ![Supports x86 Architecture][x86-shield]
 
@@ -10,7 +10,7 @@ You can use this app (formerly known as add-on) to use the AirSend (RF433) or Ai
 
 ## Installation
 <p align="center">
-    <a href="https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2F38decibel%2Fairsend-addon-dev">
+    <a href="https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2F38decibel%2Fairsend-hub">
         <img src="https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg" alt="Open your Home Assistant instance and show the add apps repository dialog with a specific repository URL pre-filled.">
     </a>
 </p>

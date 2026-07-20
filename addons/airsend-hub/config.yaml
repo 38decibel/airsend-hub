@@ -1,8 +1,8 @@
-name: AirSend
-description: Connect your AirSend / AirSend Duo boxes to Home Assistant (RF cover/switch/button/sensor via MQTT discovery)
+name: AirSend-Hub
+description: All-in-one AirSend / AirSend Duo hub for Home Assistant - device inclusion, MQTT bridge and web UI in a single add-on (RF cover/switch/button/sensor via MQTT discovery)
 version: "0.26.0"
-slug: airsend
-url: https://github.com/38decibel/airsend-addon-dev
+slug: airsend-hub
+url: https://github.com/38decibel/airsend-hub
 arch:
   - aarch64
   - amd64
@@ -20,7 +20,7 @@ homeassistant_api: true
 ingress: true
 ingress_port: 8127
 panel_icon: mdi:remote
-panel_title: AirSend
+panel_title: AirSend-Hub
 ports:
   33863/tcp: null
 ports_description:

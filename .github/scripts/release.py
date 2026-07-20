@@ -6,11 +6,11 @@ from semver import bump
 
 
 CONFIG = Path(
-    "addons/airsend/config.yaml"
+    "addons/airsend-hub/config.yaml"
 )
 
 CHANGELOG = Path(
-    "addons/airsend/CHANGELOG.md"
+    "addons/airsend-hub/CHANGELOG.md"
 )
 
 

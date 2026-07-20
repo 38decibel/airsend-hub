@@ -2,7 +2,7 @@ version: 2
 
 updates:
   - package-ecosystem: "docker"
-    directory: "/addons/airsend"
+    directory: "/addons/airsend-hub"
     schedule:
       interval: weekly
       time: "06:00"
@@ -16,7 +16,7 @@ updates:
           - "*"
 
   - package-ecosystem: "pip"
-    directory: "/addons/airsend/rootfs/app"
+    directory: "/addons/airsend-hub/rootfs/app"
     schedule:
       interval: weekly
       time: "06:00"

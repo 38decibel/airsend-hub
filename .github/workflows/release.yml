@@ -22,14 +22,14 @@ jobs:
       - name: Commit version
         run: |
           git add \
-            addons/airsend/config.yaml \
-            addons/airsend/CHANGELOG.md
+            addons/airsend-hub/config.yaml \
+            addons/airsend-hub/CHANGELOG.md
           git commit \
             -m "chore: release"
           git push
       - name: Tag
         run: |
-          VERSION=$(grep version addons/airsend/config.yaml | awk '{print $2}' | tr -d '"')
+          VERSION=$(grep version addons/airsend-hub/config.yaml | awk '{print $2}' | tr -d '"')
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           git tag "v$VERSION"
           git push origin "v$VERSION"
