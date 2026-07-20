@@ -1,6 +1,16 @@
 ## Unreleased
 
 ### Added
+
+### Changed
+
+### Fixed
+
+### Dependencies
+
+## 0.31.0 - 2026-07-20
+
+### Added
 - **import:** auto-detect airsend.yaml in the HA config folder (#63)
 
 ### Changed
