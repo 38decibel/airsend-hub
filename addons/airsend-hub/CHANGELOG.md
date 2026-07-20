@@ -5,6 +5,16 @@
 ### Changed
 
 ### Fixed
+
+### Dependencies
+
+## 0.29.0 - 2026-07-20
+
+### Added
+
+### Changed
+
+### Fixed
 - **client:** restore missing exception class bodies (#61)
 
 ### Dependencies
