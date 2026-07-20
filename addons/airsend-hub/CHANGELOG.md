@@ -3,6 +3,7 @@
 ### Added
 
 ### Changed
+- **cleanup:** remove dead code and unused fields (inclusion, airsend_client, callback_server, catalog_data, yaml_import) (#62)
 
 ### Fixed
 
