@@ -1,9 +1,9 @@
 """
-Domaine `sensor` - capteurs natifs de la box AirSend (pas de commande, lecture
-seule). device.kind attendu : "temperature" | "illuminance" | "r_humidity",
-determine automatiquement selon le premier type de note recu plutot que
-choisi manuellement a l'inclusion (cf. mqtt_bridge : auto-detection specifique
-aux sensors natifs).
+`sensor` domain – native sensors of the AirSend hub (read-only, no control).
+Expected `device.kind`: "temperature" | "illuminance" | "r_humidity"; determined
+automatically based on the first type of message received, rather than being
+manually selected during inclusion
+(see `mqtt_bridge`: auto-detection specific to native sensors).
 """
 
 from __future__ import annotations
