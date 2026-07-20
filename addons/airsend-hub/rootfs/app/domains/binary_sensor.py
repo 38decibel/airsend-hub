@@ -1,11 +1,4 @@
-"""
-Domaine `binary_sensor` - squelette minimal.
-
-Conserve pour un futur capteur ouverture/mouvement si un jour rencontre dans
-le parc reel de l'utilisateur, mais volontairement pas de logique de decodage
-speculative avant un premier cas confirme par les logs (cf. principe acte des
-le debut : pas de deduction sans preuve de terrain).
-"""
+""" `binary_sensor` domain – minimal skeleton """
 
 from __future__ import annotations
 
