@@ -34,6 +34,9 @@ _SESSION_TTL_S = 600.0
 
 _FRIENDLY_NAME_EMPTY = "empty friendly_name"
 
+_HA_CONFIG_DIR = Path("/config")
+_AIRSEND_YAML_FILENAME = "airsend.yaml"
+
 KIND_TO_DOMAIN: dict[str, str] = {
     "1_bouton": "button",
     "on_off": "switch",
@@ -107,6 +110,7 @@ class InclusionApi:
         self.app.router.add_delete("/api/devices/{key}", self._handle_delete_device)
         self.app.router.add_post("/api/import/preview", self._handle_import_preview)
         self.app.router.add_post("/api/import/commit", self._handle_import_commit)
+        self.app.router.add_get("/api/import/detect", self._handle_import_detect)
         self.app.router.add_get("/{tail:.*}", self._handle_static)
 
 
@@ -432,6 +436,22 @@ class InclusionApi:
         _LOGGER.info("Device %s removed via ingress UI", key)
         return web.json_response({"key": key, "deleted": True})
 
+
+    async def _handle_import_detect(self, request: web.Request) -> web.Response:
+        candidate = _HA_CONFIG_DIR / _AIRSEND_YAML_FILENAME
+        try:
+            yaml_text = await asyncio.to_thread(candidate.read_text, encoding="utf-8")
+        except FileNotFoundError:
+            return web.json_response({"found": False})
+        except OSError as exc:
+            _LOGGER.warning("Could not read %s: %s", candidate, exc)
+            return web.json_response({"found": False})
+
+        return web.json_response({
+            "found": True,
+            "path": str(candidate),
+            "yaml_text": yaml_text,
+        })
 
     async def _handle_import_preview(self, request: web.Request) -> web.Response:
         body = await request.json()

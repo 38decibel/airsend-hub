@@ -23,6 +23,7 @@ ports_description:
   33863/tcp: AirSendWebService communication (debug/tests only, not required by the app itself)
 map:
   - data:rw
+  - config:ro
 options:
   boxes:
     - localip: "fe80::dcf6:e5ff:fe"
@@ -50,4 +51,3 @@ schema:
     password: "str?"
 services:
   - "mqtt:need"
-

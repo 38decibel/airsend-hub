@@ -1,6 +1,7 @@
 ## Unreleased
 
 ### Added
+- **import:** auto-detect airsend.yaml in the HA config folder (#63)
 
 ### Changed
 
