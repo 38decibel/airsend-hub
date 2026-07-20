@@ -1,11 +1,11 @@
 """
-Pont MQTT : publie la discovery HA pour chaque device connu, republie les
-etats decodes (recus depuis callback_server via on_state), et route les
-commandes MQTT entrantes vers AirSendClient.transfer().
+MQTT Bridge: publishes HA discovery data for each known device, 
+republishes decoded states (received from `callback_server` via `on_state`), 
+and routes incoming MQTT commands to `AirSendClient.transfer()`.
 
-Utilise paho-mqtt (API callback classique, pas la variante asyncio - on
-l'entoure de call_soon_threadsafe pour rester compatible avec la boucle
-asyncio du reste de l'app, paho tournant sur son propre thread reseau interne).
+Uses `paho-mqtt` (standard callback API, not the `asyncio` variant—wrapped
+in `call_soon_threadsafe` to maintain compatibility with the rest of the app's
+`asyncio` loop, as `paho` runs on its own internal network thread).
 """
 
 from __future__ import annotations
@@ -58,11 +58,6 @@ _COVER_STOP_REACHED_RATIO = 0.5
 
 @dataclass
 class _CoverMotion:
-    """Minuteur de fin de course simulee en cours pour un cover "volet_roulant"
-    (cf. MqttBridge._start_cover_motion / _handle_cover_stop / _cover_motion_timer).
-    `started_at` est en secondes de l'horloge de la boucle asyncio (cf.
-    self._loop.time()), pas un timestamp mur - suffisant et plus simple ici
-    puisqu'on ne calcule qu'une duree ecoulee, jamais une date absolue."""
 
     task: asyncio.Task
     motion_state: str
@@ -136,17 +131,7 @@ class MqttBridge:
             self.publish_box_diagnostics(box)
 
     def _cleanup_legacy_discovery_topics(self) -> None:
-        """
-        Migration ponctuelle : efface les topics de discovery de l'ANCIEN
-        schema (avant l'inversion "airsend_X" -> "X_airsend"), ainsi que les
-        entites completement retirees (switch "Mode inclusion", fiabilite
-        minimale). Publier un payload vide et retenu sur un topic de
-        discovery MQTT est la methode standard pour supprimer une entite
-        decouverte cote HA - on l'utilise ici pour eviter d'avoir a supprimer
-        les anciennes entites a la main a chaque fois qu'on change le schema.
-        Sans danger a rejouer : publier un payload vide sur un topic deja
-        vide ne fait rien.
-        """
+
         for device in self._registry.all():
             module = get_domain_module(device.domain)
             if module is None:
@@ -185,12 +170,7 @@ class MqttBridge:
         )
 
     def _device_info_for_element(self, device: Device) -> dict:
-        """Device HA dedie a un element RF (1 par device.key), rattache au
-        device box via `via_device` - cf. discussion "1 device par element"
-        remplacant l'ancien schema ou tous les elements partageaient le
-        device box, ce qui empechait de nommer/zoner chaque volet/switch
-        individuellement (le nom affiche heritait du prefixe du device box,
-        et l'assignation de zone se faisait entite par entite)."""
+
         return build_device_info(
             identifier=device.key,
             name=device.friendly_name,
@@ -198,8 +178,7 @@ class MqttBridge:
         )
 
     def _primary_box_slug(self) -> str | None:
-        """L'entite reglage "Duree du bind" est rattachee a la premiere box
-        configuree tant qu'on ne gere qu'un etat global (pas encore per-box)."""
+
         return next(iter(self._boxes_by_slug), None)
 
 
@@ -237,10 +216,6 @@ class MqttBridge:
     def _diagnostic_sensor_topics_and_config(
         self, box: BoxConfig, suffix: str, name: str, extra: dict | None = None
     ) -> tuple[DeviceTopics, dict]:
-        """Construit (topics, config discovery) pour une entite sensor
-        diagnostic de box (IPv4/statut/version partagent tous la meme forme,
-        cf. publish_box_diagnostics) - evite de repeter les 8 memes cles
-        (dont les literaux "sensor"/"diagnostic") trois fois."""
         object_id = f"{box.slug}_{suffix}"
         topics = DeviceTopics.for_device(_SENSOR_COMPONENT, object_id)
         config = {
@@ -260,18 +235,7 @@ class MqttBridge:
         return topics, config
 
     def publish_box_diagnostics(self, box: BoxConfig) -> None:
-        """Publie les entites sensor (categorie diagnostic) : IPv4, statut et
-        version du service AirSendWebService. La MAC, elle, est exposee
-        nativement via `connections` dans le bloc `device` (cf.
-        _device_info_for_box) plutot qu'en entite separee - c'est
-        l'emplacement standard HA pour ce genre d'identifiant.
 
-        NOTE : /service/status interroge le binaire AirSendWebService
-        lui-meme (le moteur RF local partage), pas une box precise - si
-        plusieurs box sont configurees, ce statut/version sera identique
-        pour toutes (c'est le meme service qui les sert toutes, cf.
-        airsend_client.py). Rattache quand meme au diagnostic de chaque box
-        pour rester visible sans introduire un device "addon" a part."""
         ipv4_topics, ipv4_config = self._diagnostic_sensor_topics_and_config(box, "ipv4", "Adresse IPv4")
         self._mqtt.publish(ipv4_topics.discovery, json.dumps(ipv4_config), retain=True)
         self._mqtt.publish(ipv4_topics.state, box.ipv4, retain=True)
@@ -287,9 +251,7 @@ class MqttBridge:
         self._mqtt.publish(version_topics.discovery, json.dumps(version_config), retain=True)
 
     async def _refresh_box_service_health(self) -> None:
-        """Interroge GET /service/status une seule fois (service partage,
-        cf. note plus haut) et republie le resultat sur les entites
-        diagnostic de chaque box configuree."""
+
         try:
             result = await self._client.get_status()
             is_ok = isinstance(result, dict)
@@ -358,7 +320,7 @@ class MqttBridge:
         self._settings.bind_duration_s = value
         self._publish_bind_duration_state()
         _LOGGER.info(
-            "bind_duration_s updated to %s (effectif au prochain renouvellement de bind)",
+            "bind_duration_s updated to %s (effective upon the next bind renewal)",
             value,
         )
 
@@ -423,17 +385,7 @@ class MqttBridge:
         )
 
     def _handle_cover_stop(self, device: Device) -> None:
-        """
-        Calcule et publie l'etat final d'un "volet_roulant" arrete en cours
-        de route, a partir du temps de course reellement ecoule.
 
-        IMPORTANT : ne publie jamais le payload "stopped" (cf. note dans
-        domains/cover.py.encode_optimistic_state) - le composant MQTT Cover
-        de HA le resoudrait en interne en "closed"/"open" selon la seule
-        direction en cours, sans tenir compte du temps ecoule, ce qui donne
-        un etat faux en cas d'arret precoce (constate empiriquement : STOP
-        1s apres le debut d'une fermeture de 20s affichait quand meme "closed").
-        """
         motion = self._cover_tasks.pop(device.key, None)
         if motion is None:
             return
@@ -461,14 +413,7 @@ class MqttBridge:
         )
 
     async def _cover_motion_timer(self, device: Device, motion_state: str, travel_time_s: float) -> None:
-        """Attend `travel_time_s` puis publie l'etat final (open/closed) sur
-        un cover "volet_roulant". Annule via _handle_cover_stop ou une
-        nouvelle commande de mouvement avant l'echeance : dans ce cas
-        asyncio.sleep leve CancelledError, on ne publie alors aucun etat final
-        ici (l'appelant s'en charge le cas echeant), on nettoie juste l'entree
-        dans _cover_tasks avant de laisser l'exception se propager (cf.
-        finally, pas de except CancelledError ici - rien a y faire de plus
-        qu'un simple re-raise)."""
+
         topics = DeviceTopics.for_device("cover", device.key)
         try:
             await asyncio.sleep(travel_time_s)
