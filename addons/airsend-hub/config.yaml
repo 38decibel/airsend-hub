@@ -1,5 +1,5 @@
 name: AirSend-Hub
-description: All-in-one AirSend / AirSend Duo hub for Home Assistant - device inclusion, MQTT bridge and web UI in a single add-on (RF cover/switch/button/sensor via MQTT discovery)
+description: All-in-one AirSend hub for Home Assistant - device inclusion, MQTT bridge and web UI in a single app.
 version: "0.27.0"
 slug: airsend-hub
 url: https://github.com/38decibel/airsend-hub
@@ -20,7 +20,7 @@ panel_title: AirSend-Hub
 ports:
   33863/tcp: null
 ports_description:
-  33863/tcp: AirSendWebService communication (debug/tests uniquement, non requis par l'addon lui-meme)
+  33863/tcp: AirSendWebService communication (debug/tests only, not required by the app itself)
 map:
   - data:rw
 options:
