@@ -1,10 +1,10 @@
 """
-Reglages ajustables depuis HA (entites MQTT "number", categorie config),
-partages par reference entre callback_server.py et mqtt_bridge.py.
+Old settings adjustable from HA (MQTT "number" entities, config category),
+shared by reference between callback_server.py and mqtt_bridge.py.
 
-Volontairement un objet mutable simple plutot qu'une valeur immuable : le
-changement doit prendre effet immediatement sur la prochaine trame recue,
-sans redemarrage de l'addon.
+Deliberately a simple mutable object rather than an immutable value: the
+change must take effect immediately on the next received frame,
+without restarting the app.
 """
 
 from __future__ import annotations
