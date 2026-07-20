@@ -1,13 +1,12 @@
 """
-Registre persistant des appareils AirSend appris (mode ecoute, ajout manuel
-ou import cloud ponctuel). Stocke dans /data/devices.json (volume persistant
-standard des addons HA, survit aux redemarrages/mises a jour) - PAS gere par
-Supervisor/options, c'est notre propre source de verite runtime, distincte de
-la config utilisateur (boxes).
+Persistent registry of learned AirSend devices (listening mode, manual addition,
+or one-off cloud import). Stored in /data/devices.json (standard persistent
+volume for HA apps; survives restarts/updates)—NOT managed by
+Supervisor/options; this is our own runtime source of truth, distinct from
+user configuration (boxes).
 
-Cle de matching pour une trame RF entrante : (box_slug, channel.id, channel.source)
-cf. hassapi.class.php::toBasicChannel() qui ne retient que (id, source) - on
-prefixe par box_slug puisque plusieurs box peuvent coexister dans notre addon.
+Matching key for an incoming RF frame: (box_slug, channel.id, channel.source)
+We prefix this with box_slug since multiple boxes can coexist within our app.
 """
 
 from __future__ import annotations
@@ -71,8 +70,8 @@ class DeviceRegistry:
         _LOGGER.info("Loaded %d device(s) from registry", len(self._devices))
 
     def save(self) -> None:
-        """Ecriture atomique (fichier temp + rename) pour eviter un registre
-        corrompu en cas de crash pendant l'ecriture."""
+        """Atomic write (temporary file + rename) to avoid
+        a corrupted registry in the event of a crash during writing."""
         payload = {}
         for key, device in self._devices.items():
             data = asdict(device)
@@ -118,11 +117,11 @@ class DeviceRegistry:
         friendly_name: str | None = None,
         options: dict[str, Any] | None = None,
     ) -> Device | None:
-        """Edition limitee a friendly_name/options (cf. UI Ingress) : ne touche
-        jamais a channel_id/channel_source/kind/domain, qui restent geres via
-        suppression + reinclusion pour eviter tout risque de desynchronisation
-        entre le registre et les topics MQTT discovery deja publies (dont le
-        composant depend du domain)."""
+        """Limited to friendly_name/options (see Ingress UI): never affects 
+        channel_id/channel_source/kind/domain, which remain managed via deletion 
+        and re-inclusion to avoid any risk of desynchronization between the 
+        registry and the already published MQTT discovery topics (where the 
+        component depends on the domain)."""
         device = self._devices.get(key)
         if device is None:
             return None
