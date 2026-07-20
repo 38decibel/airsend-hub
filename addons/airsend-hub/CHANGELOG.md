@@ -3,6 +3,7 @@
 ### Added
 
 ### Changed
+- fixed(cleanup): strip inline code comments (#59)
 
 ### Fixed
 
