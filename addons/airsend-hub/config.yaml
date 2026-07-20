@@ -1,6 +1,6 @@
 name: AirSend-Hub
 description: All-in-one AirSend hub for Home Assistant - device inclusion, MQTT bridge and web UI in a single app.
-version: "0.31.0"
+version: "0.31.1"
 slug: airsend-hub
 url: https://github.com/38decibel/airsend-hub
 arch:
