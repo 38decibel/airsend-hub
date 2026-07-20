@@ -1,42 +1,6 @@
 """
-Serveur HTTP interne qui recoit les evenements pousses par AirSendWebService
-suite a un `bind` avec callback (cf. bind_manager.py).
-
-Forme confirmee du body recu (source: hass_cb.php, pas seulement le spec) :
-    { "events": [ ThingEvent, ThingEvent, ... ] }
-=> PAS un ThingEvent unique, toujours un batch. C'etait une hypothese fausse
-dans une version anterieure de la conception, corrigee ici.
-
-Deux categories de ThingEvent, distinguees par la presence de thingnotes.uid :
-
-  - AVEC uid : evenement lie a UNE COMMANDE QUE NOUS AVONS ENVOYEE nous-memes
-    (uid = sha256 tronque de l'entity_id, genere cote nous au moment du
-    POST /airsend/transfer). Sert a acquitter nos propres commandes. On ne
-    route PAS ca vers l'inclusion : ce n'est jamais une nouvelle detection.
-
-  - SANS uid : evenement non sollicite = candidat serieux pour "quelqu'un a
-    appuye sur une telecommande physique". On ne le traite QUE si :
-      * type == 3 (GOT, cf. enum ThingEvent.type du spec)
-      * ET reliability, SI PRESENT, strictement compris entre 6 et 71
-        (cf. jeeAirSend.php, reference historique Jeedom). Absence du champ
-        => reliable par defaut, on ne dropp jamais sur ce seul motif.
-    Le champ `reliability` n'apparait dans AUCUN spec OpenAPI vu jusqu'ici :
-    c'est une extension non documentee du firmware. Releve empirique du
-    2026-07-09 : sur un vrai appui, la meme trame RF est vue plusieurs fois
-    avec reliability = 0, 64, 128, 192 (multiples de 64) - probablement un
-    compteur de retransmissions, pas une mesure de qualite de signal. La
-    borne [6, 71] ne sert donc qu'a ne retenir qu'une seule retransmission
-    par appui, pas a juger la qualite RF. Ne plus etendre cette plage sans
-    nouvelle preuve empirique concrete.
-
-Log `raw_event_body` (2026-07-11) : releve empirique montrant que
-channel_id/channel_source restent identiques entre plusieurs boutons d'une
-meme telecommande (ex: HPD 25454/12238991 vu en continu sur 10s malgre
-plusieurs appuis distincts). Le match_key actuel (channel_id, channel_source)
-ne peut donc PAS distinguer les boutons d'une telecommande a lui seul -
-l'identite du bouton doit venir de thingnotes.notes (STATE UP/DOWN/STOP,
-cf. thing_notes.py), jamais logue jusqu'ici. Ce log expose le body JSON
-complet de chaque event non sollicite pour verifier cette hypothese.
+Internal HTTP server that receives events pushed by the AirSend WebService
+following a `bind` with a callback (see bind_manager.py).
 """
 
 from __future__ import annotations
@@ -119,22 +83,7 @@ class CallbackServer:
         return web.Response(status=200)
 
     def _is_valid_reliability(self, event: dict) -> bool:
-        """Mirroir exact de jeeAirSend.php (Jeedom, reference historique) :
 
-            $isreliable = true;
-            if (array_key_exists('reliability', $val)) {
-                $isreliable = false;
-                if ($val['reliability'] > 0x6 && $val['reliability'] < 0x47) {
-                    $isreliable = true;
-                }
-            }
-
-        C-a-d : absence du champ => reliable par defaut (ne JAMAIS dropper
-        sur ce seul motif). Presence du champ => bornes [6, 71] strictement
-        exclusives. On avait initialement code l'inverse (absent => rejete),
-        ce qui pouvait bloquer silencieusement un protocole qui n'emet pas
-        ce champ du tout.
-        """
         if "reliability" not in event:
             return True
         reliability = event.get("reliability")
@@ -215,4 +164,3 @@ class CallbackServer:
             channel_source=channel_source,
             protocol_name=protocol_name,
         )
-
