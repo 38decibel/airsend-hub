@@ -44,11 +44,6 @@ class CallbackServer:
         self._app.router.add_post("/cb/{box_slug}", self._handle_callback)
         self._runner: web.AppRunner | None = None
 
-    @property
-    def base_url_hint(self) -> str:
-        scheme = "http"
-        return f"{scheme}://<addon_ip>:{self._port}"
-
     async def start(self) -> None:
         self._runner = web.AppRunner(self._app)
         await self._runner.setup()
