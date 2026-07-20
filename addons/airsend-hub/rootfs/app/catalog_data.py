@@ -46,7 +46,3 @@ def search_brands(query: str, limit: int = 20) -> list[dict]:
     ]
     results.sort(key=lambda b: (not b["brand"].lower().startswith(q), b["brand"]))
     return results[:limit]
-
-
-def protocols_for_brand(brand: str) -> list[dict]:
-    return _load().get(brand, [])
