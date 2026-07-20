@@ -1,31 +1,31 @@
 
 configuration:
   boxes:
-    name: "Boxes AirSend"
-    description: "Retrouvez les informations de connexion au dos de l'appareil."
+    name: "AirSend boxes"
+    description: "Connection details are printed on the back of the device."
     fields:
       localip:
         name: "Local IP"
-        description: "Adresse IPv6 link-local de la box (imprimee sous le boitier)."
+        description: "Link-local IPv6 address of the box (printed under the device)."
       password:
         name: "Password"
-        description: "Mot de passe de la box (imprime sous le boitier)."
+        description: "Password of the box (printed under the device)."
       ipv4:
-        name: "Adresse secondaire"
-        description: "ex. 192.168.x.x"
+        name: "Secondary address"
+        description: "e.g. 192.168.x.x"
       gw:
         name: "GW"
-        description: "Active si la box est configuree pour passer par la passerelle internet."
+        description: "Enable if the box is configured to go through the internet gateway."
       name:
         name: "Name"
-        description: "The name that will be used for MQTT device"
+        description: "The name that will be used for the MQTT device"
   system:
-    name: "Systeme"
-    description: "Reglages generaux de l'addon."
+    name: "System"
+    description: "General add-on settings."
     fields:
       log_level:
-        name: "Niveau de log"
-        description: "Verbosite des journaux de l'addon."
+        name: "Log level"
+        description: "Verbosity of the add-on logs."
   mqtt:
     name: "MQTT"
     description: >-

@@ -1,0 +1,45 @@
+
+configuration:
+  boxes:
+    name: "Boxes AirSend"
+    description: "Retrouvez les informations de connexion au dos de l'appareil."
+    fields:
+      localip:
+        name: "IP locale"
+        description: "Adresse IPv6 link-local de la box (imprimée sous le boîtier)."
+      password:
+        name: "Mot de passe"
+        description: "Mot de passe de la box (imprimé sous le boîtier)."
+      ipv4:
+        name: "Adresse secondaire"
+        description: "ex. 192.168.x.x"
+      gw:
+        name: "GW"
+        description: "Activer si la box est configurée pour passer par la passerelle internet."
+      name:
+        name: "Nom"
+        description: "Le nom qui sera utilisé pour l'appareil MQTT"
+  system:
+    name: "Système"
+    description: "Réglages généraux de l'add-on."
+    fields:
+      log_level:
+        name: "Niveau de log"
+        description: "Verbosité des journaux de l'add-on."
+  mqtt:
+    name: "MQTT"
+    description: >-
+      (optionnel) Configuration MQTT pour se connecter à un broker externe.
+      Si non renseigné, le broker MQTT intégré à Home Assistant sera
+      utilisé.
+    fields:
+      host:
+        name: "Hôte"
+      port:
+        name: "Port"
+      ssl:
+        name: "SSL"
+      username:
+        name: "Nom d'utilisateur"
+      password:
+        name: "Mot de passe"
