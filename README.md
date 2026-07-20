@@ -8,6 +8,18 @@ All-in-one AirSend controller for Home Assistant: device inclusion, MQTT bridge 
 
 You can use this app (formerly known as add-on) to use the AirSend (RF433) or AirSend Duo (RF433 & RF868) in transmission and reception. An Airsend box device is created in MQTT. Each newly discovered device is pushed as a new device and linked to Airsend box. For more information, please see [devmel].
 
+## ✨ Features
+
+This addon is a ground-up rebuild of the AirSend integration for Home Assistant, focused on a self-service experience that doesn't require editing YAML by hand or permit inclusion of new device.
+
+- **Guided device inclusion via the UI** — a step-by-step Ingress wizard lets you pick a brand, listen for RF events, and confirm the detected device, with or without a physical remote in hand. No manual `airsend.yaml` editing required to add a device.
+- **No auto-include, no surprises** — nothing is created in Home Assistant without explicit user confirmation. Every detected candidate is reviewed before it becomes an entity.
+- **MQTT discovery, not YAML mapping** — entities are created and updated through Home Assistant's native MQTT discovery, so there's no `type` code to look up and no addon restart needed after adding a device.
+- **One RF element, one HA device** — each button, shutter, or switch is exposed as its own Home Assistant device (with `via_device` pointing to the AirSend box), following the same hub-and-child-device pattern as Zigbee2MQTT or Z-Wave JS UI — instead of being buried as an entity under a single monolithic integration device.
+- **`airsend.yaml` import, if you have one** — devices already defined for the official integration can be imported and reviewed through a preview screen with conflict detection, so migrating existing setups doesn't mean starting from scratch.
+- **Built-in inclusion of "orphan" or unrecognized devices** — devices and protocols not in the official catalog (e.g. proprietary Profalux/PFX RF frames) can still be captured and added based on raw RF event data, rather than being limited to the vendor's official device list.
+- **Editable/removable devices from the UI** — every device can be renamed, reconfigured, or deleted directly from the Ingress panel, no file editing involved.
+- 
 ## Installation
 <p align="center">
     <a href="https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2F38decibel%2Fairsend-hub">
