@@ -1,11 +1,12 @@
 """
-Domaine `event` - fallback sur pour les telecommandes rolling-code sans retour
-de position fiable (ex: appui detecte sur une telecommande physique tierce
-Profalux liee a un volet deja gere en `cover`) ou tout appareil dont
-l'utilisateur a explicitement choisi de ne pas piloter d'etat devine.
+`event` domain – a fallback for rolling-code remote controls that lack 
+reliable position feedback (e.g., a detected button press on a third-party
+physical Profalux remote linked to a shutter already managed as a `cover`),
+or for any device where the user has explicitly chosen not to control it
+based on an inferred state.
 
-Composant MQTT `event` de HA (schema JSON, state_topic + event_types) :
-chaque trame recue publie un evenement horodate, jamais un etat retenu.
+HA MQTT `event` component (JSON schema, `state_topic` + `event_types`):
+each received frame publishes a timestamped event, never a retained state.
 """
 
 from __future__ import annotations
