@@ -14,8 +14,10 @@ import aiohttp
 _LOGGER = logging.getLogger("airsend.client")
 
 class AirSendError(Exception):
-
+    pass
+    
 class AirSendAuthError(AirSendError):
+    pass
 
 @dataclass
 class BoxConfig:
