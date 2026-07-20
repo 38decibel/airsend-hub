@@ -5,25 +5,6 @@ Converts a legacy hass_airsend integration YAML config (devices: {...})
 into devices.json-shaped preview rows, to be reviewed/edited by the user
 before being committed via InclusionApi._create_device.
 
-Design constraints (see project memory / prior discussion):
-- `type` is always 4098 on real devices in this YAML, never a domain
-  classifier -> ignored entirely.
-- domain/kind CANNOT be inferred from protocol_name alone (the same
-  channel_id has produced both "cover" and "switch" devices in practice)
-  -> for genuinely new devices, left blank, user must choose.
-- For devices that already exist (conflict on channel_id+channel_source),
-  kind/domain are carried over from the existing device - NOT re-derived
-  from protocol, since that's exactly the info we already have and trust.
-- domain/kind CANNOT be inferred from `type` (4096-4099) either: real exports
-  show every device (shutters AND an on/off light) sharing type 4098, since
-  the AirSendWebService has no dedicated "Light" type - confirmed against
-  the user's actual cloud exports. `type` reflects the RF command set
-  available (open/close/stop), not the intended HA domain, so it's ignored
-  entirely here, same as `channel_id`/protocol.
-- kind_aliases exists only as a defensive hook for translating an old kind
-  vocabulary into the current one, should one ever surface; no such
-  mismatch is currently known to exist (an earlier suspected case,
-  "interrupteur", turned out to be a documentation slip, not real data).
 """
 import json
 import re
