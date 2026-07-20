@@ -5,6 +5,16 @@
 ### Changed
 
 ### Fixed
+
+### Dependencies
+
+## 0.28.0 - 2026-07-20
+
+### Added
+
+### Changed
+
+### Fixed
 - comments translated to eng (#60)
 
 ### Dependencies
