@@ -5,6 +5,7 @@
 ### Changed
 
 ### Fixed
+- **client:** restore missing exception class bodies (#61)
 
 ### Dependencies
 
