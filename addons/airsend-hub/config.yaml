@@ -1,6 +1,6 @@
 name: AirSend-Hub
 description: All-in-one AirSend / AirSend Duo hub for Home Assistant - device inclusion, MQTT bridge and web UI in a single add-on (RF cover/switch/button/sensor via MQTT discovery)
-version: "0.26.1"
+version: "0.27.0"
 slug: airsend-hub
 url: https://github.com/38decibel/airsend-hub
 arch:

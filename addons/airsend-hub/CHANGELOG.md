@@ -3,6 +3,16 @@
 ### Added
 
 ### Changed
+
+### Fixed
+
+### Dependencies
+
+## 0.27.0 - 2026-07-20
+
+### Added
+
+### Changed
 - fixed(cleanup): strip inline code comments (#59)
 
 ### Fixed
