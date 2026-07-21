@@ -1,0 +1,40 @@
+name: Release addon
+on:
+  push:
+    branches:
+      - main
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        with:
+          fetch-depth: 0
+      - name: Configure git
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+      - name: Create release
+        run: |
+          VERSION=$(python3 .github/scripts/release.py)
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+      - name: Commit version
+        run: |
+          git add \
+            addons/airsend-hub/config.yaml \
+            addons/airsend-hub/CHANGELOG.md
+          git commit \
+            -m "chore(release): ${{ env.VERSION }}" \
+            -m "$(cat /tmp/release_notes.md)"
+          git push
+      - name: Tag
+        run: |
+          git tag "v${{ env.VERSION }}"
+          git push origin "v${{ env.VERSION }}"
+      - name: GitHub Release
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b
+        with:
+          tag_name: v${{ env.VERSION }}
+          body_path: /tmp/release_notes.md

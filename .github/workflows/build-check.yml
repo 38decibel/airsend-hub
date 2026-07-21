@@ -1,0 +1,41 @@
+name: Validate addon build
+
+on:
+  push:
+    paths:
+      - "addons/airsend-hub/**"
+  pull_request:
+    paths:
+      - "addons/airsend-hub/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [aarch64, amd64, armhf, armv7, i386]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c
+
+      - name: Read BUILD_FROM for ${{ matrix.arch }}
+        id: build_from
+        run: |
+          BUILD_FROM=$(yq -r ".build_from.${{ matrix.arch }}" addons/airsend-hub/build.yaml)
+          echo "value=$BUILD_FROM" >> "$GITHUB_OUTPUT"
+
+      - name: Build (no push)
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a
+        with:
+          context: addons/airsend-hub
+          platforms: linux/${{ matrix.arch == 'aarch64' && 'arm64' || matrix.arch == 'armhf' && 'arm/v6' || matrix.arch == 'armv7' && 'arm/v7' || matrix.arch == 'i386' && '386' || 'amd64' }}
+          build-args: |
+            BUILD_FROM=${{ steps.build_from.outputs.value }}
+          push: false

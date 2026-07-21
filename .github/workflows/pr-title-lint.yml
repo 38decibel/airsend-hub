@@ -1,0 +1,33 @@
+name: PR title lint
+
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+      - reopened
+
+jobs:
+  lint-title:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          if [ "$PR_AUTHOR" = "dependabot[bot]" ]; then
+            echo "PR Dependabot, format de titre géré séparément."
+            exit 0
+          fi
+
+          if echo "$PR_TITLE" | grep -Eq '^(feat|fix|deps|chore|docs|refactor|test|ci|perf|style|build)(\([a-zA-Z0-9_-]+\))?!?: .+'; then
+            echo "Titre de PR valide : $PR_TITLE"
+          else
+            echo "::error::Le titre de la PR doit suivre la convention 'type(scope): description'."
+            echo "::error::Types autorisés : feat, fix, deps, chore, docs, refactor, test, ci, perf, style, build."
+            echo "::error::Exemple : 'fix(inclusion): corrige le matching des boutons Profalux'"
+            exit 1
+          fi

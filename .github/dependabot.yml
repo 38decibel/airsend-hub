@@ -1,0 +1,30 @@
+version: 2
+
+updates:
+  - package-ecosystem: "docker"
+    directory: "/addons/airsend-hub"
+    schedule:
+      interval: weekly
+      time: "06:00"
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 10
+
+    groups:
+      docker-images:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "pip"
+    directory: "/addons/airsend-hub/rootfs/app"
+    schedule:
+      interval: weekly
+      time: "06:00"
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 10
+
+    groups:
+      python-dependencies:
+        patterns:
+          - "*"
