@@ -13,6 +13,10 @@ CHANGELOG = Path(
     "addons/airsend-hub/CHANGELOG.md"
 )
 
+RELEASE_NOTES = Path(
+    "/tmp/release_notes.md"
+)
+
 
 def get_version():
 
@@ -82,6 +86,15 @@ def split_version_block(text, heading):
     else:
         block, after = rest[:next_heading], rest[next_heading:]
     return text[:start], block, after
+
+
+def extract_notes_body(block, heading):
+    """Drop the leading '## <version> - <date>' heading line (and any
+    blank lines right after it) from block, returning only the notes
+    content for that release."""
+
+    body = block[len(heading):]
+    return body.lstrip("\n")
 
 
 def detect_level():
@@ -154,6 +167,11 @@ text = "## Unreleased\n\n" + text
 
 
 CHANGELOG.write_text(text)
+
+
+RELEASE_NOTES.write_text(
+    extract_notes_body(released_block, version_heading)
+)
 
 
 print(new)
