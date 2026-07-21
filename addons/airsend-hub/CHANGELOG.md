@@ -1,13 +1,9 @@
 ## Unreleased
 
+## 0.32.0 - 2026-07-21
+
 ### Added
 - **ci:** add icons to changelog sections and drop empty ones (#64)
-
-### Changed
-
-### Fixed
-
-### Dependencies
 
 ## 0.31.1 - 2026-07-20
 
