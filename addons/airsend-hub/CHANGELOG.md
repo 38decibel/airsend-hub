@@ -1,6 +1,7 @@
 ## Unreleased
 
 ### Added
+- **ci:** add icons to changelog sections and drop empty ones (#64)
 
 ### Changed
 
