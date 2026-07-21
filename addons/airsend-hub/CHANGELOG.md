@@ -1,5 +1,8 @@
 ## Unreleased
 
+### 🚀 Added
+- **ci:** use changelog section for release body and commit message (#66)
+
 ## 0.33.0 - 2026-07-21
 
 ### 🚀 Added
