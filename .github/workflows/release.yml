@@ -37,3 +37,4 @@ jobs:
         uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b
         with:
           tag_name: v${{ env.VERSION }}
+          body_path: /tmp/release_notes.md
