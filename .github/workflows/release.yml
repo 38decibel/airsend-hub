@@ -18,21 +18,21 @@ jobs:
           git config user.email github-actions@github.com
       - name: Create release
         run: |
-          python3 .github/scripts/release.py
+          VERSION=$(python3 .github/scripts/release.py)
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
       - name: Commit version
         run: |
           git add \
             addons/airsend-hub/config.yaml \
             addons/airsend-hub/CHANGELOG.md
           git commit \
-            -m "chore: release"
+            -m "chore(release): ${{ env.VERSION }}" \
+            -m "$(cat /tmp/release_notes.md)"
           git push
       - name: Tag
         run: |
-          VERSION=$(grep version addons/airsend-hub/config.yaml | awk '{print $2}' | tr -d '"')
-          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-          git tag "v$VERSION"
-          git push origin "v$VERSION"
+          git tag "v${{ env.VERSION }}"
+          git push origin "v${{ env.VERSION }}"
       - name: GitHub Release
         uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b
         with:
