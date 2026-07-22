@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AirSend - Ajouter un appareil</title>
+<title data-i18n="page.title">AirSend - Ajouter un appareil</title>
 <style>
   :root {
     --bg: #111318; --card: #1b1e26; --border: #2a2e38; --text: #e8eaed;
@@ -17,6 +17,16 @@
   }
   h1 { font-size: 1.3rem; margin: 0 0 16px; }
   h2 { font-size: 1.05rem; margin: 0 0 12px; color: var(--muted); font-weight: 600; }
+  .top-bar { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .lang-switch {
+    display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+    margin-bottom: 16px; flex-shrink: 0;
+  }
+  .lang-switch button {
+    background: #1b1e26; color: var(--muted); border: none; padding: 6px 12px;
+    font-size: 0.8rem; cursor: pointer;
+  }
+  .lang-switch button.active { background: var(--accent); color: #fff; }
   .card {
     background: var(--card); border: 1px solid var(--border); border-radius: 10px;
     padding: 16px; margin-bottom: 14px;
@@ -88,164 +98,170 @@
 </head>
 <body>
 
-<h1>AirSend</h1>
+<div class="top-bar">
+  <h1>AirSend</h1>
+  <div class="lang-switch" id="lang-switch" role="group" aria-label="Language / Langue">
+    <button type="button" id="lang-btn-fr" data-lang="fr">FR</button>
+    <button type="button" id="lang-btn-en" data-lang="en">EN</button>
+  </div>
+</div>
 
 <div id="screen-home" class="card">
-  <h2>Appareils</h2>
-  <div id="device-list" class="muted">Chargement…</div>
+  <h2 data-i18n="home.devices">Appareils</h2>
+  <div id="device-list" class="muted" data-i18n="home.loading">Chargement…</div>
   <div style="margin-top:14px;">
-    <button class="btn" id="btn-add-device">+ Ajouter un appareil</button>
-    <button class="btn secondary" id="btn-open-import">Importer depuis YAML</button>
+    <button class="btn" id="btn-add-device" data-i18n="home.addDevice">+ Ajouter un appareil</button>
+    <button class="btn secondary" id="btn-open-import" data-i18n="home.importYaml">Importer depuis YAML</button>
   </div>
 </div>
 
 <div id="device-edit" class="card hidden">
-  <h2>Modifier l'appareil</h2>
-  <label class="field-label" for="edit-name-input">Nom</label>
-  <input type="text" id="edit-name-input" placeholder="ex: Volet salon terrasse">
+  <h2 data-i18n="edit.title">Modifier l'appareil</h2>
+  <label class="field-label" for="edit-name-input" data-i18n="edit.name">Nom</label>
+  <input type="text" id="edit-name-input" data-i18n-placeholder="common.namePlaceholder" placeholder="ex: Volet salon terrasse">
 
   <div id="edit-invert-row" class="checkbox-row hidden">
     <input type="checkbox" id="edit-invert-checkbox">
-    <label for="edit-invert-checkbox">Inverser le sens (câblage à l'envers)</label>
+    <label for="edit-invert-checkbox" data-i18n="common.invert">Inverser le sens (câblage à l'envers)</label>
   </div>
 
   <div id="edit-travel-time-row" class="hidden">
-    <label class="field-label" for="edit-travel-time-input">Durée de course estimée (secondes)</label>
+    <label class="field-label" for="edit-travel-time-input" data-i18n="common.travelTime">Durée de course estimée (secondes)</label>
     <input type="number" id="edit-travel-time-input" min="1" max="180" step="1">
-    <div class="muted">Temps approximatif pour aller complètement ouvert ↔ fermé. Utilisé pour estimer quand le volet a fini sa course (pas de retour de position réel).</div>
+    <div class="muted" data-i18n="edit.travelTimeHelp">Temps approximatif pour aller complètement ouvert ↔ fermé. Utilisé pour estimer quand le volet a fini sa course (pas de retour de position réel).</div>
   </div>
 
   <div id="edit-banner" class="banner hidden"></div>
 
   <div style="margin-top:10px;">
-    <button class="btn" id="btn-edit-save">Enregistrer</button>
-    <button class="btn secondary" id="btn-edit-cancel">Annuler</button>
+    <button class="btn" id="btn-edit-save" data-i18n="common.save">Enregistrer</button>
+    <button class="btn secondary" id="btn-edit-cancel" data-i18n="common.cancel">Annuler</button>
   </div>
 </div>
 
 <div id="screen-wizard" class="card hidden">
-  <button class="btn secondary" id="btn-cancel">&larr; Annuler</button>
+  <button class="btn secondary" id="btn-cancel" data-i18n="common.backCancel">&larr; Annuler</button>
 
   <div id="step-branch" class="hidden" style="margin-top:14px;">
-    <h2>Comment souhaitez-vous ajouter cet appareil ?</h2>
+    <h2 data-i18n="wizard.branch.title">Comment souhaitez-vous ajouter cet appareil ?</h2>
     <div class="btn-grid">
       <div class="choice-box" data-branch="A">
-        <strong>J'ai la télécommande</strong>
-        <div class="muted">On écoute la trame RF réelle</div>
+        <strong data-i18n="wizard.branch.aTitle">J'ai la télécommande</strong>
+        <div class="muted" data-i18n="wizard.branch.aSubtitle">On écoute la trame RF réelle</div>
       </div>
       <div class="choice-box" data-branch="B">
-        <strong>Je n'ai pas la télécommande</strong>
-        <div class="muted">Saisie manuelle de l'identifiant</div>
+        <strong data-i18n="wizard.branch.bTitle">Je n'ai pas la télécommande</strong>
+        <div class="muted" data-i18n="wizard.branch.bSubtitle">Saisie manuelle de l'identifiant</div>
       </div>
     </div>
   </div>
 
   <div id="step-catalog" class="hidden" style="margin-top:14px;">
-    <h2>Marque</h2>
-    <label class="field-label" for="brand-input">Chercher une marque</label>
-    <input type="text" id="brand-input" placeholder="ex: Somfy, Profalux…" autocomplete="off">
+    <h2 data-i18n="wizard.catalog.title">Marque</h2>
+    <label class="field-label" for="brand-input" data-i18n="wizard.catalog.searchLabel">Chercher une marque</label>
+    <input type="text" id="brand-input" data-i18n-placeholder="wizard.catalog.searchPlaceholder" placeholder="ex: Somfy, Profalux…" autocomplete="off">
     <div id="brand-suggestions" class="suggestions hidden"></div>
 
     <div id="skip-brand-row" class="hidden" style="margin-top:10px;">
-      <button class="btn secondary" id="btn-skip-brand" type="button">Passer cette étape (recherche générique 433MHz)</button>
-      <div class="muted" style="margin-top:6px;">À utiliser si vous ne connaissez ni la marque ni le protocole : l'écoute captera toute trame 433MHz, sans filtrage. Moins précis, en dernier recours.</div>
+      <button class="btn secondary" id="btn-skip-brand" type="button" data-i18n="wizard.catalog.skipBrand">Passer cette étape (recherche générique 433MHz)</button>
+      <div class="muted" style="margin-top:6px;" data-i18n="wizard.catalog.skipBrandHelp">À utiliser si vous ne connaissez ni la marque ni le protocole : l'écoute captera toute trame 433MHz, sans filtrage. Moins précis, en dernier recours.</div>
     </div>
 
     <div id="protocol-picker" class="hidden" style="margin-top:12px;">
-      <label class="field-label">Plusieurs protocoles disponibles pour cette marque :</label>
+      <label class="field-label" data-i18n="wizard.catalog.multiProtocol">Plusieurs protocoles disponibles pour cette marque :</label>
       <div class="btn-grid" id="protocol-choices"></div>
     </div>
 
     <div id="rolling-code-banner" class="banner warn hidden"></div>
 
     <div style="margin-top:14px;">
-      <button class="btn" id="btn-catalog-next" disabled>Continuer</button>
+      <button class="btn" id="btn-catalog-next" disabled data-i18n="common.continue">Continuer</button>
     </div>
   </div>
 
   <div id="step-listen" class="hidden" style="margin-top:14px;">
-    <h2>Écoute radio</h2>
-    <p class="muted">Sur votre télécommande d'origine, appuyez sur le bouton à copier pendant quelques secondes, dès que vous lancez l'écoute ci-dessous. Répétez l'appui 2 ou 3 fois si rien n'apparaît.</p>
-    <p class="muted">💡 Idéalement, placez-vous à environ 1 mètre du boîtier AirSend pendant l'appui, pour optimiser la qualité du signal reçu.</p>
-    <button class="btn" id="btn-listen-play">▶ Écouter (20s)</button>
+    <h2 data-i18n="wizard.listen.title">Écoute radio</h2>
+    <p class="muted" data-i18n="wizard.listen.instructions">Sur votre télécommande d'origine, appuyez sur le bouton à copier pendant quelques secondes, dès que vous lancez l'écoute ci-dessous. Répétez l'appui 2 ou 3 fois si rien n'apparaît.</p>
+    <p class="muted" data-i18n="wizard.listen.proximityTip">💡 Idéalement, placez-vous à environ 1 mètre du boîtier AirSend pendant l'appui, pour optimiser la qualité du signal reçu.</p>
+    <button class="btn" id="btn-listen-play" data-i18n="wizard.listen.play">▶ Écouter (20s)</button>
     <div id="listen-status" class="muted" style="margin-top:10px;"></div>
     <div id="listen-candidates" style="margin-top:10px;"></div>
   </div>
 
   <div id="step-manual" class="hidden" style="margin-top:14px;">
-    <h2>Identifiant de l'appareil</h2>
-    <label class="field-label" for="manual-source">Identifiant unique (channel_source)</label>
-    <input type="number" id="manual-source" placeholder="ex: 24679">
-    <div class="muted">Cette valeur n'est pas devinable : elle doit provenir d'un export existant (ex. import cloud) ou d'une capture RF antérieure.</div>
+    <h2 data-i18n="wizard.manual.title">Identifiant de l'appareil</h2>
+    <label class="field-label" for="manual-source" data-i18n="wizard.manual.sourceLabel">Identifiant unique (channel_source)</label>
+    <input type="number" id="manual-source" data-i18n-placeholder="wizard.manual.sourcePlaceholder" placeholder="ex: 24679">
+    <div class="muted" data-i18n="wizard.manual.sourceHelp">Cette valeur n'est pas devinable : elle doit provenir d'un export existant (ex. import cloud) ou d'une capture RF antérieure.</div>
     <div style="margin-top:14px;">
-      <button class="btn" id="btn-manual-next">Continuer</button>
+      <button class="btn" id="btn-manual-next" data-i18n="common.continue">Continuer</button>
     </div>
   </div>
 
   <div id="step-kind" class="hidden" style="margin-top:14px;">
-    <h2>Type de matériel</h2>
+    <h2 data-i18n="wizard.kind.title">Type de matériel</h2>
     <div class="btn-grid" id="kind-choices">
-      <div class="choice-box" data-kind="1_bouton"><strong>1 bouton</strong></div>
-      <div class="choice-box" data-kind="on_off"><strong>On / Off</strong></div>
-      <div class="choice-box" data-kind="volet_roulant"><strong>Volet roulant</strong></div>
-      <div class="choice-box" data-kind="niveau"><strong>Niveau (position)</strong></div>
+      <div class="choice-box" data-kind="1_bouton"><strong data-i18n="kind.1_bouton">1 bouton</strong></div>
+      <div class="choice-box" data-kind="on_off"><strong data-i18n="kind.on_off">On / Off</strong></div>
+      <div class="choice-box" data-kind="volet_roulant"><strong data-i18n="kind.volet_roulant">Volet roulant</strong></div>
+      <div class="choice-box" data-kind="niveau"><strong data-i18n="kind.niveau">Niveau (position)</strong></div>
     </div>
 
     <div id="invert-row" class="checkbox-row hidden">
       <input type="checkbox" id="invert-checkbox">
-      <label for="invert-checkbox">Inverser le sens (câblage à l'envers)</label>
+      <label for="invert-checkbox" data-i18n="common.invert">Inverser le sens (câblage à l'envers)</label>
     </div>
 
     <div id="travel-time-row" class="hidden">
-      <label class="field-label" for="travel-time-input">Durée de course estimée (secondes)</label>
+      <label class="field-label" for="travel-time-input" data-i18n="common.travelTime">Durée de course estimée (secondes)</label>
       <input type="number" id="travel-time-input" min="1" max="180" step="1" value="20">
-      <div class="muted">Temps approximatif pour aller complètement ouvert ↔ fermé. Modifiable plus tard.</div>
+      <div class="muted" data-i18n="wizard.kind.travelTimeHelp">Temps approximatif pour aller complètement ouvert ↔ fermé. Modifiable plus tard.</div>
     </div>
 
-    <label class="field-label" for="name-input">Nom de l'appareil</label>
-    <input type="text" id="name-input" placeholder="ex: Volet salon terrasse">
+    <label class="field-label" for="name-input" data-i18n="wizard.kind.nameLabel">Nom de l'appareil</label>
+    <input type="text" id="name-input" data-i18n-placeholder="common.namePlaceholder" placeholder="ex: Volet salon terrasse">
 
     <div id="confirm-banner" class="banner hidden"></div>
 
     <div style="margin-top:14px;">
-      <button class="btn" id="btn-confirm" disabled>Ajouter l'appareil</button>
+      <button class="btn" id="btn-confirm" disabled data-i18n="wizard.kind.confirm">Ajouter l'appareil</button>
     </div>
   </div>
 
   <div id="step-done" class="hidden" style="margin-top:14px;">
-    <div class="banner ok">✓ Appareil ajouté avec succès.</div>
-    <button class="btn" id="btn-done-back">Retour</button>
+    <div class="banner ok" data-i18n="wizard.done.success">✓ Appareil ajouté avec succès.</div>
+    <button class="btn" id="btn-done-back" data-i18n="common.back">Retour</button>
   </div>
 </div>
 
 <div id="screen-import" class="card hidden">
-  <button class="btn secondary" id="btn-import-cancel">&larr; Annuler</button>
+  <button class="btn secondary" id="btn-import-cancel" data-i18n="common.backCancel">&larr; Annuler</button>
 
   <div id="import-step-input" style="margin-top:14px;">
-    <h2>Importer depuis le YAML de l'ancienne intégration</h2>
-    <p class="muted">Colle le contenu de ton fichier (ex. <code>airsend.yaml</code>), ou choisis un fichier. Rien n'est modifié tant que tu n'as pas confirmé à l'étape suivante.</p>
+    <h2 data-i18n="import.title">Importer depuis le YAML de l'ancienne intégration</h2>
+    <p class="muted" data-i18n="import.instructions">Colle le contenu de ton fichier (ex. <code>airsend.yaml</code>), ou choisis un fichier. Rien n'est modifié tant que tu n'as pas confirmé à l'étape suivante.</p>
     <div id="import-detect-banner" class="banner hidden" style="margin-bottom:10px;">
       <span id="import-detect-text"></span>
-      <button class="btn secondary" id="import-detect-use-btn" style="margin-left:8px;">Utiliser ce fichier</button>
+      <button class="btn secondary" id="import-detect-use-btn" style="margin-left:8px;" data-i18n="import.useThisFile">Utiliser ce fichier</button>
     </div>
-    <input type="file" id="import-file-input" accept=".yaml,.yml" aria-label="Fichier YAML à importer">
-    <textarea id="import-yaml-textarea" rows="10" placeholder="devices:&#10;  Volet Celyan:&#10;    type: 4098&#10;    channel:&#10;      id: 25455&#10;      source: 233575" aria-label="Contenu YAML"></textarea>
+    <input type="file" id="import-file-input" accept=".yaml,.yml" data-i18n-aria="import.fileInputAria" aria-label="Fichier YAML à importer">
+    <textarea id="import-yaml-textarea" rows="10" data-i18n-placeholder="import.textareaPlaceholder" placeholder="devices:&#10;  Volet Celyan:&#10;    type: 4098&#10;    channel:&#10;      id: 25455&#10;      source: 233575" data-i18n-aria="import.textareaAria" aria-label="Contenu YAML"></textarea>
     <div id="import-error" class="banner error hidden"></div>
-    <button class="btn" id="import-preview-btn">Analyser</button>
+    <button class="btn" id="import-preview-btn" data-i18n="import.analyze">Analyser</button>
   </div>
 
   <div id="import-step-preview" class="hidden" style="margin-top:14px;">
-    <h2>Vérifier avant import</h2>
+    <h2 data-i18n="import.previewTitle">Vérifier avant import</h2>
     <table class="import-table">
       <thead>
         <tr>
-          <th></th><th>Nom</th><th>Protocole</th><th>Statut</th><th>Domain</th><th>Kind</th><th>Si conflit</th>
+          <th></th><th data-i18n="import.col.name">Nom</th><th data-i18n="import.col.protocol">Protocole</th><th data-i18n="import.col.status">Statut</th><th data-i18n="import.col.domain">Domain</th><th data-i18n="import.col.kind">Kind</th><th data-i18n="import.col.conflict">Si conflit</th>
         </tr>
       </thead>
       <tbody id="import-table-body"></tbody>
     </table>
     <div style="margin-top:14px;">
-      <button class="btn" id="import-commit-btn">Importer la sélection</button>
+      <button class="btn" id="import-commit-btn" data-i18n="import.commit">Importer la sélection</button>
     </div>
     <div id="import-result" class="banner hidden" style="margin-top:10px;"></div>
   </div>
@@ -254,6 +270,292 @@
 <script>
 (function () {
   "use strict";
+
+  // ---------------------------------------------------------------------
+  // i18n
+  // ---------------------------------------------------------------------
+
+  var I18N = {
+    fr: {
+      "page.title": "AirSend - Ajouter un appareil",
+      "home.devices": "Appareils",
+      "home.loading": "Chargement…",
+      "home.addDevice": "+ Ajouter un appareil",
+      "home.importYaml": "Importer depuis YAML",
+      "home.noDevices": "Aucun appareil pour le moment.",
+      "home.edit": "Modifier",
+      "home.delete": "Supprimer",
+      "home.deleteConfirm": "Supprimer \"{name}\" ? Cette action est irréversible et retirera l'appareil de Home Assistant.",
+      "home.deleteError": "Erreur lors de la suppression.",
+
+      "edit.title": "Modifier l'appareil",
+      "edit.name": "Nom",
+      "edit.travelTimeHelp": "Temps approximatif pour aller complètement ouvert ↔ fermé. Utilisé pour estimer quand le volet a fini sa course (pas de retour de position réel).",
+      "edit.nameEmptyError": "Le nom ne peut pas être vide.",
+      "edit.updateError": "Erreur lors de la mise à jour.",
+
+      "common.save": "Enregistrer",
+      "common.cancel": "Annuler",
+      "common.back": "Retour",
+      "common.backCancel": "&larr; Annuler",
+      "common.continue": "Continuer",
+      "common.invert": "Inverser le sens (câblage à l'envers)",
+      "common.travelTime": "Durée de course estimée (secondes)",
+      "common.namePlaceholder": "ex: Volet salon terrasse",
+
+      "wizard.branch.title": "Comment souhaitez-vous ajouter cet appareil ?",
+      "wizard.branch.aTitle": "J'ai la télécommande",
+      "wizard.branch.aSubtitle": "On écoute la trame RF réelle",
+      "wizard.branch.bTitle": "Je n'ai pas la télécommande",
+      "wizard.branch.bSubtitle": "Saisie manuelle de l'identifiant",
+
+      "wizard.catalog.title": "Marque",
+      "wizard.catalog.searchLabel": "Chercher une marque",
+      "wizard.catalog.searchPlaceholder": "ex: Somfy, Profalux…",
+      "wizard.catalog.skipBrand": "Passer cette étape (recherche générique 433MHz)",
+      "wizard.catalog.skipBrandHelp": "À utiliser si vous ne connaissez ni la marque ni le protocole : l'écoute captera toute trame 433MHz, sans filtrage. Moins précis, en dernier recours.",
+      "wizard.catalog.multiProtocol": "Plusieurs protocoles disponibles pour cette marque :",
+      "wizard.catalog.rollingCodeBranchA": "Protocole à code tournant : l'écoute RF réelle est fortement recommandée pour ce protocole.",
+      "wizard.catalog.rollingCodeBranchB": "Protocole à code tournant : sans télécommande, l'ajout risque d'échouer (voir avertissement à la confirmation).",
+
+      "wizard.listen.title": "Écoute radio",
+      "wizard.listen.instructions": "Sur votre télécommande d'origine, appuyez sur le bouton à copier pendant quelques secondes, dès que vous lancez l'écoute ci-dessous. Répétez l'appui 2 ou 3 fois si rien n'apparaît.",
+      "wizard.listen.proximityTip": "💡 Idéalement, placez-vous à environ 1 mètre du boîtier AirSend pendant l'appui, pour optimiser la qualité du signal reçu.",
+      "wizard.listen.play": "▶ Écouter (20s)",
+      "wizard.listen.retry": "▶ Réessayer (20s)",
+      "wizard.listen.startError": "Erreur: {detail}",
+      "wizard.listen.startErrorDefault": "impossible de démarrer l'écoute",
+      "wizard.listen.inProgress": "Écoute en cours… ({s}s restantes)",
+      "wizard.listen.error": "Erreur : {detail}",
+      "wizard.listen.done": "Écoute terminée.",
+      "wizard.listen.channelFallback": "canal {id}",
+      "wizard.listen.useThis": "Utiliser celui-ci",
+
+      "wizard.manual.title": "Identifiant de l'appareil",
+      "wizard.manual.sourceLabel": "Identifiant unique (channel_source)",
+      "wizard.manual.sourcePlaceholder": "ex: 24679",
+      "wizard.manual.sourceHelp": "Cette valeur n'est pas devinable : elle doit provenir d'un export existant (ex. import cloud) ou d'une capture RF antérieure.",
+
+      "wizard.kind.title": "Type de matériel",
+      "wizard.kind.travelTimeHelp": "Temps approximatif pour aller complètement ouvert ↔ fermé. Modifiable plus tard.",
+      "wizard.kind.nameLabel": "Nom de l'appareil",
+      "wizard.kind.confirm": "Ajouter l'appareil",
+      "wizard.kind.creationError": "Erreur lors de la création de l'appareil.",
+      "wizard.kind.tryAnyway": "Continuer quand même",
+
+      "wizard.done.success": "✓ Appareil ajouté avec succès.",
+
+      "kind.1_bouton": "1 bouton",
+      "kind.on_off": "On / Off",
+      "kind.volet_roulant": "Volet roulant",
+      "kind.niveau": "Niveau (position)",
+
+      "import.title": "Importer depuis le YAML de l'ancienne intégration",
+      "import.instructions": "Colle le contenu de ton fichier (ex. <code>airsend.yaml</code>), ou choisis un fichier. Rien n'est modifié tant que tu n'as pas confirmé à l'étape suivante.",
+      "import.useThisFile": "Utiliser ce fichier",
+      "import.fileInputAria": "Fichier YAML à importer",
+      "import.textareaAria": "Contenu YAML",
+      "import.textareaPlaceholder": "devices:\n  Volet Celyan:\n    type: 4098\n    channel:\n      id: 25455\n      source: 233575",
+      "import.analyze": "Analyser",
+      "import.detected": "Fichier détecté : {path}",
+      "import.previewTitle": "Vérifier avant import",
+      "import.col.name": "Nom",
+      "import.col.protocol": "Protocole",
+      "import.col.status": "Statut",
+      "import.col.domain": "Domain",
+      "import.col.kind": "Kind",
+      "import.col.conflict": "Si conflit",
+      "import.commit": "Importer la sélection",
+      "import.parseError": "Erreur lors de l'analyse du YAML.",
+      "import.commitError": "Erreur lors de l'import.",
+      "import.domainAriaLabel": "Domaine pour {name}",
+      "import.kindAriaLabel": "Type de materiel pour {name}",
+      "import.conflictAriaLabel": "Action en cas de conflit pour {name}",
+      "import.conflictKeepExisting": "garder existant",
+      "import.conflictOverwrite": "écraser",
+      "import.kindTranslatedNote": "kind traduit depuis l'ancien format",
+      "import.checkboxAriaLabel": "Importer {name}",
+      "import.resultSummary": "{added} ajoutés, {overwritten} écrasés, {skipped} ignorés.",
+      "import.resultErrors": " Erreurs: {errors}",
+    },
+    en: {
+      "page.title": "AirSend - Add a device",
+      "home.devices": "Devices",
+      "home.loading": "Loading…",
+      "home.addDevice": "+ Add a device",
+      "home.importYaml": "Import from YAML",
+      "home.noDevices": "No devices yet.",
+      "home.edit": "Edit",
+      "home.delete": "Delete",
+      "home.deleteConfirm": "Delete \"{name}\"? This action is irreversible and will remove the device from Home Assistant.",
+      "home.deleteError": "Error while deleting.",
+
+      "edit.title": "Edit device",
+      "edit.name": "Name",
+      "edit.travelTimeHelp": "Approximate time to travel fully open ↔ closed. Used to estimate when the cover has finished moving (no real position feedback).",
+      "edit.nameEmptyError": "Name cannot be empty.",
+      "edit.updateError": "Error while updating.",
+
+      "common.save": "Save",
+      "common.cancel": "Cancel",
+      "common.back": "Back",
+      "common.backCancel": "&larr; Cancel",
+      "common.continue": "Continue",
+      "common.invert": "Invert direction (wired backwards)",
+      "common.travelTime": "Estimated travel time (seconds)",
+      "common.namePlaceholder": "e.g. Living room shutter",
+
+      "wizard.branch.title": "How would you like to add this device?",
+      "wizard.branch.aTitle": "I have the remote",
+      "wizard.branch.aSubtitle": "We'll listen to the actual RF signal",
+      "wizard.branch.bTitle": "I don't have the remote",
+      "wizard.branch.bSubtitle": "Manual entry of the identifier",
+
+      "wizard.catalog.title": "Brand",
+      "wizard.catalog.searchLabel": "Search for a brand",
+      "wizard.catalog.searchPlaceholder": "e.g. Somfy, Profalux…",
+      "wizard.catalog.skipBrand": "Skip this step (generic 433MHz search)",
+      "wizard.catalog.skipBrandHelp": "Use this if you know neither the brand nor the protocol: listening will capture any 433MHz signal, unfiltered. Less precise, last resort.",
+      "wizard.catalog.multiProtocol": "Several protocols are available for this brand:",
+      "wizard.catalog.rollingCodeBranchA": "Rolling-code protocol: real RF listening is strongly recommended for this protocol.",
+      "wizard.catalog.rollingCodeBranchB": "Rolling-code protocol: without the remote, adding it may fail (see warning at confirmation).",
+
+      "wizard.listen.title": "RF listening",
+      "wizard.listen.instructions": "On your original remote, press the button to copy for a few seconds as soon as you start listening below. Repeat 2 or 3 times if nothing appears.",
+      "wizard.listen.proximityTip": "💡 Ideally, stand about 1 meter from the AirSend box while pressing, to get the best signal quality.",
+      "wizard.listen.play": "▶ Listen (20s)",
+      "wizard.listen.retry": "▶ Retry (20s)",
+      "wizard.listen.startError": "Error: {detail}",
+      "wizard.listen.startErrorDefault": "unable to start listening",
+      "wizard.listen.inProgress": "Listening… ({s}s remaining)",
+      "wizard.listen.error": "Error: {detail}",
+      "wizard.listen.done": "Listening finished.",
+      "wizard.listen.channelFallback": "channel {id}",
+      "wizard.listen.useThis": "Use this one",
+
+      "wizard.manual.title": "Device identifier",
+      "wizard.manual.sourceLabel": "Unique identifier (channel_source)",
+      "wizard.manual.sourcePlaceholder": "e.g. 24679",
+      "wizard.manual.sourceHelp": "This value cannot be guessed: it must come from an existing export (e.g. cloud import) or a previous RF capture.",
+
+      "wizard.kind.title": "Device type",
+      "wizard.kind.travelTimeHelp": "Approximate time to travel fully open ↔ closed. Can be changed later.",
+      "wizard.kind.nameLabel": "Device name",
+      "wizard.kind.confirm": "Add device",
+      "wizard.kind.creationError": "Error while creating the device.",
+      "wizard.kind.tryAnyway": "Continue anyway",
+
+      "wizard.done.success": "✓ Device added successfully.",
+
+      "kind.1_bouton": "Single button",
+      "kind.on_off": "On / Off",
+      "kind.volet_roulant": "Roller shutter",
+      "kind.niveau": "Level (position)",
+
+      "import.title": "Import from the old integration's YAML",
+      "import.instructions": "Paste the contents of your file (e.g. <code>airsend.yaml</code>), or choose a file. Nothing is changed until you confirm on the next step.",
+      "import.useThisFile": "Use this file",
+      "import.fileInputAria": "YAML file to import",
+      "import.textareaAria": "YAML content",
+      "import.textareaPlaceholder": "devices:\n  Living room shutter:\n    type: 4098\n    channel:\n      id: 25455\n      source: 233575",
+      "import.analyze": "Analyze",
+      "import.detected": "File detected: {path}",
+      "import.previewTitle": "Review before import",
+      "import.col.name": "Name",
+      "import.col.protocol": "Protocol",
+      "import.col.status": "Status",
+      "import.col.domain": "Domain",
+      "import.col.kind": "Kind",
+      "import.col.conflict": "If conflict",
+      "import.commit": "Import selection",
+      "import.parseError": "Error while parsing the YAML.",
+      "import.commitError": "Error while importing.",
+      "import.domainAriaLabel": "Domain for {name}",
+      "import.kindAriaLabel": "Device type for {name}",
+      "import.conflictAriaLabel": "Action on conflict for {name}",
+      "import.conflictKeepExisting": "keep existing",
+      "import.conflictOverwrite": "overwrite",
+      "import.kindTranslatedNote": "kind translated from the old format",
+      "import.checkboxAriaLabel": "Import {name}",
+      "import.resultSummary": "{added} added, {overwritten} overwritten, {skipped} skipped.",
+      "import.resultErrors": " Errors: {errors}",
+    },
+  };
+
+  var SUPPORTED_LANGS = ["fr", "en"];
+  var LANG_STORAGE_KEY = "airsend_lang";
+
+  function detectDefaultLang() {
+    var nav = (navigator.language || navigator.userLanguage || "fr").toLowerCase();
+    return nav.indexOf("en") === 0 ? "en" : "fr";
+  }
+
+  function loadStoredLang() {
+    try {
+      var stored = window.localStorage.getItem(LANG_STORAGE_KEY);
+      return SUPPORTED_LANGS.includes(stored) ? stored : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  var currentLang = loadStoredLang() || detectDefaultLang();
+
+  function t(key, vars) {
+    var dict = I18N[currentLang] || I18N.fr;
+    var text = Object.prototype.hasOwnProperty.call(dict, key) ? dict[key] : (I18N.fr[key] || key);
+    if (vars) {
+      Object.keys(vars).forEach(function (k) {
+        text = text.replace("{" + k + "}", vars[k]);
+      });
+    }
+    return text;
+  }
+
+  function applyStaticTranslations() {
+    document.documentElement.lang = currentLang;
+    document.querySelectorAll("[data-i18n]").forEach(function (el) {
+      el.innerHTML = t(el.dataset.i18n);
+    });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach(function (el) {
+      el.setAttribute("placeholder", t(el.dataset.i18nPlaceholder));
+    });
+    document.querySelectorAll("[data-i18n-aria]").forEach(function (el) {
+      el.setAttribute("aria-label", t(el.dataset.i18nAria));
+    });
+    document.title = t("page.title");
+    document.querySelectorAll(".lang-switch button").forEach(function (btn) {
+      btn.classList.toggle("active", btn.dataset.lang === currentLang);
+    });
+  }
+
+  function setLang(lang) {
+    if (!SUPPORTED_LANGS.includes(lang) || lang === currentLang) {
+      applyStaticTranslations();
+      return;
+    }
+    currentLang = lang;
+    try { window.localStorage.setItem(LANG_STORAGE_KEY, lang); } catch (e) { /* ignore storage errors */ }
+    applyStaticTranslations();
+    refreshDynamicUi();
+  }
+
+  document.querySelectorAll(".lang-switch button").forEach(function (btn) {
+    btn.addEventListener("click", function () { setLang(btn.dataset.lang); });
+  });
+
+  // Re-renders the parts of the UI that were built dynamically in JS,
+  // so a language switch mid-flow is reflected immediately.
+  function refreshDynamicUi() {
+    loadDevices();
+    if (currentImportRows.length) { renderImportTable(); }
+  }
+
+  applyStaticTranslations();
+
+  // ---------------------------------------------------------------------
+  // App logic
+  // ---------------------------------------------------------------------
 
   var state = {
     branch: null,
@@ -301,12 +603,12 @@
 
     var editBtn = document.createElement("button");
     editBtn.className = "icon-btn";
-    editBtn.textContent = "Modifier";
+    editBtn.textContent = t("home.edit");
     editBtn.addEventListener("click", function () { openEditDevice(d); });
 
     var delBtn = document.createElement("button");
     delBtn.className = "icon-btn danger";
-    delBtn.textContent = "Supprimer";
+    delBtn.textContent = t("home.delete");
     delBtn.addEventListener("click", function () { deleteDevice(d); });
 
     actions.appendChild(editBtn);
@@ -319,7 +621,7 @@
   function populateDeviceList(res) {
     var list = $("device-list");
     if (!res.ok || !res.body.length) {
-      list.textContent = "Aucun appareil pour le moment.";
+      list.textContent = t("home.noDevices");
       return;
     }
     list.innerHTML = "";
@@ -362,7 +664,7 @@
     var banner = $("edit-banner");
     if (!friendlyName) {
       banner.className = "banner error";
-      banner.textContent = "Le nom ne peut pas être vide.";
+      banner.textContent = t("edit.nameEmptyError");
       show(banner.id);
       return;
     }
@@ -385,7 +687,7 @@
       $("btn-edit-save").disabled = false;
       if (!res.ok) {
         banner.className = "banner error";
-        banner.textContent = "Erreur lors de la mise à jour.";
+        banner.textContent = t("edit.updateError");
         show(banner.id);
         return;
       }
@@ -396,12 +698,12 @@
   });
 
   function deleteDevice(d) {
-    if (!window.confirm("Supprimer \"" + d.friendly_name + "\" ? Cette action est irréversible et retirera l'appareil de Home Assistant.")) {
+    if (!window.confirm(t("home.deleteConfirm", { name: d.friendly_name }))) {
       return;
     }
     api("api/devices/" + encodeURIComponent(d.key), { method: "DELETE" }).then(function (res) {
       if (!res.ok) {
-        window.alert("Erreur lors de la suppression.");
+        window.alert(t("home.deleteError"));
         return;
       }
       if (state.editingDevice && state.editingDevice.key === d.key) {
@@ -448,6 +750,7 @@
     document.querySelectorAll(".choice-box").forEach(function (b) { b.classList.remove("selected"); });
     $("listen-status").textContent = "";
     $("listen-candidates").innerHTML = "";
+    $("btn-listen-play").textContent = t("wizard.listen.play");
   }
 
   $("btn-add-device").addEventListener("click", function () {
@@ -553,10 +856,9 @@
     api("api/channel/" + p.channel_id + "?box=" + encodeURIComponent(state.box)).then(function (res) {
       var banner = $("rolling-code-banner");
       if (res.body && res.body.rolling_code_risk) {
-        banner.textContent = "Protocole à code tournant : " +
-          (state.branch === "B"
-            ? "sans télécommande, l'ajout risque d'échouer (voir avertissement à la confirmation)."
-            : "l'écoute RF réelle est fortement recommandée pour ce protocole.");
+        banner.textContent = state.branch === "B"
+          ? t("wizard.catalog.rollingCodeBranchB")
+          : t("wizard.catalog.rollingCodeBranchA");
         show("rolling-code-banner");
       } else {
         hide("rolling-code-banner");
@@ -582,7 +884,7 @@
       body: JSON.stringify({ box: state.box, channel_id: state.channelId, duration: 20 }),
     }).then(function (res) {
       if (!res.ok) {
-        $("listen-status").textContent = "Erreur: " + (res.body.text || "impossible de démarrer l'écoute");
+        $("listen-status").textContent = t("wizard.listen.startError", { detail: res.body.text || t("wizard.listen.startErrorDefault") });
         $("btn-listen-play").disabled = false;
         return;
       }
@@ -598,8 +900,8 @@
         if (!res.ok) { clearInterval(state.listenPoll); return; }
         var body = res.body;
         $("listen-status").innerHTML = body.status === "listening"
-          ? "<span class='spinner'></span>Écoute en cours… (" + body.remaining_s + "s restantes)"
-          : (body.error ? "Erreur : " + body.error : "Écoute terminée.");
+          ? "<span class='spinner'></span>" + t("wizard.listen.inProgress", { s: body.remaining_s })
+          : (body.error ? t("wizard.listen.error", { detail: body.error }) : t("wizard.listen.done"));
 
         renderCandidates(body.candidates || []);
 
@@ -607,7 +909,7 @@
           clearInterval(state.listenPoll);
           state.listenPoll = null;
           $("btn-listen-play").disabled = false;
-          $("btn-listen-play").textContent = "▶ Réessayer (20s)";
+          $("btn-listen-play").textContent = t("wizard.listen.retry");
         }
       });
     }, 1200);
@@ -620,11 +922,11 @@
     list.forEach(function (c) {
       var row = document.createElement("div");
       row.className = "candidate";
-      row.innerHTML = "<span>" + (c.protocol_name || ("canal " + c.channel_id)) +
+      row.innerHTML = "<span>" + (c.protocol_name || t("wizard.listen.channelFallback", { id: c.channel_id })) +
         " <span class='muted'>(id " + c.channel_source + ")</span></span>";
       var btn = document.createElement("button");
       btn.className = "btn";
-      btn.textContent = "Utiliser celui-ci";
+      btn.textContent = t("wizard.listen.useThis");
       btn.addEventListener("click", function () {
         state.candidate = c;
         if (state.listenPoll) { clearInterval(state.listenPoll); state.listenPoll = null; }
@@ -722,7 +1024,7 @@
         var retryBtn = document.createElement("button");
         retryBtn.className = "btn";
         retryBtn.style.marginTop = "8px";
-        retryBtn.textContent = "Continuer quand même";
+        retryBtn.textContent = t("wizard.kind.tryAnyway");
         retryBtn.addEventListener("click", function () { submitDevice(true); });
         banner.appendChild(document.createElement("br"));
         banner.appendChild(retryBtn);
@@ -731,7 +1033,7 @@
       }
       if (!res.ok) {
         banner.className = "banner error";
-        banner.textContent = "Erreur lors de la création de l'appareil.";
+        banner.textContent = t("wizard.kind.creationError");
         show(banner.id);
         $("btn-confirm").disabled = false;
         return;
@@ -740,10 +1042,9 @@
     });
   }
 
-
-  var KIND_LABELS = {
-    "1_bouton": "1 bouton", "on_off": "On / Off",
-    "volet_roulant": "Volet roulant", "niveau": "Niveau (position)",
+  var KIND_LABEL_KEYS = {
+    "1_bouton": "kind.1_bouton", "on_off": "kind.on_off",
+    "volet_roulant": "kind.volet_roulant", "niveau": "kind.niveau",
   };
   var DOMAIN_TO_KINDS = { button: ["1_bouton"], switch: ["on_off"], cover: ["volet_roulant", "niveau"] };
   var currentImportRows = [];
@@ -766,7 +1067,7 @@
     api("api/import/detect").then(function (res) {
       if (!res.ok || !res.body.found) return;
       detectedYamlText = res.body.yaml_text;
-      $("import-detect-text").textContent = "Fichier détecté : " + res.body.path;
+      $("import-detect-text").textContent = t("import.detected", { path: res.body.path });
       show("import-detect-banner");
     });
   }
@@ -799,25 +1100,25 @@
     var opts = Object.keys(DOMAIN_TO_KINDS).map(function (d) {
       return "<option value='" + d + "'" + (row.domain === d ? " selected" : "") + ">" + d + "</option>";
     }).join("");
-    var label = "Domaine pour " + escapeAttr(row.friendly_name);
+    var label = t("import.domainAriaLabel", { name: escapeAttr(row.friendly_name) });
     return "<select data-field='domain' aria-label='" + label + "'><option value=''>--</option>" + opts + "</select>";
   }
 
   function kindSelectHtml(row) {
     var kinds = row.domain ? (DOMAIN_TO_KINDS[row.domain] || []) : [];
     var opts = kinds.map(function (k) {
-      return "<option value='" + k + "'" + (row.kind === k ? " selected" : "") + ">" + KIND_LABELS[k] + "</option>";
+      return "<option value='" + k + "'" + (row.kind === k ? " selected" : "") + ">" + t(KIND_LABEL_KEYS[k]) + "</option>";
     }).join("");
-    var label = "Type de materiel pour " + escapeAttr(row.friendly_name);
+    var label = t("import.kindAriaLabel", { name: escapeAttr(row.friendly_name) });
     return "<select data-field='kind' aria-label='" + label + "'><option value=''>--</option>" + opts + "</select>";
   }
 
   function conflictSelectHtml(row) {
     if (row.status !== "conflict") return "-";
-    var label = "Action en cas de conflit pour " + escapeAttr(row.friendly_name);
+    var label = t("import.conflictAriaLabel", { name: escapeAttr(row.friendly_name) });
     return "<select data-field='conflict_action' aria-label='" + label + "'>" +
-      "<option value='keep_existing'>garder existant</option>" +
-      "<option value='overwrite'>écraser</option>" +
+      "<option value='keep_existing'>" + t("import.conflictKeepExisting") + "</option>" +
+      "<option value='overwrite'>" + t("import.conflictOverwrite") + "</option>" +
       "</select>";
   }
 
@@ -826,8 +1127,8 @@
       var checked = row.status !== "unknown_protocol" ? "checked" : "";
       var disabled = row.status === "unknown_protocol" ? "disabled" : "";
       var translatedNote = row.kind_translated
-        ? "<div class='muted' style='font-size:0.75em'>kind traduit depuis l'ancien format</div>" : "";
-      var checkboxLabel = "Importer " + escapeAttr(row.friendly_name);
+        ? "<div class='muted' style='font-size:0.75em'>" + t("import.kindTranslatedNote") + "</div>" : "";
+      var checkboxLabel = t("import.checkboxAriaLabel", { name: escapeAttr(row.friendly_name) });
       return "<tr data-index='" + i + "'>" +
         "<td><input type='checkbox' class='import-check' aria-label='" + checkboxLabel + "' " + checked + " " + disabled + "></td>" +
         "<td>" + row.friendly_name + "<div class='muted' style='font-size:0.8em'>" + row.key + "</div></td>" +
@@ -851,7 +1152,7 @@
     }).then(function (res) {
       if (!res.ok) {
         var err = $("import-error");
-        err.textContent = res.body.text || res.body.error || "Erreur lors de l'analyse du YAML.";
+        err.textContent = res.body.text || res.body.error || t("import.parseError");
         show(err.id);
         return;
       }
@@ -902,14 +1203,14 @@
       var result = $("import-result");
       if (!res.ok) {
         result.className = "banner error";
-        result.textContent = res.body.text || "Erreur lors de l'import.";
+        result.textContent = res.body.text || t("import.commitError");
         show(result.id);
         return;
       }
       var body = res.body;
       result.className = body.errors.length ? "banner warn" : "banner ok";
-      result.textContent = body.added + " ajoutés, " + body.overwritten + " écrasés, " +
-        body.skipped + " ignorés." + (body.errors.length ? " Erreurs: " + body.errors.join(" | ") : "");
+      result.textContent = t("import.resultSummary", { added: body.added, overwritten: body.overwritten, skipped: body.skipped }) +
+        (body.errors.length ? t("import.resultErrors", { errors: body.errors.join(" | ") }) : "");
       show(result.id);
     });
   });
