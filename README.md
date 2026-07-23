@@ -20,6 +20,18 @@ This app is a ground-up rebuild of the AirSend integration for Home Assistant, f
 - **Built-in inclusion of "orphan" or unrecognized devices** — devices and protocols not in the official catalog (e.g. proprietary Profalux/PFX RF frames) can still be captured and added based on raw RF event data, rather than being limited to the vendor's official device list.
 - **Editable/removable devices from the UI** — every device can be renamed, reconfigured, or deleted directly from the Ingress panel, no file editing involved.
 
+## 📸 Screenshots
+
+A quick visual tour of the Ingress UI. Full step-by-step captures for each flow are inlined further down, in [How to use](#how-to-use) and [How to import airsend.yaml](#how-to-import-airsendyaml-from-the-official-app).
+
+<p align="center">
+  <img src="images/screenshots/01-home.png" width="260" alt="Device list home screen">
+  <img src="images/screenshots/08-branchA-listen-candidates.png" width="260" alt="RF listening candidates">
+  <img src="images/screenshots/23-import-preview-table.png" width="260" alt="YAML import preview table">
+</p>
+
+> The screenshots throughout this README were captured against a mocked backend for documentation purposes (no real AirSend box involved) — the UI itself is the real, unmodified Ingress panel.
+
 ## Installation
 <p align="center">
     <a href="https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2F38decibel%2Fairsend-hub">
@@ -40,10 +52,43 @@ To get the app running:
 3. Run the app
 4. Check your MQTT broker to see the AirSend device.
 5. Devices already known to the app (e.g. imported from a previous setup) are automatically discovered by Home Assistant as covers, switches, or other entities via MQTT.
-6. To add a new device, open the **AirSend** web user interface (Ingress UI). See below for import airsend.yaml file.
+6. To add a new device, open the **AirSend** web user interface (Ingress UI). You'll be asked how you want to add it. See below for import airsend.yaml file.
+
+   <p align="center"><img src="images/screenshots/02-wizard-branch-choice.png" width="320" alt="Choice between remote-based inclusion and manual inclusion"></p>
+
 7. Choose the inclusion method depending on what you have on hand:
+
    - **With the original remote**: select it from the catalog, then follow the on-screen steps to trigger the RF listening window and press the remote's button.
-   - **Without the remote**: enter the channel source manually. If a conflict is detected (HTTP 409), the addon will warn you about rolling-code resynchronization before proceeding.
+
+     <p align="center">
+       <img src="images/screenshots/04-branchA-catalog-suggestions.png" width="240" alt="Brand search suggestions">
+       <img src="images/screenshots/05-branchA-catalog-selected-rollingcode.png" width="240" alt="Brand selected, rolling-code warning shown">
+       <img src="images/screenshots/07-branchA-listening-inprogress.png" width="240" alt="RF listening in progress">
+     </p>
+     <p align="center">
+       <img src="images/screenshots/08-branchA-listen-candidates.png" width="240" alt="Detected RF candidates">
+       <img src="images/screenshots/10-branchA-kind-filled.png" width="240" alt="Device type and name selection">
+       <img src="images/screenshots/11-branchA-done.png" width="240" alt="Device added confirmation">
+     </p>
+
+     If you don't know the brand or protocol at all, use **"Skip this step (generic 433MHz search)"** as a last resort — it listens for any 433MHz frame, unfiltered.
+
+     Some brands expose more than one protocol (e.g. a box that supports both a proprietary and a standard mode); in that case you'll be asked to pick one before continuing:
+
+     <p align="center"><img src="images/screenshots/14-branchB-protocol-picker.png" width="320" alt="Multiple protocols available for a brand"></p>
+
+   - **Without the remote**: enter the channel source manually. This value isn't guessable — it has to come from an existing export (e.g. a cloud/YAML import) or an earlier RF capture.
+
+     <p align="center">
+       <img src="images/screenshots/16-branchB-manual-empty.png" width="240" alt="Manual channel source entry">
+       <img src="images/screenshots/17-branchB-manual-filled.png" width="240" alt="Manual channel source filled in">
+       <img src="images/screenshots/18-branchB-kind-filled.png" width="240" alt="Device type and name for manual inclusion">
+     </p>
+
+     If a conflict is detected (HTTP 409), the addon will warn you about rolling-code resynchronization before proceeding — you can still continue at your own risk:
+
+     <p align="center"><img src="images/screenshots/19-branchB-rollingcode-warning.png" width="320" alt="Rolling-code risk warning with override button"></p>
+
 8. Once included, the new device appears automatically in Home Assistant via MQTT discovery — no restart required.
 9. Repeat step 6-8 for each additional device.
 
@@ -62,11 +107,24 @@ import your existing devices instead of re-configuring them from scratch.
    - **Upload file**: select your `airsend.yaml` directly.
    - **Paste content**: open `airsend.yaml` in a text editor, copy its
      content, and paste it into the text field provided.
+
+   <p align="center">
+     <img src="images/screenshots/21-import-detect-banner.png" width="280" alt="airsend.yaml auto-detected banner">
+     <img src="images/screenshots/22-import-textarea-filled.png" width="280" alt="YAML content loaded into the textarea">
+   </p>
+
 4. Confirm the import. Devices found in the file are added to this app's
    device list and will appear in Home Assistant via MQTT discovery.
+
+   <p align="center"><img src="images/screenshots/23-import-preview-table.png" width="380" alt="Import preview table with new / conflict / unknown protocol rows"></p>
+
+   Each row can be included or excluded, and its domain/kind reassigned, before you commit. Rows with a protocol this app doesn't recognize are flagged `unknown_protocol` and excluded by default.
+
 5. Review the imported devices in the AirSend panel — some fields (e.g.
    friendly names) may need adjustment depending on differences between the
    official app's format and this app's device model.
+
+   <p align="center"><img src="images/screenshots/24-import-result.png" width="320" alt="Import result summary"></p>
 
 ### App configuration
 
