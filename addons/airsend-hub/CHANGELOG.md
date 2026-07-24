@@ -1,5 +1,8 @@
 ## Unreleased
 
+### 🚀 Added
+- **inclusion:** warn prominently that rolling-code pairing is still WIP (#69)
+
 ## 1.0.2 - 2026-07-23
 
 ### ♻️ Changed
