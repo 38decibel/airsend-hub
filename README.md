@@ -20,6 +20,14 @@ This app is a ground-up rebuild of the AirSend integration for Home Assistant, f
 - **Built-in inclusion of "orphan" or unrecognized devices** — devices and protocols not in the official catalog (e.g. proprietary Profalux/PFX RF frames) can still be captured and added based on raw RF event data, rather than being limited to the vendor's official device list.
 - **Editable/removable devices from the UI** — every device can be renamed, reconfigured, or deleted directly from the Ingress panel, no file editing involved.
 
+> [!WARNING]
+> **Rolling-code protocols are not fully supported yet.** Counter/pairing
+> synchronization for rolling-code protocols (flagged as such throughout the
+> UI) is still under active development and does not work reliably today.
+> Adding this kind of device is currently expected to be **incomplete**:
+> commands sent to it may fail, and it may need a manual resync later once
+> this feature lands. Non-rolling-code protocols are not affected.
+
 ## 📸 Screenshots
 
 A quick visual tour of the Ingress UI. Full step-by-step captures for each flow are inlined further down, in [How to use](#how-to-use) and [How to import airsend.yaml](#how-to-import-airsendyaml-from-the-official-app).
@@ -85,7 +93,7 @@ To get the app running:
        <img src="images/screenshots/18-branchB-kind-filled.png" width="240" alt="Device type and name for manual inclusion">
      </p>
 
-     If a conflict is detected (HTTP 409), the addon will warn you about rolling-code resynchronization before proceeding — you can still continue at your own risk:
+     If a conflict is detected (HTTP 409), the addon will warn you again before proceeding — see [the known limitation above](#-features) — you can still continue at your own risk, knowing the inclusion will likely be incomplete:
 
      <p align="center"><img src="images/screenshots/19-branchB-rollingcode-warning.png" width="320" alt="Rolling-code risk warning with override button"></p>
 
