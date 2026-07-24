@@ -376,10 +376,11 @@ class InclusionApi:
                 {
                     "warning": "rolling_code_risk",
                     "message": (
-                        "This protocol uses a rolling code. "
-                        "Without actually capturing your remote control, the counter "
-                        "will not be synchronized, and the first commands "
-                        "sent may fail."
+                        "\u26a0\ufe0f Under active development: rolling-code counter "
+                        "synchronization is not working yet. Without actually capturing "
+                        "your remote control, the counter will not be synchronized, and "
+                        "commands sent to this device will likely fail. Adding it now "
+                        "will result in an incomplete, non-functional inclusion."
                     ),
                 },
                 status=409,
@@ -605,4 +606,3 @@ def create_ingress_app(
         mqtt_bridge=mqtt_bridge,
     )
     return api.app
-  
