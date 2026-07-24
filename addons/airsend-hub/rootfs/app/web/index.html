@@ -90,14 +90,46 @@
   .hidden { display: none !important; }
   .checkbox-row { display: flex; align-items: center; gap: 8px; margin: 10px 0; }
 
-  .import-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-  .import-table th { text-align: left; color: var(--muted); font-weight: 500; padding: 6px 8px; border-bottom: 1px solid var(--border); }
-  .import-table td { padding: 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-  .import-table select { margin-bottom: 0; padding: 6px; font-size: 0.85rem; }
+  .import-summary { font-size: 0.85rem; color: var(--muted); margin: 4px 0 12px; }
+  .import-row { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
+  .import-row-head { display: flex; align-items: flex-start; gap: 10px; }
+  .import-check-wrap { padding-top: 3px; }
+  .import-row-main { flex: 1; min-width: 0; }
+  .import-row-name { font-size: 0.92rem; }
+  .import-row-sub { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+  .import-protocol { display: none; font-size: 0.85rem; }
+  .import-toggle {
+    background: none; border: 1px solid var(--border); border-radius: 6px; color: inherit;
+    font-size: 0.78rem; cursor: pointer; padding: 4px 8px; white-space: nowrap; align-self: flex-start;
+  }
+  .import-details { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .import-row.expanded .import-details { display: block; }
+  .import-field { margin-top: 10px; }
+  .import-field:first-child { margin-top: 0; }
+  .import-field label { display: block; font-size: 0.78rem; color: var(--muted); margin-bottom: 4px; }
+  .import-field select { width: 100%; margin-bottom: 0; padding: 6px; font-size: 0.85rem; }
+  .import-note { font-size: 0.78rem; margin-top: 10px; }
+  .import-list-head { display: none; }
   .status-pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; }
   .status-pill.new { background: #123a22; color: #7ee0a0; }
   .status-pill.conflict { background: #3a2f14; color: #e8c977; }
   .status-pill.unknown_protocol { background: #3a1414; color: #ff9a9a; }
+
+  @media (min-width: 640px) {
+    .import-list-head, .import-row {
+      display: grid; grid-template-columns: 26px 1.6fr 0.7fr 0.8fr 1fr 1fr 1fr;
+      gap: 10px; align-items: center;
+    }
+    .import-list-head { padding: 0 12px 8px; font-size: 0.8rem; color: var(--muted); border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+    .import-row-head { display: contents; }
+    .import-row-sub, .import-sub-protocol { display: none; }
+    .import-protocol { display: block; }
+    .import-toggle { display: none; }
+    .import-details { display: contents !important; margin: 0; padding: 0; border: 0; }
+    .import-field { margin: 0; }
+    .import-field label { display: none; }
+    .import-note { grid-column: 1 / -1; margin-top: 6px; }
+  }
 </style>
 </head>
 <body>
@@ -257,14 +289,17 @@
 
   <div id="import-step-preview" class="hidden" style="margin-top:14px;">
     <h2 data-i18n="import.previewTitle">Vérifier avant import</h2>
-    <table class="import-table">
-      <thead>
-        <tr>
-          <th></th><th data-i18n="import.col.name">Nom</th><th data-i18n="import.col.protocol">Protocole</th><th data-i18n="import.col.status">Statut</th><th data-i18n="import.col.domain">Domain</th><th data-i18n="import.col.kind">Kind</th><th data-i18n="import.col.conflict">Si conflit</th>
-        </tr>
-      </thead>
-      <tbody id="import-table-body"></tbody>
-    </table>
+    <div id="import-summary" class="import-summary"></div>
+    <div class="import-list-head">
+      <span></span>
+      <span data-i18n="import.col.name">Nom</span>
+      <span data-i18n="import.col.protocol">Protocole</span>
+      <span data-i18n="import.col.status">Statut</span>
+      <span data-i18n="import.col.domain">Domain</span>
+      <span data-i18n="import.col.kind">Kind</span>
+      <span data-i18n="import.col.conflict">Si conflit</span>
+    </div>
+    <div id="import-table-body"></div>
     <div style="margin-top:14px;">
       <button class="btn" id="import-commit-btn" data-i18n="import.commit">Importer la sélection</button>
     </div>
@@ -380,6 +415,16 @@
       "import.conflictOverwrite": "écraser",
       "import.kindTranslatedNote": "kind traduit depuis l'ancien format",
       "import.checkboxAriaLabel": "Importer {name}",
+      "import.summary.newSingular": "{n} nouveau",
+      "import.summary.newPlural": "{n} nouveaux",
+      "import.summary.conflictSingular": "{n} conflit",
+      "import.summary.conflictPlural": "{n} conflits",
+      "import.summary.unknownSingular": "{n} protocole inconnu",
+      "import.summary.unknownPlural": "{n} protocoles inconnus",
+      "import.modify": "Modifier",
+      "import.collapse": "Réduire",
+      "import.toggleAriaLabel": "Afficher/masquer les champs pour {name}",
+      "import.unknownProtocolNote": "Protocole non reconnu : cet appareil ne peut pas encore être importé automatiquement.",
       "import.resultSummary": "{added} ajoutés, {overwritten} écrasés, {skipped} ignorés.",
       "import.resultErrors": " Erreurs: {errors}",
     },
@@ -482,6 +527,16 @@
       "import.conflictOverwrite": "overwrite",
       "import.kindTranslatedNote": "kind translated from the old format",
       "import.checkboxAriaLabel": "Import {name}",
+      "import.summary.newSingular": "{n} new",
+      "import.summary.newPlural": "{n} new",
+      "import.summary.conflictSingular": "{n} conflict",
+      "import.summary.conflictPlural": "{n} conflicts",
+      "import.summary.unknownSingular": "{n} unknown protocol",
+      "import.summary.unknownPlural": "{n} unknown protocols",
+      "import.modify": "Modify",
+      "import.collapse": "Collapse",
+      "import.toggleAriaLabel": "Show or hide fields for {name}",
+      "import.unknownProtocolNote": "Unrecognized protocol — this device can't be imported automatically yet.",
       "import.resultSummary": "{added} added, {overwritten} overwritten, {skipped} skipped.",
       "import.resultErrors": " Errors: {errors}",
     },
@@ -1142,8 +1197,8 @@
     return "<select data-field='kind' aria-label='" + label + "'><option value=''>--</option>" + opts + "</select>";
   }
 
-  function conflictSelectHtml(row) {
-    if (row.status !== "conflict") return "-";
+  function conflictFieldHtml(row) {
+    if (row.status !== "conflict") return "<span class='muted'>–</span>";
     var label = t("import.conflictAriaLabel", { name: escapeAttr(row.friendly_name) });
     return "<select data-field='conflict_action' aria-label='" + label + "'>" +
       "<option value='keep_existing'>" + t("import.conflictKeepExisting") + "</option>" +
@@ -1151,22 +1206,61 @@
       "</select>";
   }
 
+  function importCountLabel(n, singularKey, pluralKey) {
+    return t(n === 1 ? singularKey : pluralKey, { n: n });
+  }
+
+  function renderImportSummary() {
+    var counts = { new: 0, conflict: 0, unknown_protocol: 0 };
+    currentImportRows.forEach(function (row) {
+      counts[row.status] = (counts[row.status] || 0) + 1;
+    });
+    var parts = [];
+    if (counts.new) parts.push(importCountLabel(counts.new, "import.summary.newSingular", "import.summary.newPlural"));
+    if (counts.conflict) parts.push(importCountLabel(counts.conflict, "import.summary.conflictSingular", "import.summary.conflictPlural"));
+    if (counts.unknown_protocol) parts.push(importCountLabel(counts.unknown_protocol, "import.summary.unknownSingular", "import.summary.unknownPlural"));
+    $("import-summary").textContent = parts.join(" · ");
+  }
+
+  function importRowFieldsHtml(row) {
+    if (row.status === "unknown_protocol") {
+      return (
+        "<div class='import-field'><label>" + t("import.col.domain") + "</label><span class='muted'>–</span></div>" +
+        "<div class='import-field'><label>" + t("import.col.kind") + "</label><span class='muted'>–</span></div>" +
+        "<div class='import-field'><label>" + t("import.col.conflict") + "</label><span class='muted'>–</span></div>" +
+        "<div class='import-note muted'>" + t("import.unknownProtocolNote") + "</div>"
+      );
+    }
+    var translatedNote = row.kind_translated
+      ? "<div class='muted' style='font-size:0.75em'>" + t("import.kindTranslatedNote") + "</div>" : "";
+    return (
+      "<div class='import-field'><label>" + t("import.col.domain") + "</label>" + domainSelectHtml(row) + "</div>" +
+      "<div class='import-field'><label>" + t("import.col.kind") + "</label>" + kindSelectHtml(row) + translatedNote + "</div>" +
+      "<div class='import-field'><label>" + t("import.col.conflict") + "</label>" + conflictFieldHtml(row) + "</div>"
+    );
+  }
+
   function renderImportTable() {
+    renderImportSummary();
     $("import-table-body").innerHTML = currentImportRows.map(function (row, i) {
       var checked = row.status !== "unknown_protocol" ? "checked" : "";
       var disabled = row.status === "unknown_protocol" ? "disabled" : "";
-      var translatedNote = row.kind_translated
-        ? "<div class='muted' style='font-size:0.75em'>" + t("import.kindTranslatedNote") + "</div>" : "";
       var checkboxLabel = t("import.checkboxAriaLabel", { name: escapeAttr(row.friendly_name) });
-      return "<tr data-index='" + i + "'>" +
-        "<td><input type='checkbox' class='import-check' aria-label='" + checkboxLabel + "' " + checked + " " + disabled + "></td>" +
-        "<td>" + row.friendly_name + "<div class='muted' style='font-size:0.8em'>" + row.key + "</div></td>" +
-        "<td>" + row.protocol_name + "</td>" +
-        "<td><span class='status-pill " + row.status + "'>" + row.status + "</span></td>" +
-        "<td>" + domainSelectHtml(row) + "</td>" +
-        "<td>" + kindSelectHtml(row) + translatedNote + "</td>" +
-        "<td>" + conflictSelectHtml(row) + "</td>" +
-        "</tr>";
+      var toggleLabel = t(row.expanded ? "import.collapse" : "import.modify");
+      var toggleAria = t("import.toggleAriaLabel", { name: escapeAttr(row.friendly_name) });
+      return "<div class='import-row status-" + row.status + (row.expanded ? " expanded" : "") + "' data-index='" + i + "'>" +
+        "<div class='import-row-head'>" +
+          "<label class='import-check-wrap'><input type='checkbox' class='import-check' aria-label='" + checkboxLabel + "' " + checked + " " + disabled + "></label>" +
+          "<div class='import-row-main'>" +
+            "<div class='import-row-name'>" + row.friendly_name + "</div>" +
+            "<div class='import-row-sub'>" + row.key + "<span class='import-sub-protocol'> · " + row.protocol_name + "</span></div>" +
+          "</div>" +
+          "<div class='import-protocol'>" + row.protocol_name + "</div>" +
+          "<span class='status-pill " + row.status + "'>" + row.status + "</span>" +
+          "<button type='button' class='import-toggle' data-action='toggle' aria-label='" + toggleAria + "' aria-expanded='" + (row.expanded ? "true" : "false") + "'>" + toggleLabel + "</button>" +
+        "</div>" +
+        "<div class='import-details'>" + importRowFieldsHtml(row) + "</div>" +
+      "</div>";
     }).join("");
   }
 
@@ -1185,17 +1279,29 @@
         show(err.id);
         return;
       }
-      currentImportRows = res.body.rows;
+      currentImportRows = res.body.rows.map(function (row) {
+        row.expanded = row.status !== "new";
+        return row;
+      });
       renderImportTable();
       hide("import-step-input");
       show("import-step-preview");
     });
   });
 
+  $("import-table-body").addEventListener("click", function (e) {
+    var btn = e.target.closest(".import-toggle");
+    if (!btn) return;
+    var row = btn.closest(".import-row");
+    var idx = Number.parseInt(row.dataset.index, 10);
+    currentImportRows[idx].expanded = !currentImportRows[idx].expanded;
+    renderImportTable();
+  });
+
   $("import-table-body").addEventListener("change", function (e) {
-    var tr = e.target.closest("tr");
-    if (!tr) return;
-    var idx = Number.parseInt(tr.dataset.index, 10);
+    var row = e.target.closest(".import-row");
+    if (!row) return;
+    var idx = Number.parseInt(row.dataset.index, 10);
     var field = e.target.dataset.field;
     if (!field) return;
     if (field === "conflict_action") {
