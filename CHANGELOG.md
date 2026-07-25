@@ -1,5 +1,7 @@
 ## Unreleased
 
+## 1.2.0 - 2026-07-25
+
 ### 🚀 Added
 - **backup:** add native devices.json export/import to survive addon reinstalls (#73)
 
