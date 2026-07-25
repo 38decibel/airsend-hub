@@ -1,5 +1,6 @@
 from pathlib import Path
 import re
+import subprocess
 from datetime import date
 
 from semver import bump
@@ -16,6 +17,34 @@ CHANGELOG = Path(
 RELEASE_NOTES = Path(
     "/tmp/release_notes.md"
 )
+
+SEPARATOR = "---"
+
+DEFAULT_ENTRY = "_No description provided for this release._"
+
+TYPE_TO_SECTION = {
+    "feat": "Added",
+    "fix": "Fixed",
+    "deps": "Dependencies",
+}
+
+SECTION_ICONS = {
+    "Added": "🚀",
+    "Changed": "♻️",
+    "Fixed": "🐛",
+    "Dependencies": "📦",
+}
+
+CONVENTIONAL_RE = re.compile(
+    r"^(feat|fix|deps|chore|docs|refactor|test|ci|perf|style|build)"
+    r"(?:\(([^)]+)\))?!?:\s*(.+)$"
+)
+
+BUMP_RE = re.compile(r"^Bump (.+) from (.+) to (.+)$")
+
+PR_SUFFIX_RE = re.compile(r"^(.*)\s\(#(\d+)\)$")
+
+DEPENDABOT_AUTHOR = "dependabot[bot]"
 
 
 def get_version():
@@ -44,62 +73,68 @@ def set_version(version):
     CONFIG.write_text(text)
 
 
-def strip_empty_sections(block):
-    """Drop any '### ' subsection heading in block that has no content
-    line before the next '### ' / '## ' heading (or the end of block)."""
+def get_last_commit():
+    """Return (subject, author_name) for the commit that triggered this
+    release -- the squash-merge commit that GitHub just pushed to
+    main."""
 
-    lines = block.split("\n")
-    kept = []
-    i = 0
-    total = len(lines)
+    subject = subprocess.check_output(
+        ["git", "log", "-1", "--pretty=%s"],
+        text=True,
+    ).strip()
 
-    while i < total:
-        line = lines[i]
-        if not line.startswith("### "):
-            kept.append(line)
-            i += 1
-            continue
+    author = subprocess.check_output(
+        ["git", "log", "-1", "--pretty=%an"],
+        text=True,
+    ).strip()
 
-        j = i + 1
-        has_content = False
-        while j < total and not lines[j].startswith("### ") and not lines[j].startswith("## "):
-            if lines[j].strip():
-                has_content = True
-            j += 1
-
-        if has_content:
-            kept.extend(lines[i:j])
-        i = j
-
-    return "\n".join(kept)
+    return subject, author
 
 
-def split_version_block(text, heading):
-    """Return (before, block, after) where block spans from heading up to
-    (not including) the next '## ' heading, or the end of text."""
+def section_header(section):
+    return f"### {SECTION_ICONS[section]} {section}"
 
-    start = text.index(heading)
-    rest = text[start:]
-    next_heading = rest.find("\n## ", len(heading))
-    if next_heading == -1:
-        block, after = rest, ""
+
+def build_entry(subject, author):
+    """Categorize the triggering commit the same way a PR title used to
+    be categorized, and return (section, changelog_line)."""
+
+    is_dependabot = author == DEPENDABOT_AUTHOR
+
+    match = PR_SUFFIX_RE.match(subject)
+    title, pr_number = match.groups() if match else (subject, None)
+    suffix = f" (#{pr_number})" if pr_number else ""
+
+    if is_dependabot:
+        bump_match = BUMP_RE.match(title)
+        if bump_match:
+            package, old, new = bump_match.groups()
+            category = "Docker" if "ghcr.io" in package else "Python"
+            text = f"⬆️ {category} : `{package}` {old} → {new}"
+        else:
+            text = title
+        return "Dependencies", f"- {text}{suffix}"
+
+    conv_match = CONVENTIONAL_RE.match(title)
+    if conv_match:
+        commit_type, scope, description = conv_match.groups()
+        section = TYPE_TO_SECTION.get(commit_type, "Changed")
+        text = f"**{scope}:** {description}" if scope else description
     else:
-        block, after = rest[:next_heading], rest[next_heading:]
-    return text[:start], block, after
+        section, text = "Changed", title
+
+    return section, f"- {text}{suffix}"
 
 
-def extract_notes_body(block, heading):
-    """Drop the leading '## <version> - <date>' heading line (and any
-    blank lines right after it) from block, returning only the notes
-    content for that release."""
+def build_body(subject, author):
+    if not subject.strip():
+        return DEFAULT_ENTRY
 
-    body = block[len(heading):]
-    return body.lstrip("\n")
+    section, line = build_entry(subject, author)
+    return f"{section_header(section)}\n{line}\n"
 
 
 def detect_level():
-
-    import subprocess
 
     files = subprocess.check_output(
         [
@@ -147,31 +182,19 @@ set_version(new)
 today = date.today().isoformat()
 
 
-text = CHANGELOG.read_text()
-
+subject, author = get_last_commit()
+body = build_body(subject, author)
 
 version_heading = f"## {new} - {today}"
 
-text = text.replace(
-    "## Unreleased",
-    version_heading,
-    1
-)
+existing = CHANGELOG.read_text() if CHANGELOG.exists() else ""
 
-before, released_block, after = split_version_block(text, version_heading)
-released_block = strip_empty_sections(released_block)
-text = before + released_block + after
+new_block = f"{SEPARATOR}\n\n{version_heading}\n\n{body}\n"
+
+CHANGELOG.write_text(new_block + existing)
 
 
-text = "## Unreleased\n\n" + text
-
-
-CHANGELOG.write_text(text)
-
-
-RELEASE_NOTES.write_text(
-    extract_notes_body(released_block, version_heading)
-)
+RELEASE_NOTES.write_text(body + "\n")
 
 
 print(new)
