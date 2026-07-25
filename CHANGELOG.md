@@ -1,5 +1,12 @@
 ---
 
+## 1.3.0 - 2026-07-25
+
+### ♻️ Changed
+- Merge pull request #74 from 38decibel/38decibel-patch-8
+
+---
+
 ## 1.2.0 - 2026-07-25
 
 ### 🚀 Added
