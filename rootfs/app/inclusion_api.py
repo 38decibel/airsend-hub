@@ -5,6 +5,7 @@ Ingress web interface for adding devices, inspired by the workflow of the offici
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import re
 import time
@@ -15,6 +16,7 @@ from typing import Any
 from aiohttp import web
 
 from airsend_client import AirSendClient, AirSendError, BoxConfig
+from backup_export import build_backup, diff_backup_devices, parse_backup
 from bind_manager import BindManager
 from catalog_data import search_brands
 from channel_aliases import expected_receive_channels
@@ -111,6 +113,9 @@ class InclusionApi:
         self.app.router.add_post("/api/import/preview", self._handle_import_preview)
         self.app.router.add_post("/api/import/commit", self._handle_import_commit)
         self.app.router.add_get("/api/import/detect", self._handle_import_detect)
+        self.app.router.add_get("/api/backup/export", self._handle_backup_export)
+        self.app.router.add_post("/api/backup/import/preview", self._handle_backup_import_preview)
+        self.app.router.add_post("/api/backup/import/commit", self._handle_backup_import_commit)
         self.app.router.add_get("/{tail:.*}", self._handle_static)
 
 
@@ -279,17 +284,22 @@ class InclusionApi:
         friendly_name: str,
         options: dict[str, Any],
         source_of_creation: str,
+        key: str | None = None,
     ) -> Device:
+        """If `key` is omitted, one is minted from friendly_name (existing
+        inclusion/YAML-import behavior). If provided (backup restore), it is
+        used verbatim so the MQTT unique_id/entity_id match the originals."""
         domain = KIND_TO_DOMAIN.get(kind)
         if domain is None:
             raise web.HTTPBadRequest(text=f"unknown kind: {kind}")
 
-        base_key = _slugify(friendly_name)
-        key = base_key
-        suffix = 2
-        while self._registry.get(key) is not None:
-            key = f"{base_key}_{suffix}"
-            suffix += 1
+        if key is None:
+            base_key = _slugify(friendly_name)
+            key = base_key
+            suffix = 2
+            while self._registry.get(key) is not None:
+                key = f"{base_key}_{suffix}"
+                suffix += 1
 
         device = Device(
             key=key,
@@ -584,6 +594,115 @@ class InclusionApi:
 
         return web.json_response(
             {"added": added, "overwritten": overwritten, "skipped": skipped, "errors": errors}
+        )
+
+    async def _handle_backup_export(self, request: web.Request) -> web.Response:
+        backup = build_backup(self._registry.all())
+        filename = f"airsend-hub-backup-{backup['exported_at']}.json"
+        return web.Response(
+            text=json.dumps(backup, indent=2, ensure_ascii=False),
+            content_type="application/json",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
+    async def _handle_backup_import_preview(self, request: web.Request) -> web.Response:
+        body = await request.json()
+        raw = body.get("backup")
+        if not isinstance(raw, dict):
+            raise web.HTTPBadRequest(text="missing or invalid 'backup'")
+
+        try:
+            backup_devices = parse_backup(raw)
+        except ValueError as exc:
+            raise web.HTTPBadRequest(text=str(exc))
+
+        existing_devices = {
+            d.key: {
+                "box": d.box,
+                "channel_id": d.channel_id,
+                "channel_source": d.channel_source,
+                "protocol_name": d.protocol_name,
+                "kind": d.kind,
+                "domain": d.domain,
+                "friendly_name": d.friendly_name,
+                "options": d.options,
+                "source_of_creation": d.source_of_creation,
+            }
+            for d in self._registry.all()
+        }
+
+        rows = diff_backup_devices(
+            backup_devices, existing_devices, set(self._boxes.keys()), set(KIND_TO_DOMAIN.keys())
+        )
+        return web.json_response({"rows": rows, "known_boxes": list(self._boxes.keys())})
+
+    def _process_backup_row(self, row: dict[str, Any]) -> tuple[str, str | None]:
+        action = row.get("action", "skip")
+        key = row.get("key", "?")
+
+        if action == "skip":
+            return "skipped", None
+        if action not in ("import", "overwrite"):
+            return "error", f"{key}: unknown action '{action}'"
+
+        kind = row.get("kind")
+        if kind not in KIND_TO_DOMAIN:
+            return "error", f"{key}: unknown kind '{kind}'"
+        box_slug = row.get("box")
+        if box_slug not in self._boxes:
+            return "error", f"{key}: unknown box '{box_slug}'"
+        friendly_name = str(row.get("friendly_name", "")).strip()
+        if not friendly_name:
+            return "error", f"{key}: {_FRIENDLY_NAME_EMPTY}"
+
+        existing = self._registry.get(key)
+        if existing is not None and action != "overwrite":
+            return "error", f"{key}: already exists (choose 'overwrite' or 'skip')"
+
+        removed_existing = existing is not None
+        if removed_existing:
+            self._mqtt_bridge.remove_discovery(existing)
+            self._registry.remove(key)
+
+        try:
+            self._create_device(
+                box_slug=box_slug,
+                channel_id=row["channel_id"],
+                channel_source=row["channel_source"],
+                protocol_name=row.get("protocol_name"),
+                kind=kind,
+                friendly_name=friendly_name,
+                options=row.get("options") or {},
+                source_of_creation=row.get("source_of_creation") or "backup_import",
+                key=key,
+            )
+        except web.HTTPBadRequest as exc:
+            return "error", f"{key}: {exc.text}"
+
+        return "overwritten" if removed_existing else "imported", None
+
+    async def _handle_backup_import_commit(self, request: web.Request) -> web.Response:
+        body = await request.json()
+        rows = body.get("rows")
+        if not isinstance(rows, list):
+            raise web.HTTPBadRequest(text="'rows' must be a list")
+
+        imported = overwritten = skipped = 0
+        errors: list[str] = []
+
+        for row in rows:
+            outcome, error = self._process_backup_row(row)
+            if error is not None:
+                errors.append(error)
+            elif outcome == "imported":
+                imported += 1
+            elif outcome == "overwritten":
+                overwritten += 1
+            else:
+                skipped += 1
+
+        return web.json_response(
+            {"imported": imported, "overwritten": overwritten, "skipped": skipped, "errors": errors}
         )
 
 
