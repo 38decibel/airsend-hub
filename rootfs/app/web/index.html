@@ -114,6 +114,19 @@
   .status-pill.new { background: #123a22; color: #7ee0a0; }
   .status-pill.conflict { background: #3a2f14; color: #e8c977; }
   .status-pill.unknown_protocol { background: #3a1414; color: #ff9a9a; }
+  .status-pill.identical { background: #16233a; color: #8fb8ee; }
+  .status-pill.unknown_box { background: #3a2f14; color: #e8c977; }
+  .status-pill.invalid_kind { background: #3a1414; color: #ff9a9a; }
+
+  .backup-row {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 8px 4px; border-bottom: 1px solid var(--border);
+  }
+  .backup-row-main { flex: 1 1 160px; min-width: 0; }
+  .backup-row-name { overflow-wrap: anywhere; }
+  .backup-row-sub { font-size: 0.78rem; color: var(--muted); }
+  .backup-row-action { flex: 0 0 auto; }
+  .backup-row-action select { padding: 5px 8px; font-size: 0.85rem; margin-bottom: 0; }
 
   @media (min-width: 640px) {
     .import-list-head, .import-row {
@@ -148,6 +161,7 @@
   <div style="margin-top:14px;">
     <button class="btn" id="btn-add-device" data-i18n="home.addDevice">+ Ajouter un appareil</button>
     <button class="btn secondary" id="btn-open-import" data-i18n="home.importYaml">Importer depuis YAML</button>
+    <button class="btn secondary" id="btn-open-backup" data-i18n="home.backup">Sauvegarde / restauration</button>
   </div>
 </div>
 
@@ -307,6 +321,34 @@
   </div>
 </div>
 
+<div id="screen-backup" class="card hidden">
+  <button class="btn secondary" id="btn-backup-cancel" data-i18n="common.backCancel">&larr; Annuler</button>
+
+  <div style="margin-top:14px;">
+    <h2 data-i18n="backup.exportTitle">Exporter</h2>
+    <p class="muted" data-i18n="backup.exportInstructions">Télécharge la configuration actuelle des appareils. Conserve ce fichier avant une désinstallation : le réimporter ensuite réattache les mêmes appareils dans Home Assistant, sans doublons.</p>
+    <a class="btn" id="btn-backup-export" href="api/backup/export" download data-i18n="backup.exportButton">⬇ Télécharger la sauvegarde</a>
+  </div>
+
+  <div id="backup-step-input" style="margin-top:24px; padding-top:20px; border-top:1px solid var(--border);">
+    <h2 data-i18n="backup.importTitle">Restaurer</h2>
+    <p class="muted" data-i18n="backup.importInstructions">Choisis un fichier de sauvegarde précédemment exporté. Rien n'est modifié tant que tu n'as pas confirmé à l'étape suivante.</p>
+    <input type="file" id="backup-file-input" accept=".json" data-i18n-aria="backup.fileInputAria" aria-label="Fichier de sauvegarde à importer">
+    <div id="backup-error" class="banner error hidden"></div>
+    <button class="btn" id="backup-preview-btn" disabled data-i18n="backup.analyze">Analyser</button>
+  </div>
+
+  <div id="backup-step-preview" class="hidden" style="margin-top:14px;">
+    <h2 data-i18n="backup.previewTitle">Vérifier avant restauration</h2>
+    <div id="backup-summary" class="import-summary"></div>
+    <div id="backup-table-body"></div>
+    <div style="margin-top:14px;">
+      <button class="btn" id="backup-commit-btn" data-i18n="backup.commit">Restaurer la sélection</button>
+    </div>
+    <div id="backup-result" class="banner hidden" style="margin-top:10px;"></div>
+  </div>
+</div>
+
 <script>
 (function () {
   "use strict";
@@ -427,6 +469,44 @@
       "import.unknownProtocolNote": "Protocole non reconnu : cet appareil ne peut pas encore être importé automatiquement.",
       "import.resultSummary": "{added} ajoutés, {overwritten} écrasés, {skipped} ignorés.",
       "import.resultErrors": " Erreurs: {errors}",
+
+      "home.backup": "Sauvegarde / restauration",
+
+      "backup.exportTitle": "Exporter",
+      "backup.exportInstructions": "Télécharge la configuration actuelle des appareils. Conserve ce fichier avant une désinstallation : le réimporter ensuite réattache les mêmes appareils dans Home Assistant, sans doublons.",
+      "backup.exportButton": "⬇ Télécharger la sauvegarde",
+      "backup.importTitle": "Restaurer",
+      "backup.importInstructions": "Choisis un fichier de sauvegarde précédemment exporté. Rien n'est modifié tant que tu n'as pas confirmé à l'étape suivante.",
+      "backup.fileInputAria": "Fichier de sauvegarde à importer",
+      "backup.analyze": "Analyser",
+      "backup.previewTitle": "Vérifier avant restauration",
+      "backup.commit": "Restaurer la sélection",
+      "backup.parseError": "Erreur lors de l'analyse du fichier de sauvegarde.",
+      "backup.commitError": "Erreur lors de la restauration.",
+      "backup.resultSummary": "{imported} restaurés, {overwritten} écrasés, {skipped} ignorés.",
+      "backup.resultErrors": " Erreurs: {errors}",
+      "backup.checkboxAriaLabel": "Restaurer {name}",
+      "backup.actionAriaLabel": "Action pour {name}",
+      "backup.boxSelectAriaLabel": "Box cible pour {name}",
+      "backup.boxSelectPlaceholder": "-- choisir une box --",
+      "backup.status.new": "nouveau",
+      "backup.status.identical": "déjà à jour",
+      "backup.status.conflict": "conflit",
+      "backup.status.unknown_box": "box inconnue",
+      "backup.status.invalid_kind": "type inconnu",
+      "backup.action.skip": "ignorer",
+      "backup.action.import": "importer",
+      "backup.action.overwrite": "écraser l'existant",
+      "backup.summary.newSingular": "{n} nouveau",
+      "backup.summary.newPlural": "{n} nouveaux",
+      "backup.summary.conflictSingular": "{n} conflit",
+      "backup.summary.conflictPlural": "{n} conflits",
+      "backup.summary.identicalSingular": "{n} déjà à jour",
+      "backup.summary.identicalPlural": "{n} déjà à jour",
+      "backup.summary.unknown_boxSingular": "{n} box inconnue",
+      "backup.summary.unknown_boxPlural": "{n} box inconnues",
+      "backup.summary.invalid_kindSingular": "{n} type inconnu",
+      "backup.summary.invalid_kindPlural": "{n} types inconnus",
     },
     en: {
       "page.title": "AirSend - Add a device",
@@ -539,6 +619,44 @@
       "import.unknownProtocolNote": "Unrecognized protocol — this device can't be imported automatically yet.",
       "import.resultSummary": "{added} added, {overwritten} overwritten, {skipped} skipped.",
       "import.resultErrors": " Errors: {errors}",
+
+      "home.backup": "Backup / restore",
+
+      "backup.exportTitle": "Export",
+      "backup.exportInstructions": "Download the current device configuration. Keep this file before uninstalling: re-importing it afterwards re-attaches the same devices in Home Assistant, without duplicates.",
+      "backup.exportButton": "⬇ Download backup",
+      "backup.importTitle": "Restore",
+      "backup.importInstructions": "Choose a previously exported backup file. Nothing is changed until you confirm on the next step.",
+      "backup.fileInputAria": "Backup file to import",
+      "backup.analyze": "Analyze",
+      "backup.previewTitle": "Review before restoring",
+      "backup.commit": "Restore selection",
+      "backup.parseError": "Error while parsing the backup file.",
+      "backup.commitError": "Error while restoring.",
+      "backup.resultSummary": "{imported} restored, {overwritten} overwritten, {skipped} skipped.",
+      "backup.resultErrors": " Errors: {errors}",
+      "backup.checkboxAriaLabel": "Restore {name}",
+      "backup.actionAriaLabel": "Action for {name}",
+      "backup.boxSelectAriaLabel": "Target box for {name}",
+      "backup.boxSelectPlaceholder": "-- choose a box --",
+      "backup.status.new": "new",
+      "backup.status.identical": "up to date",
+      "backup.status.conflict": "conflict",
+      "backup.status.unknown_box": "unknown box",
+      "backup.status.invalid_kind": "unknown type",
+      "backup.action.skip": "skip",
+      "backup.action.import": "import",
+      "backup.action.overwrite": "overwrite existing",
+      "backup.summary.newSingular": "{n} new",
+      "backup.summary.newPlural": "{n} new",
+      "backup.summary.conflictSingular": "{n} conflict",
+      "backup.summary.conflictPlural": "{n} conflicts",
+      "backup.summary.identicalSingular": "{n} up to date",
+      "backup.summary.identicalPlural": "{n} up to date",
+      "backup.summary.unknown_boxSingular": "{n} unknown box",
+      "backup.summary.unknown_boxPlural": "{n} unknown boxes",
+      "backup.summary.invalid_kindSingular": "{n} unknown type",
+      "backup.summary.invalid_kindPlural": "{n} unknown types",
     },
   };
 
@@ -609,6 +727,7 @@
   function refreshDynamicUi() {
     loadDevices();
     if (currentImportRows.length) { renderImportTable(); }
+    if (currentBackupRows.length) { renderBackupTable(); }
   }
 
   applyStaticTranslations();
@@ -830,6 +949,7 @@
     if (state.listenPoll) { clearInterval(state.listenPoll); state.listenPoll = null; }
     hide("screen-wizard");
     hide("screen-import");
+    hide("screen-backup");
     show("screen-home");
     loadDevices();
   }
@@ -1346,6 +1466,163 @@
       result.className = body.errors.length ? "banner warn" : "banner ok";
       result.textContent = t("import.resultSummary", { added: body.added, overwritten: body.overwritten, skipped: body.skipped }) +
         (body.errors.length ? t("import.resultErrors", { errors: body.errors.join(" | ") }) : "");
+      show(result.id);
+    });
+  });
+
+
+  // ---------------------------------------------------------------------
+  // Backup / restore (native devices.json format)
+  // ---------------------------------------------------------------------
+
+  var BACKUP_STATUS_LABEL_KEYS = {
+    new: "backup.status.new",
+    identical: "backup.status.identical",
+    conflict: "backup.status.conflict",
+    unknown_box: "backup.status.unknown_box",
+    invalid_kind: "backup.status.invalid_kind",
+  };
+  var currentBackupRows = [];
+  var pendingBackupPayload = null;
+
+  function resetBackupScreen() {
+    currentBackupRows = [];
+    pendingBackupPayload = null;
+    $("backup-file-input").value = "";
+    $("backup-preview-btn").disabled = true;
+    hide("backup-error");
+    hide("backup-step-preview");
+    show("backup-step-input");
+    $("backup-table-body").innerHTML = "";
+    hide("backup-result");
+  }
+
+  $("btn-open-backup").addEventListener("click", function () {
+    resetBackupScreen();
+    hide("screen-home");
+    show("screen-backup");
+  });
+  $("btn-backup-cancel").addEventListener("click", backToHome);
+
+  $("backup-file-input").addEventListener("change", function () {
+    var file = this.files[0];
+    pendingBackupPayload = null;
+    $("backup-preview-btn").disabled = true;
+    hide("backup-error");
+    if (!file) return;
+    file.text().then(function (text) {
+      try {
+        pendingBackupPayload = JSON.parse(text);
+        $("backup-preview-btn").disabled = false;
+      } catch (e) {
+        var err = $("backup-error");
+        err.textContent = t("backup.parseError");
+        show(err.id);
+      }
+    });
+  });
+
+  function backupCountLabel(n, statusKey) {
+    return t("backup.summary." + statusKey + (n === 1 ? "Singular" : "Plural"), { n: n });
+  }
+
+  function renderBackupSummary() {
+    var counts = {};
+    currentBackupRows.forEach(function (row) {
+      counts[row.status] = (counts[row.status] || 0) + 1;
+    });
+    var parts = Object.keys(counts).map(function (status) {
+      return backupCountLabel(counts[status], status);
+    });
+    $("backup-summary").textContent = parts.join(" · ");
+  }
+
+  function backupActionSelectHtml(row, index) {
+    if (row.status === "invalid_kind") return "<span class='muted'>–</span>";
+
+    if (row.status === "unknown_box") {
+      var boxLabel = t("backup.boxSelectAriaLabel", { name: escapeAttr(row.friendly_name) });
+      var boxOpts = boxesCache.map(function (b) {
+        return "<option value='" + b.slug + "'" + (row.box === b.slug ? " selected" : "") + ">" + b.slug + "</option>";
+      }).join("");
+      return "<select data-index='" + index + "' data-field='box' aria-label='" + boxLabel + "'>" +
+        "<option value=''>" + t("backup.boxSelectPlaceholder") + "</option>" + boxOpts + "</select>";
+    }
+
+    var actionLabel = t("backup.actionAriaLabel", { name: escapeAttr(row.friendly_name) });
+    var actions = row.status === "conflict" ? ["skip", "overwrite"] : ["skip", "import"];
+    var actionOpts = actions.map(function (a) {
+      return "<option value='" + a + "'" + (row.action === a ? " selected" : "") + ">" + t("backup.action." + a) + "</option>";
+    }).join("");
+    return "<select data-index='" + index + "' data-field='action' aria-label='" + actionLabel + "'>" + actionOpts + "</select>";
+  }
+
+  function renderBackupTable() {
+    renderBackupSummary();
+    $("backup-table-body").innerHTML = currentBackupRows.map(function (row, i) {
+      var statusLabel = t(BACKUP_STATUS_LABEL_KEYS[row.status] || row.status);
+      return "<div class='backup-row'>" +
+        "<div class='backup-row-main'>" +
+          "<div class='backup-row-name'>" + row.friendly_name + "</div>" +
+          "<div class='backup-row-sub'>" + row.key + " · " + row.box + "</div>" +
+        "</div>" +
+        "<span class='status-pill " + row.status + "'>" + statusLabel + "</span>" +
+        "<div class='backup-row-action'>" + backupActionSelectHtml(row, i) + "</div>" +
+      "</div>";
+    }).join("");
+  }
+
+  $("backup-preview-btn").addEventListener("click", function () {
+    hide("backup-error");
+    if (!pendingBackupPayload) return;
+    api("api/backup/import/preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ backup: pendingBackupPayload }),
+    }).then(function (res) {
+      if (!res.ok) {
+        var err = $("backup-error");
+        err.textContent = res.body.text || res.body.error || t("backup.parseError");
+        show(err.id);
+        return;
+      }
+      currentBackupRows = res.body.rows;
+      renderBackupTable();
+      hide("backup-step-input");
+      show("backup-step-preview");
+    });
+  });
+
+  $("backup-table-body").addEventListener("change", function (e) {
+    var field = e.target.dataset.field;
+    if (!field) return;
+    var idx = Number.parseInt(e.target.dataset.index, 10);
+    currentBackupRows[idx][field] = e.target.value;
+    if (field === "box" && e.target.value) {
+      currentBackupRows[idx].action = "import";
+    }
+  });
+
+  $("backup-commit-btn").addEventListener("click", function () {
+    var rowsToCommit = currentBackupRows.map(function (row) { return { ...row }; });
+    $("backup-commit-btn").disabled = true;
+    api("api/backup/import/commit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rows: rowsToCommit }),
+    }).then(function (res) {
+      $("backup-commit-btn").disabled = false;
+      var result = $("backup-result");
+      if (!res.ok) {
+        result.className = "banner error";
+        result.textContent = res.body.text || t("backup.commitError");
+        show(result.id);
+        return;
+      }
+      var body = res.body;
+      result.className = body.errors.length ? "banner warn" : "banner ok";
+      result.textContent = t("backup.resultSummary", { imported: body.imported, overwritten: body.overwritten, skipped: body.skipped }) +
+        (body.errors.length ? t("backup.resultErrors", { errors: body.errors.join(" | ") }) : "");
       show(result.id);
     });
   });
