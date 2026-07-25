@@ -27,7 +27,7 @@ import os
 import re
 
 
-CHANGELOG = Path("addons/airsend-hub/CHANGELOG.md")
+CHANGELOG = Path("CHANGELOG.md")
 
 TYPE_TO_SECTION = {
     "feat": "Added",
