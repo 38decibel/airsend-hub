@@ -23,8 +23,8 @@ jobs:
       - name: Commit version
         run: |
           git add \
-            addons/airsend-hub/config.yaml \
-            addons/airsend-hub/CHANGELOG.md
+            config.yaml \
+            CHANGELOG.md
           git commit \
             -m "chore(release): ${{ env.VERSION }}" \
             -m "$(cat /tmp/release_notes.md)"
