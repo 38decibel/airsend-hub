@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title data-i18n="page.title">AirSend - Ajouter un appareil</title>
+<style>
+  :root {
+    --bg: #111318; --card: #1b1e26; --border: #2a2e38; --text: #e8eaed;
+    --muted: #9aa0ac; --accent: #4d8aff; --accent-hover: #6b9dff;
+    --danger: #e05555; --ok: #3fbf6f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--text); padding: 16px;
+  }
+  h1 { font-size: 1.3rem; margin: 0 0 16px; }
+  h2 { font-size: 1.05rem; margin: 0 0 12px; color: var(--muted); font-weight: 600; }
+  .top-bar { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .lang-switch {
+    display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+    margin-bottom: 16px; flex-shrink: 0;
+  }
+  .lang-switch button {
+    background: #1b1e26; color: var(--muted); border: none; padding: 6px 12px;
+    font-size: 0.8rem; cursor: pointer;
+  }
+  .lang-switch button.active { background: var(--accent); color: #fff; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; margin-bottom: 14px;
+  }
+  .btn {
+    display: inline-block; background: var(--accent); color: #fff; border: none;
+    border-radius: 8px; padding: 11px 18px; font-size: 0.95rem; cursor: pointer;
+    margin: 4px 6px 4px 0; text-align: center;
+  }
+  .btn:hover { background: var(--accent-hover); }
+  .btn.secondary { background: #2a2e38; color: var(--text); }
+  .btn.secondary:hover { background: #343946; }
+  .btn:disabled { opacity: 0.5; cursor: default; }
+  .btn-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .choice-box {
+    flex: 1 1 140px; background: #23262f; border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px; text-align: center; cursor: pointer; min-width: 120px;
+  }
+  .choice-box:hover { border-color: var(--accent); }
+  .choice-box.selected { border-color: var(--accent); background: #1e2a44; }
+  input[type=text], input[type=number], textarea, select {
+    width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);
+    background: #14161c; color: var(--text); font-size: 0.95rem; margin-bottom: 8px;
+    font-family: inherit;
+  }
+  textarea { font-family: ui-monospace, monospace; font-size: 0.82rem; }
+  label.field-label { display: block; font-size: 0.85rem; color: var(--muted); margin: 10px 0 4px; }
+  .suggestions { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-top: -4px; }
+  .suggestion-item { padding: 9px 12px; cursor: pointer; border-bottom: 1px solid var(--border); }
+  .suggestion-item:last-child { border-bottom: none; }
+  .suggestion-item:hover { background: #23262f; }
+  .muted { color: var(--muted); font-size: 0.88rem; }
+  .banner { padding: 10px 12px; border-radius: 8px; margin: 8px 0; font-size: 0.88rem; }
+  .banner.warn { background: #3a2f14; border: 1px solid #6b5420; color: #e8c977; }
+  .banner.error { background: #3a1414; border: 1px solid #6b2020; color: #ff9a9a; }
+  .banner.ok { background: #123a22; border: 1px solid #1f6b3a; color: #7ee0a0; }
+  .banner.rolling-wip {
+    background: #3a1414; border: 2px solid #b23c3c; color: #ffd4d4;
+    font-size: 0.98rem; font-weight: 600; padding: 14px 16px; line-height: 1.4;
+  }
+  .candidate {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px;
+  }
+  .device-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; gap: 8px; }
+  .device-row:last-child { border-bottom: none; }
+  .device-row .device-info { flex: 1; min-width: 0; }
+  .device-row .device-actions { display: flex; gap: 4px; flex-shrink: 0; }
+  .icon-btn {
+    background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--muted);
+    padding: 5px 8px; font-size: 0.85rem; cursor: pointer;
+  }
+  .icon-btn:hover { border-color: var(--accent); color: var(--text); }
+  .icon-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+  .spinner {
+    display: inline-block; width: 14px; height: 14px; border: 2px solid var(--muted);
+    border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite;
+    vertical-align: middle; margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .hidden { display: none !important; }
+  .checkbox-row { display: flex; align-items: center; gap: 8px; margin: 10px 0; }
+
+  .import-summary { font-size: 0.85rem; color: var(--muted); margin: 4px 0 12px; }
+  .import-row { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
+  .import-row-head { display: flex; align-items: flex-start; gap: 10px; }
+  .import-check-wrap { padding-top: 3px; }
+  .import-row-main { flex: 1; min-width: 0; }
+  .import-row-name { font-size: 0.92rem; }
+  .import-row-sub { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+  .import-protocol { display: none; font-size: 0.85rem; }
+  .import-toggle {
+    background: none; border: 1px solid var(--border); border-radius: 6px; color: inherit;
+    font-size: 0.78rem; cursor: pointer; padding: 4px 8px; white-space: nowrap; align-self: flex-start;
+  }
+  .import-details { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .import-row.expanded .import-details { display: block; }
+  .import-field { margin-top: 10px; }
+  .import-field:first-child { margin-top: 0; }
+  .import-field label { display: block; font-size: 0.78rem; color: var(--muted); margin-bottom: 4px; }
+  .import-field select { width: 100%; margin-bottom: 0; padding: 6px; font-size: 0.85rem; }
+  .import-note { font-size: 0.78rem; margin-top: 10px; }
+  .import-list-head { display: none; }
+  .status-pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; }
+  .status-pill.new { background: #123a22; color: #7ee0a0; }
+  .status-pill.conflict { background: #3a2f14; color: #e8c977; }
+  .status-pill.unknown_protocol { background: #3a1414; color: #ff9a9a; }
+
+  @media (min-width: 640px) {
+    .import-list-head, .import-row {
+      display: grid; grid-template-columns: 26px 1.6fr 0.7fr 0.8fr 1fr 1fr 1fr;
+      gap: 10px; align-items: center;
+    }
+    .import-list-head { padding: 0 12px 8px; font-size: 0.8rem; color: var(--muted); border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+    .import-row-head { display: contents; }
+    .import-row-sub, .import-sub-protocol { display: none; }
+    .import-protocol { display: block; }
+    .import-toggle { display: none; }
+    .import-details { display: contents !important; margin: 0; padding: 0; border: 0; }
+    .import-field { margin: 0; }
+    .import-field label { display: none; }
+    .import-note { grid-column: 1 / -1; margin-top: 6px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <h1>AirSend</h1>
+  <div class="lang-switch" id="lang-switch" role="group" aria-label="Language / Langue">
+    <button type="button" id="lang-btn-fr" data-lang="fr">FR</button>
+    <button type="button" id="lang-btn-en" data-lang="en">EN</button>
+  </div>
+</div>
+
+<div id="screen-home" class="card">
+  <h2 data-i18n="home.devices">Appareils</h2>
+  <div id="device-list" class="muted" data-i18n="home.loading">Chargement…</div>
+  <div style="margin-top:14px;">
+    <button class="btn" id="btn-add-device" data-i18n="home.addDevice">+ Ajouter un appareil</button>
+    <button class="btn secondary" id="btn-open-import" data-i18n="home.importYaml">Importer depuis YAML</button>
+  </div>
+</div>
+
+<div id="device-edit" class="card hidden">
+  <h2 data-i18n="edit.title">Modifier l'appareil</h2>
+  <label class="field-label" for="edit-name-input" data-i18n="edit.name">Nom</label>
+  <input type="text" id="edit-name-input" data-i18n-placeholder="common.namePlaceholder" placeholder="ex: Volet salon terrasse">
+
+  <div id="edit-invert-row" class="checkbox-row hidden">
+    <input type="checkbox" id="edit-invert-checkbox">
+    <label for="edit-invert-checkbox" data-i18n="common.invert">Inverser le sens (câblage à l'envers)</label>
+  </div>
+
+  <div id="edit-travel-time-row" class="hidden">
+    <label class="field-label" for="edit-travel-time-input" data-i18n="common.travelTime">Durée de course estimée (secondes)</label>
+    <input type="number" id="edit-travel-time-input" min="1" max="180" step="1">
+    <div class="muted" data-i18n="edit.travelTimeHelp">Temps approximatif pour aller complètement ouvert ↔ fermé. Utilisé pour estimer quand le volet a fini sa course (pas de retour de position réel).</div>
+  </div>
+
+  <div id="edit-banner" class="banner hidden"></div>
+
+  <div style="margin-top:10px;">
+    <button class="btn" id="btn-edit-save" data-i18n="common.save">Enregistrer</button>
+    <button class="btn secondary" id="btn-edit-cancel" data-i18n="common.cancel">Annuler</button>
+  </div>
+</div>
+
+<div id="screen-wizard" class="card hidden">
+  <button class="btn secondary" id="btn-cancel" data-i18n="common.backCancel">&larr; Annuler</button>
+
+  <div id="step-branch" class="hidden" style="margin-top:14px;">
+    <h2 data-i18n="wizard.branch.title">Comment souhaitez-vous ajouter cet appareil ?</h2>
+    <div class="btn-grid">
+      <div class="choice-box" data-branch="A">
+        <strong data-i18n="wizard.branch.aTitle">J'ai la télécommande</strong>
+        <div class="muted" data-i18n="wizard.branch.aSubtitle">On écoute la trame RF réelle</div>
+      </div>
+      <div class="choice-box" data-branch="B">
+        <strong data-i18n="wizard.branch.bTitle">Je n'ai pas la télécommande</strong>
+        <div class="muted" data-i18n="wizard.branch.bSubtitle">Saisie manuelle de l'identifiant</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="step-catalog" class="hidden" style="margin-top:14px;">
+    <h2 data-i18n="wizard.catalog.title">Marque</h2>
+    <label class="field-label" for="brand-input" data-i18n="wizard.catalog.searchLabel">Chercher une marque</label>
+    <input type="text" id="brand-input" data-i18n-placeholder="wizard.catalog.searchPlaceholder" placeholder="ex: Somfy, Profalux…" autocomplete="off">
+    <div id="brand-suggestions" class="suggestions hidden"></div>
+
+    <div id="skip-brand-row" class="hidden" style="margin-top:10px;">
+      <button class="btn secondary" id="btn-skip-brand" type="button" data-i18n="wizard.catalog.skipBrand">Passer cette étape (recherche générique 433MHz)</button>
+      <div class="muted" style="margin-top:6px;" data-i18n="wizard.catalog.skipBrandHelp">À utiliser si vous ne connaissez ni la marque ni le protocole : l'écoute captera toute trame 433MHz, sans filtrage. Moins précis, en dernier recours.</div>
+    </div>
+
+    <div id="protocol-picker" class="hidden" style="margin-top:12px;">
+      <label class="field-label" data-i18n="wizard.catalog.multiProtocol">Plusieurs protocoles disponibles pour cette marque :</label>
+      <div class="btn-grid" id="protocol-choices"></div>
+    </div>
+
+    <div id="rolling-code-banner" class="banner warn hidden"></div>
+
+    <div style="margin-top:14px;">
+      <button class="btn" id="btn-catalog-next" disabled data-i18n="common.continue">Continuer</button>
+    </div>
+  </div>
+
+  <div id="step-listen" class="hidden" style="margin-top:14px;">
+    <h2 data-i18n="wizard.listen.title">Écoute radio</h2>
+    <p class="muted" data-i18n="wizard.listen.instructions">Sur votre télécommande d'origine, appuyez sur le bouton à copier pendant quelques secondes, dès que vous lancez l'écoute ci-dessous. Répétez l'appui 2 ou 3 fois si rien n'apparaît.</p>
+    <p class="muted" data-i18n="wizard.listen.proximityTip">💡 Idéalement, placez-vous à environ 1 mètre du boîtier AirSend pendant l'appui, pour optimiser la qualité du signal reçu.</p>
+    <button class="btn" id="btn-listen-play" data-i18n="wizard.listen.play">▶ Écouter (20s)</button>
+    <div id="listen-status" class="muted" style="margin-top:10px;"></div>
+    <div id="listen-candidates" style="margin-top:10px;"></div>
+  </div>
+
+  <div id="step-manual" class="hidden" style="margin-top:14px;">
+    <h2 data-i18n="wizard.manual.title">Identifiant de l'appareil</h2>
+    <label class="field-label" for="manual-source" data-i18n="wizard.manual.sourceLabel">Identifiant unique (channel_source)</label>
+    <input type="number" id="manual-source" data-i18n-placeholder="wizard.manual.sourcePlaceholder" placeholder="ex: 24679">
+    <div class="muted" data-i18n="wizard.manual.sourceHelp">Cette valeur n'est pas devinable : elle doit provenir d'un export existant (ex. import cloud) ou d'une capture RF antérieure.</div>
+    <div style="margin-top:14px;">
+      <button class="btn" id="btn-manual-next" data-i18n="common.continue">Continuer</button>
+    </div>
+  </div>
+
+  <div id="step-kind" class="hidden" style="margin-top:14px;">
+    <h2 data-i18n="wizard.kind.title">Type de matériel</h2>
+    <div id="kind-rolling-banner" class="banner warn rolling-wip hidden"></div>
+    <div class="btn-grid" id="kind-choices">
+      <div class="choice-box" data-kind="1_bouton"><strong data-i18n="kind.1_bouton">1 bouton</strong></div>
+      <div class="choice-box" data-kind="on_off"><strong data-i18n="kind.on_off">On / Off</strong></div>
+      <div class="choice-box" data-kind="volet_roulant"><strong data-i18n="kind.volet_roulant">Volet roulant</strong></div>
+      <div class="choice-box" data-kind="niveau"><strong data-i18n="kind.niveau">Niveau (position)</strong></div>
+    </div>
+
+    <div id="invert-row" class="checkbox-row hidden">
+      <input type="checkbox" id="invert-checkbox">
+      <label for="invert-checkbox" data-i18n="common.invert">Inverser le sens (câblage à l'envers)</label>
+    </div>
+
+    <div id="travel-time-row" class="hidden">
+      <label class="field-label" for="travel-time-input" data-i18n="common.travelTime">Durée de course estimée (secondes)</label>
+      <input type="number" id="travel-time-input" min="1" max="180" step="1" value="20">
+      <div class="muted" data-i18n="wizard.kind.travelTimeHelp">Temps approximatif pour aller complètement ouvert ↔ fermé. Modifiable plus tard.</div>
+    </div>
+
+    <label class="field-label" for="name-input" data-i18n="wizard.kind.nameLabel">Nom de l'appareil</label>
+    <input type="text" id="name-input" data-i18n-placeholder="common.namePlaceholder" placeholder="ex: Volet salon terrasse">
+
+    <div id="confirm-banner" class="banner hidden"></div>
+
+    <div style="margin-top:14px;">
+      <button class="btn" id="btn-confirm" disabled data-i18n="wizard.kind.confirm">Ajouter l'appareil</button>
+    </div>
+  </div>
+
+  <div id="step-done" class="hidden" style="margin-top:14px;">
+    <div class="banner ok" data-i18n="wizard.done.success">✓ Appareil ajouté avec succès.</div>
+    <button class="btn" id="btn-done-back" data-i18n="common.back">Retour</button>
+  </div>
+</div>
+
+<div id="screen-import" class="card hidden">
+  <button class="btn secondary" id="btn-import-cancel" data-i18n="common.backCancel">&larr; Annuler</button>
+
+  <div id="import-step-input" style="margin-top:14px;">
+    <h2 data-i18n="import.title">Importer depuis le YAML de l'ancienne intégration</h2>
+    <p class="muted" data-i18n="import.instructions">Colle le contenu de ton fichier (ex. <code>airsend.yaml</code>), ou choisis un fichier. Rien n'est modifié tant que tu n'as pas confirmé à l'étape suivante.</p>
+    <div id="import-detect-banner" class="banner hidden" style="margin-bottom:10px;">
+      <span id="import-detect-text"></span>
+      <button class="btn secondary" id="import-detect-use-btn" style="margin-left:8px;" data-i18n="import.useThisFile">Utiliser ce fichier</button>
+    </div>
+    <input type="file" id="import-file-input" accept=".yaml,.yml" data-i18n-aria="import.fileInputAria" aria-label="Fichier YAML à importer">
+    <textarea id="import-yaml-textarea" rows="10" data-i18n-placeholder="import.textareaPlaceholder" placeholder="devices:&#10;  Volet Celyan:&#10;    type: 4098&#10;    channel:&#10;      id: 25455&#10;      source: 233575" data-i18n-aria="import.textareaAria" aria-label="Contenu YAML"></textarea>
+    <div id="import-error" class="banner error hidden"></div>
+    <button class="btn" id="import-preview-btn" data-i18n="import.analyze">Analyser</button>
+  </div>
+
+  <div id="import-step-preview" class="hidden" style="margin-top:14px;">
+    <h2 data-i18n="import.previewTitle">Vérifier avant import</h2>
+    <div id="import-summary" class="import-summary"></div>
+    <div class="import-list-head">
+      <span></span>
+      <span data-i18n="import.col.name">Nom</span>
+      <span data-i18n="import.col.protocol">Protocole</span>
+      <span data-i18n="import.col.status">Statut</span>
+      <span data-i18n="import.col.domain">Domain</span>
+      <span data-i18n="import.col.kind">Kind</span>
+      <span data-i18n="import.col.conflict">Si conflit</span>
+    </div>
+    <div id="import-table-body"></div>
+    <div style="margin-top:14px;">
+      <button class="btn" id="import-commit-btn" data-i18n="import.commit">Importer la sélection</button>
+    </div>
+    <div id="import-result" class="banner hidden" style="margin-top:10px;"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------------------------------------------------------------------
+  // i18n
+  // ---------------------------------------------------------------------
+
+  var I18N = {
+    fr: {
+      "page.title": "AirSend - Ajouter un appareil",
+      "home.devices": "Appareils",
+      "home.loading": "Chargement…",
+      "home.addDevice": "+ Ajouter un appareil",
+      "home.importYaml": "Importer depuis YAML",
+      "home.noDevices": "Aucun appareil pour le moment.",
+      "home.edit": "Modifier",
+      "home.delete": "Supprimer",
+      "home.deleteConfirm": "Supprimer \"{name}\" ? Cette action est irréversible et retirera l'appareil de Home Assistant.",
+      "home.deleteError": "Erreur lors de la suppression.",
+
+      "edit.title": "Modifier l'appareil",
+      "edit.name": "Nom",
+      "edit.travelTimeHelp": "Temps approximatif pour aller complètement ouvert ↔ fermé. Utilisé pour estimer quand le volet a fini sa course (pas de retour de position réel).",
+      "edit.nameEmptyError": "Le nom ne peut pas être vide.",
+      "edit.updateError": "Erreur lors de la mise à jour.",
+
+      "common.save": "Enregistrer",
+      "common.cancel": "Annuler",
+      "common.back": "Retour",
+      "common.backCancel": "&larr; Annuler",
+      "common.continue": "Continuer",
+      "common.invert": "Inverser le sens (câblage à l'envers)",
+      "common.travelTime": "Durée de course estimée (secondes)",
+      "common.namePlaceholder": "ex: Volet salon terrasse",
+
+      "wizard.branch.title": "Comment souhaitez-vous ajouter cet appareil ?",
+      "wizard.branch.aTitle": "J'ai la télécommande",
+      "wizard.branch.aSubtitle": "On écoute la trame RF réelle",
+      "wizard.branch.bTitle": "Je n'ai pas la télécommande",
+      "wizard.branch.bSubtitle": "Saisie manuelle de l'identifiant",
+
+      "wizard.catalog.title": "Marque",
+      "wizard.catalog.searchLabel": "Chercher une marque",
+      "wizard.catalog.searchPlaceholder": "ex: Somfy, Profalux…",
+      "wizard.catalog.skipBrand": "Passer cette étape (recherche générique 433MHz)",
+      "wizard.catalog.skipBrandHelp": "À utiliser si vous ne connaissez ni la marque ni le protocole : l'écoute captera toute trame 433MHz, sans filtrage. Moins précis, en dernier recours.",
+      "wizard.catalog.multiProtocol": "Plusieurs protocoles disponibles pour cette marque :",
+      "wizard.catalog.rollingCodeBranchA": "⚠️ Développement en cours : la synchronisation des protocoles à code tournant n'est pas encore fonctionnelle. L'inclusion de cet appareil sera probablement incomplète (commandes qui échouent, resynchronisation manuelle nécessaire).",
+      "wizard.catalog.rollingCodeBranchB": "⚠️ Développement en cours : la synchronisation des protocoles à code tournant n'est pas encore fonctionnelle. Sans télécommande, l'ajout de cet appareil échouera probablement ou restera incomplet (voir l'avertissement à la confirmation).",
+
+      "wizard.listen.title": "Écoute radio",
+      "wizard.listen.instructions": "Sur votre télécommande d'origine, appuyez sur le bouton à copier pendant quelques secondes, dès que vous lancez l'écoute ci-dessous. Répétez l'appui 2 ou 3 fois si rien n'apparaît.",
+      "wizard.listen.proximityTip": "💡 Idéalement, placez-vous à environ 1 mètre du boîtier AirSend pendant l'appui, pour optimiser la qualité du signal reçu.",
+      "wizard.listen.play": "▶ Écouter (20s)",
+      "wizard.listen.retry": "▶ Réessayer (20s)",
+      "wizard.listen.startError": "Erreur: {detail}",
+      "wizard.listen.startErrorDefault": "impossible de démarrer l'écoute",
+      "wizard.listen.inProgress": "Écoute en cours… ({s}s restantes)",
+      "wizard.listen.error": "Erreur : {detail}",
+      "wizard.listen.done": "Écoute terminée.",
+      "wizard.listen.channelFallback": "canal {id}",
+      "wizard.listen.useThis": "Utiliser celui-ci",
+
+      "wizard.manual.title": "Identifiant de l'appareil",
+      "wizard.manual.sourceLabel": "Identifiant unique (channel_source)",
+      "wizard.manual.sourcePlaceholder": "ex: 24679",
+      "wizard.manual.sourceHelp": "Cette valeur n'est pas devinable : elle doit provenir d'un export existant (ex. import cloud) ou d'une capture RF antérieure.",
+
+      "wizard.kind.title": "Type de matériel",
+      "wizard.kind.travelTimeHelp": "Temps approximatif pour aller complètement ouvert ↔ fermé. Modifiable plus tard.",
+      "wizard.kind.nameLabel": "Nom de l'appareil",
+      "wizard.kind.confirm": "Ajouter l'appareil",
+      "wizard.kind.creationError": "Erreur lors de la création de l'appareil.",
+      "wizard.kind.tryAnyway": "Continuer quand même",
+
+      "wizard.done.success": "✓ Appareil ajouté avec succès.",
+
+      "kind.1_bouton": "1 bouton",
+      "kind.on_off": "On / Off",
+      "kind.volet_roulant": "Volet roulant",
+      "kind.niveau": "Niveau (position)",
+
+      "import.title": "Importer depuis le YAML de l'ancienne intégration",
+      "import.instructions": "Colle le contenu de ton fichier (ex. <code>airsend.yaml</code>), ou choisis un fichier. Rien n'est modifié tant que tu n'as pas confirmé à l'étape suivante.",
+      "import.useThisFile": "Utiliser ce fichier",
+      "import.fileInputAria": "Fichier YAML à importer",
+      "import.textareaAria": "Contenu YAML",
+      "import.textareaPlaceholder": "devices:\n  Volet Celyan:\n    type: 4098\n    channel:\n      id: 25455\n      source: 233575",
+      "import.analyze": "Analyser",
+      "import.detected": "Fichier détecté : {path}",
+      "import.previewTitle": "Vérifier avant import",
+      "import.col.name": "Nom",
+      "import.col.protocol": "Protocole",
+      "import.col.status": "Statut",
+      "import.col.domain": "Domain",
+      "import.col.kind": "Kind",
+      "import.col.conflict": "Si conflit",
+      "import.commit": "Importer la sélection",
+      "import.parseError": "Erreur lors de l'analyse du YAML.",
+      "import.commitError": "Erreur lors de l'import.",
+      "import.domainAriaLabel": "Domaine pour {name}",
+      "import.kindAriaLabel": "Type de materiel pour {name}",
+      "import.conflictAriaLabel": "Action en cas de conflit pour {name}",
+      "import.conflictKeepExisting": "garder existant",
+      "import.conflictOverwrite": "écraser",
+      "import.kindTranslatedNote": "kind traduit depuis l'ancien format",
+      "import.checkboxAriaLabel": "Importer {name}",
+      "import.summary.newSingular": "{n} nouveau",
+      "import.summary.newPlural": "{n} nouveaux",
+      "import.summary.conflictSingular": "{n} conflit",
+      "import.summary.conflictPlural": "{n} conflits",
+      "import.summary.unknownSingular": "{n} protocole inconnu",
+      "import.summary.unknownPlural": "{n} protocoles inconnus",
+      "import.modify": "Modifier",
+      "import.collapse": "Réduire",
+      "import.toggleAriaLabel": "Afficher/masquer les champs pour {name}",
+      "import.unknownProtocolNote": "Protocole non reconnu : cet appareil ne peut pas encore être importé automatiquement.",
+      "import.resultSummary": "{added} ajoutés, {overwritten} écrasés, {skipped} ignorés.",
+      "import.resultErrors": " Erreurs: {errors}",
+    },
+    en: {
+      "page.title": "AirSend - Add a device",
+      "home.devices": "Devices",
+      "home.loading": "Loading…",
+      "home.addDevice": "+ Add a device",
+      "home.importYaml": "Import from YAML",
+      "home.noDevices": "No devices yet.",
+      "home.edit": "Edit",
+      "home.delete": "Delete",
+      "home.deleteConfirm": "Delete \"{name}\"? This action is irreversible and will remove the device from Home Assistant.",
+      "home.deleteError": "Error while deleting.",
+
+      "edit.title": "Edit device",
+      "edit.name": "Name",
+      "edit.travelTimeHelp": "Approximate time to travel fully open ↔ closed. Used to estimate when the cover has finished moving (no real position feedback).",
+      "edit.nameEmptyError": "Name cannot be empty.",
+      "edit.updateError": "Error while updating.",
+
+      "common.save": "Save",
+      "common.cancel": "Cancel",
+      "common.back": "Back",
+      "common.backCancel": "&larr; Cancel",
+      "common.continue": "Continue",
+      "common.invert": "Invert direction (wired backwards)",
+      "common.travelTime": "Estimated travel time (seconds)",
+      "common.namePlaceholder": "e.g. Living room shutter",
+
+      "wizard.branch.title": "How would you like to add this device?",
+      "wizard.branch.aTitle": "I have the remote",
+      "wizard.branch.aSubtitle": "We'll listen to the actual RF signal",
+      "wizard.branch.bTitle": "I don't have the remote",
+      "wizard.branch.bSubtitle": "Manual entry of the identifier",
+
+      "wizard.catalog.title": "Brand",
+      "wizard.catalog.searchLabel": "Search for a brand",
+      "wizard.catalog.searchPlaceholder": "e.g. Somfy, Profalux…",
+      "wizard.catalog.skipBrand": "Skip this step (generic 433MHz search)",
+      "wizard.catalog.skipBrandHelp": "Use this if you know neither the brand nor the protocol: listening will capture any 433MHz signal, unfiltered. Less precise, last resort.",
+      "wizard.catalog.multiProtocol": "Several protocols are available for this brand:",
+      "wizard.catalog.rollingCodeBranchA": "⚠️ Under active development: rolling-code counter synchronization does not work yet. Including this device will likely be incomplete (commands may fail, manual resync may be required).",
+      "wizard.catalog.rollingCodeBranchB": "⚠️ Under active development: rolling-code counter synchronization does not work yet. Without the remote, adding this device will likely fail or remain incomplete (see the warning at confirmation).",
+
+      "wizard.listen.title": "RF listening",
+      "wizard.listen.instructions": "On your original remote, press the button to copy for a few seconds as soon as you start listening below. Repeat 2 or 3 times if nothing appears.",
+      "wizard.listen.proximityTip": "💡 Ideally, stand about 1 meter from the AirSend box while pressing, to get the best signal quality.",
+      "wizard.listen.play": "▶ Listen (20s)",
+      "wizard.listen.retry": "▶ Retry (20s)",
+      "wizard.listen.startError": "Error: {detail}",
+      "wizard.listen.startErrorDefault": "unable to start listening",
+      "wizard.listen.inProgress": "Listening… ({s}s remaining)",
+      "wizard.listen.error": "Error: {detail}",
+      "wizard.listen.done": "Listening finished.",
+      "wizard.listen.channelFallback": "channel {id}",
+      "wizard.listen.useThis": "Use this one",
+
+      "wizard.manual.title": "Device identifier",
+      "wizard.manual.sourceLabel": "Unique identifier (channel_source)",
+      "wizard.manual.sourcePlaceholder": "e.g. 24679",
+      "wizard.manual.sourceHelp": "This value cannot be guessed: it must come from an existing export (e.g. cloud import) or a previous RF capture.",
+
+      "wizard.kind.title": "Device type",
+      "wizard.kind.travelTimeHelp": "Approximate time to travel fully open ↔ closed. Can be changed later.",
+      "wizard.kind.nameLabel": "Device name",
+      "wizard.kind.confirm": "Add device",
+      "wizard.kind.creationError": "Error while creating the device.",
+      "wizard.kind.tryAnyway": "Continue anyway",
+
+      "wizard.done.success": "✓ Device added successfully.",
+
+      "kind.1_bouton": "Single button",
+      "kind.on_off": "On / Off",
+      "kind.volet_roulant": "Roller shutter",
+      "kind.niveau": "Level (position)",
+
+      "import.title": "Import from the old integration's YAML",
+      "import.instructions": "Paste the contents of your file (e.g. <code>airsend.yaml</code>), or choose a file. Nothing is changed until you confirm on the next step.",
+      "import.useThisFile": "Use this file",
+      "import.fileInputAria": "YAML file to import",
+      "import.textareaAria": "YAML content",
+      "import.textareaPlaceholder": "devices:\n  Living room shutter:\n    type: 4098\n    channel:\n      id: 25455\n      source: 233575",
+      "import.analyze": "Analyze",
+      "import.detected": "File detected: {path}",
+      "import.previewTitle": "Review before import",
+      "import.col.name": "Name",
+      "import.col.protocol": "Protocol",
+      "import.col.status": "Status",
+      "import.col.domain": "Domain",
+      "import.col.kind": "Kind",
+      "import.col.conflict": "If conflict",
+      "import.commit": "Import selection",
+      "import.parseError": "Error while parsing the YAML.",
+      "import.commitError": "Error while importing.",
+      "import.domainAriaLabel": "Domain for {name}",
+      "import.kindAriaLabel": "Device type for {name}",
+      "import.conflictAriaLabel": "Action on conflict for {name}",
+      "import.conflictKeepExisting": "keep existing",
+      "import.conflictOverwrite": "overwrite",
+      "import.kindTranslatedNote": "kind translated from the old format",
+      "import.checkboxAriaLabel": "Import {name}",
+      "import.summary.newSingular": "{n} new",
+      "import.summary.newPlural": "{n} new",
+      "import.summary.conflictSingular": "{n} conflict",
+      "import.summary.conflictPlural": "{n} conflicts",
+      "import.summary.unknownSingular": "{n} unknown protocol",
+      "import.summary.unknownPlural": "{n} unknown protocols",
+      "import.modify": "Modify",
+      "import.collapse": "Collapse",
+      "import.toggleAriaLabel": "Show or hide fields for {name}",
+      "import.unknownProtocolNote": "Unrecognized protocol — this device can't be imported automatically yet.",
+      "import.resultSummary": "{added} added, {overwritten} overwritten, {skipped} skipped.",
+      "import.resultErrors": " Errors: {errors}",
+    },
+  };
+
+  var SUPPORTED_LANGS = ["fr", "en"];
+  var LANG_STORAGE_KEY = "airsend_lang";
+
+  function detectDefaultLang() {
+    var nav = (navigator.language || navigator.userLanguage || "fr").toLowerCase();
+    return nav.indexOf("en") === 0 ? "en" : "fr";
+  }
+
+  function loadStoredLang() {
+    try {
+      var stored = window.localStorage.getItem(LANG_STORAGE_KEY);
+      return SUPPORTED_LANGS.includes(stored) ? stored : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  var currentLang = loadStoredLang() || detectDefaultLang();
+
+  function t(key, vars) {
+    var dict = I18N[currentLang] || I18N.fr;
+    var text = Object.prototype.hasOwnProperty.call(dict, key) ? dict[key] : (I18N.fr[key] || key);
+    if (vars) {
+      Object.keys(vars).forEach(function (k) {
+        text = text.replace("{" + k + "}", vars[k]);
+      });
+    }
+    return text;
+  }
+
+  function applyStaticTranslations() {
+    document.documentElement.lang = currentLang;
+    document.querySelectorAll("[data-i18n]").forEach(function (el) {
+      el.innerHTML = t(el.dataset.i18n);
+    });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach(function (el) {
+      el.setAttribute("placeholder", t(el.dataset.i18nPlaceholder));
+    });
+    document.querySelectorAll("[data-i18n-aria]").forEach(function (el) {
+      el.setAttribute("aria-label", t(el.dataset.i18nAria));
+    });
+    document.title = t("page.title");
+    document.querySelectorAll(".lang-switch button").forEach(function (btn) {
+      btn.classList.toggle("active", btn.dataset.lang === currentLang);
+    });
+  }
+
+  function setLang(lang) {
+    if (!SUPPORTED_LANGS.includes(lang) || lang === currentLang) {
+      applyStaticTranslations();
+      return;
+    }
+    currentLang = lang;
+    try { window.localStorage.setItem(LANG_STORAGE_KEY, lang); } catch (e) { /* ignore storage errors */ }
+    applyStaticTranslations();
+    refreshDynamicUi();
+  }
+
+  document.querySelectorAll(".lang-switch button").forEach(function (btn) {
+    btn.addEventListener("click", function () { setLang(btn.dataset.lang); });
+  });
+
+  // Re-renders the parts of the UI that were built dynamically in JS,
+  // so a language switch mid-flow is reflected immediately.
+  function refreshDynamicUi() {
+    loadDevices();
+    if (currentImportRows.length) { renderImportTable(); }
+  }
+
+  applyStaticTranslations();
+
+  // ---------------------------------------------------------------------
+  // App logic
+  // ---------------------------------------------------------------------
+
+  var state = {
+    branch: null,
+    box: null,
+    brand: null,
+    channelId: null,
+    protocolName: null,
+    sessionId: null,
+    listenPoll: null,
+    candidate: null,
+    kind: null,
+    editingDevice: null,
+    rollingCodeRisk: false,
+  };
+
+  var boxesCache = [];
+
+  var DEFAULT_TRAVEL_TIME_S = 20;
+
+  function $(id) { return document.getElementById(id); }
+  function show(id) { $(id).classList.remove("hidden"); }
+  function hide(id) { $(id).classList.add("hidden"); }
+  function showOnly(ids) {
+    ["step-branch", "step-catalog", "step-listen", "step-manual", "step-kind", "step-done"]
+      .forEach(function (s) { ids.includes(s) ? show(s) : hide(s); });
+  }
+
+  function api(path, opts) {
+    return fetch(path, opts).then(function (r) {
+      return r.json().then(function (body) { return { ok: r.ok, status: r.status, body: body }; });
+    });
+  }
+
+
+  function buildDeviceRow(d) {
+    var row = document.createElement("div");
+    row.className = "device-row";
+
+    var info = document.createElement("span");
+    info.className = "device-info";
+    info.innerHTML = "<span>" + d.friendly_name + "</span><span class='muted'> · " +
+      d.kind + " · " + (d.protocol_name || "?") + "</span>";
+
+    var actions = document.createElement("span");
+    actions.className = "device-actions";
+
+    var editBtn = document.createElement("button");
+    editBtn.className = "icon-btn";
+    editBtn.textContent = t("home.edit");
+    editBtn.addEventListener("click", function () { openEditDevice(d); });
+
+    var delBtn = document.createElement("button");
+    delBtn.className = "icon-btn danger";
+    delBtn.textContent = t("home.delete");
+    delBtn.addEventListener("click", function () { deleteDevice(d); });
+
+    actions.appendChild(editBtn);
+    actions.appendChild(delBtn);
+    row.appendChild(info);
+    row.appendChild(actions);
+    return row;
+  }
+
+  function populateDeviceList(res) {
+    var list = $("device-list");
+    if (!res.ok || !res.body.length) {
+      list.textContent = t("home.noDevices");
+      return;
+    }
+    list.innerHTML = "";
+    res.body.forEach(function (d) { list.appendChild(buildDeviceRow(d)); });
+  }
+
+  function loadDevices() {
+    api("api/devices").then(populateDeviceList);
+  }
+
+  function openEditDevice(d) {
+    state.editingDevice = d;
+    $("edit-name-input").value = d.friendly_name;
+    if (d.domain === "cover") {
+      $("edit-invert-checkbox").checked = !!(d.options && d.options.invert);
+      show("edit-invert-row");
+    } else {
+      hide("edit-invert-row");
+    }
+    if (d.domain === "cover" && d.kind === "volet_roulant") {
+      $("edit-travel-time-input").value = (d.options && d.options.travel_time) || DEFAULT_TRAVEL_TIME_S;
+      show("edit-travel-time-row");
+    } else {
+      hide("edit-travel-time-row");
+    }
+    hide("edit-banner");
+    show("device-edit");
+    $("device-edit").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  $("btn-edit-cancel").addEventListener("click", function () {
+    state.editingDevice = null;
+    hide("device-edit");
+  });
+
+  $("btn-edit-save").addEventListener("click", function () {
+    var d = state.editingDevice;
+    if (!d) return;
+    var friendlyName = $("edit-name-input").value.trim();
+    var banner = $("edit-banner");
+    if (!friendlyName) {
+      banner.className = "banner error";
+      banner.textContent = t("edit.nameEmptyError");
+      show(banner.id);
+      return;
+    }
+    var payload = { friendly_name: friendlyName };
+    if (d.domain === "cover") {
+      payload.options = { ...d.options, invert: $("edit-invert-checkbox").checked };
+      if (d.kind === "volet_roulant") {
+        var rawTravelTime = Number.parseFloat($("edit-travel-time-input").value);
+        var travelTime = Number.isNaN(rawTravelTime) ? DEFAULT_TRAVEL_TIME_S : Math.min(180, Math.max(1, rawTravelTime));
+        payload.options.travel_time = travelTime;
+      }
+    }
+
+    $("btn-edit-save").disabled = true;
+    api("api/devices/" + encodeURIComponent(d.key), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }).then(function (res) {
+      $("btn-edit-save").disabled = false;
+      if (!res.ok) {
+        banner.className = "banner error";
+        banner.textContent = t("edit.updateError");
+        show(banner.id);
+        return;
+      }
+      state.editingDevice = null;
+      hide("device-edit");
+      loadDevices();
+    });
+  });
+
+  function deleteDevice(d) {
+    if (!window.confirm(t("home.deleteConfirm", { name: d.friendly_name }))) {
+      return;
+    }
+    api("api/devices/" + encodeURIComponent(d.key), { method: "DELETE" }).then(function (res) {
+      if (!res.ok) {
+        window.alert(t("home.deleteError"));
+        return;
+      }
+      if (state.editingDevice && state.editingDevice.key === d.key) {
+        state.editingDevice = null;
+        hide("device-edit");
+      }
+      loadDevices();
+    });
+  }
+
+  function loadBoxes() {
+    return api("api/boxes").then(function (res) {
+      boxesCache = res.body || [];
+      state.box = boxesCache.length ? boxesCache[0].slug : null;
+    });
+  }
+
+
+  function resetWizard() {
+    state.branch = null;
+    state.brand = null;
+    state.channelId = null;
+    state.protocolName = null;
+    state.sessionId = null;
+    state.candidate = null;
+    state.kind = null;
+    state.rollingCodeRisk = false;
+    if (state.listenPoll) { clearInterval(state.listenPoll); state.listenPoll = null; }
+    $("brand-input").value = "";
+    $("brand-suggestions").innerHTML = "";
+    hide("brand-suggestions");
+    hide("skip-brand-row");
+    $("protocol-choices").innerHTML = "";
+    hide("protocol-picker");
+    hide("rolling-code-banner");
+    hide("kind-rolling-banner");
+    $("btn-catalog-next").disabled = true;
+    $("manual-source").value = "";
+    $("name-input").value = "";
+    $("invert-checkbox").checked = false;
+    hide("invert-row");
+    $("travel-time-input").value = "20";
+    hide("travel-time-row");
+    hide("confirm-banner");
+    $("btn-confirm").disabled = true;
+    document.querySelectorAll(".choice-box").forEach(function (b) { b.classList.remove("selected"); });
+    $("listen-status").textContent = "";
+    $("listen-candidates").innerHTML = "";
+    $("btn-listen-play").textContent = t("wizard.listen.play");
+  }
+
+  $("btn-add-device").addEventListener("click", function () {
+    resetWizard();
+    show("screen-wizard");
+    hide("screen-home");
+    showOnly(["step-branch"]);
+  });
+
+  $("btn-cancel").addEventListener("click", backToHome);
+  $("btn-done-back").addEventListener("click", backToHome);
+
+  function backToHome() {
+    if (state.listenPoll) { clearInterval(state.listenPoll); state.listenPoll = null; }
+    hide("screen-wizard");
+    hide("screen-import");
+    show("screen-home");
+    loadDevices();
+  }
+
+
+  document.querySelectorAll('[data-branch]').forEach(function (box) {
+    box.addEventListener("click", function () {
+      document.querySelectorAll('[data-branch]').forEach(function (b) { b.classList.remove("selected"); });
+      box.classList.add("selected");
+      state.branch = box.dataset.branch;
+      if (state.branch === "A") { show("skip-brand-row"); } else { hide("skip-brand-row"); }
+      showOnly(["step-catalog"]);
+    });
+  });
+
+  $("btn-skip-brand").addEventListener("click", function () {
+    state.brand = null;
+    state.channelId = null;
+    state.protocolName = null;
+    $("brand-input").value = "";
+    hide("brand-suggestions");
+    hide("protocol-picker");
+    hide("rolling-code-banner");
+    showOnly(["step-listen"]);
+  });
+
+
+  function showBrandSuggestions(res) {
+    var box = $("brand-suggestions");
+    box.innerHTML = "";
+    if (!res.body.length) { hide(box.id); return; }
+    res.body.forEach(function (entry) {
+      var item = document.createElement("div");
+      item.className = "suggestion-item";
+      item.textContent = entry.brand;
+      item.addEventListener("click", function () { selectBrand(entry); });
+      box.appendChild(item);
+    });
+    show("brand-suggestions");
+  }
+
+  var brandDebounce = null;
+  $("brand-input").addEventListener("input", function () {
+    var q = this.value;
+    clearTimeout(brandDebounce);
+    if (q.trim().length < 2) { hide("brand-suggestions"); return; }
+    brandDebounce = setTimeout(function () {
+      api("api/brands?q=" + encodeURIComponent(q)).then(showBrandSuggestions);
+    }, 200);
+  });
+
+  function clearChoiceBoxSelection(b) { b.classList.remove("selected"); }
+
+  function selectBrand(entry) {
+    state.brand = entry.brand;
+    $("brand-input").value = entry.brand;
+    hide("brand-suggestions");
+    var choices = $("protocol-choices");
+    choices.innerHTML = "";
+
+    if (entry.protocols.length <= 1) {
+      hide("protocol-picker");
+      applyProtocol(entry.protocols[0]);
+      return;
+    }
+
+    show("protocol-picker");
+    entry.protocols.forEach(function (p) {
+      var box = document.createElement("div");
+      box.className = "choice-box";
+      box.innerHTML = "<strong>" + p.protocol + "</strong>";
+      box.addEventListener("click", function () {
+        choices.querySelectorAll(".choice-box").forEach(clearChoiceBoxSelection);
+        box.classList.add("selected");
+        applyProtocol(p);
+      });
+      choices.appendChild(box);
+    });
+  }
+
+  function rollingCodeMessage() {
+    return state.branch === "B"
+      ? t("wizard.catalog.rollingCodeBranchB")
+      : t("wizard.catalog.rollingCodeBranchA");
+  }
+
+  function updateKindRollingBanner() {
+    var banner = $("kind-rolling-banner");
+    if (state.rollingCodeRisk) {
+      banner.textContent = rollingCodeMessage();
+      show(banner.id);
+    } else {
+      hide(banner.id);
+    }
+  }
+
+  function applyProtocol(p) {
+    if (!p) { $("btn-catalog-next").disabled = true; return; }
+    state.channelId = p.channel_id;
+    state.protocolName = p.protocol;
+    $("btn-catalog-next").disabled = false;
+
+    api("api/channel/" + p.channel_id + "?box=" + encodeURIComponent(state.box)).then(function (res) {
+      state.rollingCodeRisk = !!(res.body && res.body.rolling_code_risk);
+      var banner = $("rolling-code-banner");
+      banner.classList.add("rolling-wip");
+      if (state.rollingCodeRisk) {
+        banner.textContent = rollingCodeMessage();
+        show(banner.id);
+      } else {
+        hide(banner.id);
+      }
+    });
+  }
+
+  $("btn-catalog-next").addEventListener("click", function () {
+    if (state.branch === "A") {
+      showOnly(["step-listen"]);
+    } else {
+      showOnly(["step-manual"]);
+    }
+  });
+
+
+  $("btn-listen-play").addEventListener("click", function () {
+    $("btn-listen-play").disabled = true;
+    $("listen-candidates").innerHTML = "";
+    api("api/listen", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ box: state.box, channel_id: state.channelId, duration: 20 }),
+    }).then(function (res) {
+      if (!res.ok) {
+        $("listen-status").textContent = t("wizard.listen.startError", { detail: res.body.text || t("wizard.listen.startErrorDefault") });
+        $("btn-listen-play").disabled = false;
+        return;
+      }
+      state.sessionId = res.body.session_id;
+      pollListen();
+    });
+  });
+
+  function pollListen() {
+    if (state.listenPoll) clearInterval(state.listenPoll);
+    state.listenPoll = setInterval(function () {
+      api("api/listen/" + state.sessionId).then(function (res) {
+        if (!res.ok) { clearInterval(state.listenPoll); return; }
+        var body = res.body;
+        $("listen-status").innerHTML = body.status === "listening"
+          ? "<span class='spinner'></span>" + t("wizard.listen.inProgress", { s: body.remaining_s })
+          : (body.error ? t("wizard.listen.error", { detail: body.error }) : t("wizard.listen.done"));
+
+        renderCandidates(body.candidates || []);
+
+        if (body.status !== "listening") {
+          clearInterval(state.listenPoll);
+          state.listenPoll = null;
+          $("btn-listen-play").disabled = false;
+          $("btn-listen-play").textContent = t("wizard.listen.retry");
+        }
+      });
+    }, 1200);
+  }
+
+  function renderCandidates(list) {
+    var box = $("listen-candidates");
+    box.innerHTML = "";
+    if (!list.length) return;
+    list.forEach(function (c) {
+      var row = document.createElement("div");
+      row.className = "candidate";
+      row.innerHTML = "<span>" + (c.protocol_name || t("wizard.listen.channelFallback", { id: c.channel_id })) +
+        " <span class='muted'>(id " + c.channel_source + ")</span></span>";
+      var btn = document.createElement("button");
+      btn.className = "btn";
+      btn.textContent = t("wizard.listen.useThis");
+      btn.addEventListener("click", function () {
+        state.candidate = c;
+        if (state.listenPoll) { clearInterval(state.listenPoll); state.listenPoll = null; }
+        api("api/channel/" + c.channel_id + "?box=" + encodeURIComponent(state.box)).then(function (res) {
+          state.rollingCodeRisk = !!(res.body && res.body.rolling_code_risk);
+          showOnly(["step-kind"]);
+          updateKindRollingBanner();
+        });
+      });
+      row.appendChild(btn);
+      box.appendChild(row);
+    });
+  }
+
+
+  $("btn-manual-next").addEventListener("click", function () {
+    var val = Number.parseInt($("manual-source").value, 10);
+    if (Number.isNaN(val)) { return; }
+    state.candidate = { channel_id: state.channelId, channel_source: val, protocol_name: state.protocolName };
+    showOnly(["step-kind"]);
+    updateKindRollingBanner();
+  });
+
+
+  document.querySelectorAll('[data-kind]').forEach(function (box) {
+    box.addEventListener("click", function () {
+      document.querySelectorAll('[data-kind]').forEach(function (b) { b.classList.remove("selected"); });
+      box.classList.add("selected");
+      state.kind = box.dataset.kind;
+      if (state.kind === "volet_roulant" || state.kind === "niveau") {
+        show("invert-row");
+      } else {
+        hide("invert-row");
+      }
+      if (state.kind === "volet_roulant") {
+        show("travel-time-row");
+      } else {
+        hide("travel-time-row");
+      }
+      updateConfirmEnabled();
+    });
+  });
+
+  $("name-input").addEventListener("input", updateConfirmEnabled);
+
+  function updateConfirmEnabled() {
+    $("btn-confirm").disabled = !(state.kind && $("name-input").value.trim());
+  }
+
+  $("btn-confirm").addEventListener("click", function () {
+    submitDevice(false);
+  });
+
+  function submitDevice(confirmRollingCodeRisk) {
+    var options = {};
+    if (state.kind === "volet_roulant" || state.kind === "niveau") {
+      options.invert = $("invert-checkbox").checked;
+    }
+    if (state.kind === "volet_roulant") {
+      var rawTravelTime = Number.parseFloat($("travel-time-input").value);
+      options.travel_time = Number.isNaN(rawTravelTime) ? DEFAULT_TRAVEL_TIME_S : Math.min(180, Math.max(1, rawTravelTime));
+    }
+    var friendlyName = $("name-input").value.trim();
+    var banner = $("confirm-banner");
+    hide(banner.id);
+
+    var payload, url;
+    if (state.branch === "A") {
+      url = "api/devices";
+      payload = {
+        session_id: state.sessionId,
+        channel_source: state.candidate.channel_source,
+        kind: state.kind,
+        friendly_name: friendlyName,
+        options: options,
+      };
+    } else {
+      url = "api/devices/manual";
+      payload = {
+        box: state.box,
+        channel_id: state.candidate.channel_id,
+        channel_source: state.candidate.channel_source,
+        kind: state.kind,
+        friendly_name: friendlyName,
+        options: options,
+        confirm_rolling_code_risk: !!confirmRollingCodeRisk,
+      };
+    }
+
+    $("btn-confirm").disabled = true;
+    api(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }).then(function (res) {
+      if (res.status === 409 && res.body.warning === "rolling_code_risk") {
+        banner.className = "banner warn rolling-wip";
+        banner.textContent = res.body.message;
+        show(banner.id);
+        var retryBtn = document.createElement("button");
+        retryBtn.className = "btn";
+        retryBtn.style.marginTop = "8px";
+        retryBtn.textContent = t("wizard.kind.tryAnyway");
+        retryBtn.addEventListener("click", function () { submitDevice(true); });
+        banner.appendChild(document.createElement("br"));
+        banner.appendChild(retryBtn);
+        $("btn-confirm").disabled = false;
+        return;
+      }
+      if (!res.ok) {
+        banner.className = "banner error";
+        banner.textContent = t("wizard.kind.creationError");
+        show(banner.id);
+        $("btn-confirm").disabled = false;
+        return;
+      }
+      showOnly(["step-done"]);
+    });
+  }
+
+  var KIND_LABEL_KEYS = {
+    "1_bouton": "kind.1_bouton", "on_off": "kind.on_off",
+    "volet_roulant": "kind.volet_roulant", "niveau": "kind.niveau",
+  };
+  var DOMAIN_TO_KINDS = { button: ["1_bouton"], switch: ["on_off"], cover: ["volet_roulant", "niveau"] };
+  var currentImportRows = [];
+  var detectedYamlText = null;
+
+  function resetImportScreen() {
+    currentImportRows = [];
+    detectedYamlText = null;
+    $("import-yaml-textarea").value = "";
+    $("import-file-input").value = "";
+    hide("import-error");
+    hide("import-detect-banner");
+    hide("import-step-preview");
+    show("import-step-input");
+    $("import-table-body").innerHTML = "";
+    hide("import-result");
+  }
+
+  function detectImportFile() {
+    api("api/import/detect").then(function (res) {
+      if (!res.ok || !res.body.found) return;
+      detectedYamlText = res.body.yaml_text;
+      $("import-detect-text").textContent = t("import.detected", { path: res.body.path });
+      show("import-detect-banner");
+    });
+  }
+
+  $("btn-open-import").addEventListener("click", function () {
+    resetImportScreen();
+    hide("screen-home");
+    show("screen-import");
+    detectImportFile();
+  });
+  $("btn-import-cancel").addEventListener("click", backToHome);
+
+  $("import-detect-use-btn").addEventListener("click", function () {
+    if (detectedYamlText === null) return;
+    $("import-yaml-textarea").value = detectedYamlText;
+    hide("import-detect-banner");
+  });
+
+  $("import-file-input").addEventListener("change", function () {
+    var file = this.files[0];
+    if (!file) return;
+    file.text().then(function (text) { $("import-yaml-textarea").value = text; });
+  });
+
+  function escapeAttr(text) {
+    return String(text).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  function domainSelectHtml(row) {
+    var opts = Object.keys(DOMAIN_TO_KINDS).map(function (d) {
+      return "<option value='" + d + "'" + (row.domain === d ? " selected" : "") + ">" + d + "</option>";
+    }).join("");
+    var label = t("import.domainAriaLabel", { name: escapeAttr(row.friendly_name) });
+    return "<select data-field='domain' aria-label='" + label + "'><option value=''>--</option>" + opts + "</select>";
+  }
+
+  function kindSelectHtml(row) {
+    var kinds = row.domain ? (DOMAIN_TO_KINDS[row.domain] || []) : [];
+    var opts = kinds.map(function (k) {
+      return "<option value='" + k + "'" + (row.kind === k ? " selected" : "") + ">" + t(KIND_LABEL_KEYS[k]) + "</option>";
+    }).join("");
+    var label = t("import.kindAriaLabel", { name: escapeAttr(row.friendly_name) });
+    return "<select data-field='kind' aria-label='" + label + "'><option value=''>--</option>" + opts + "</select>";
+  }
+
+  function conflictFieldHtml(row) {
+    if (row.status !== "conflict") return "<span class='muted'>–</span>";
+    var label = t("import.conflictAriaLabel", { name: escapeAttr(row.friendly_name) });
+    return "<select data-field='conflict_action' aria-label='" + label + "'>" +
+      "<option value='keep_existing'>" + t("import.conflictKeepExisting") + "</option>" +
+      "<option value='overwrite'>" + t("import.conflictOverwrite") + "</option>" +
+      "</select>";
+  }
+
+  function importCountLabel(n, singularKey, pluralKey) {
+    return t(n === 1 ? singularKey : pluralKey, { n: n });
+  }
+
+  function renderImportSummary() {
+    var counts = { new: 0, conflict: 0, unknown_protocol: 0 };
+    currentImportRows.forEach(function (row) {
+      counts[row.status] = (counts[row.status] || 0) + 1;
+    });
+    var parts = [];
+    if (counts.new) parts.push(importCountLabel(counts.new, "import.summary.newSingular", "import.summary.newPlural"));
+    if (counts.conflict) parts.push(importCountLabel(counts.conflict, "import.summary.conflictSingular", "import.summary.conflictPlural"));
+    if (counts.unknown_protocol) parts.push(importCountLabel(counts.unknown_protocol, "import.summary.unknownSingular", "import.summary.unknownPlural"));
+    $("import-summary").textContent = parts.join(" · ");
+  }
+
+  function importRowFieldsHtml(row) {
+    if (row.status === "unknown_protocol") {
+      return (
+        "<div class='import-field'><label>" + t("import.col.domain") + "</label><span class='muted'>–</span></div>" +
+        "<div class='import-field'><label>" + t("import.col.kind") + "</label><span class='muted'>–</span></div>" +
+        "<div class='import-field'><label>" + t("import.col.conflict") + "</label><span class='muted'>–</span></div>" +
+        "<div class='import-note muted'>" + t("import.unknownProtocolNote") + "</div>"
+      );
+    }
+    var translatedNote = row.kind_translated
+      ? "<div class='muted' style='font-size:0.75em'>" + t("import.kindTranslatedNote") + "</div>" : "";
+    return (
+      "<div class='import-field'><label>" + t("import.col.domain") + "</label>" + domainSelectHtml(row) + "</div>" +
+      "<div class='import-field'><label>" + t("import.col.kind") + "</label>" + kindSelectHtml(row) + translatedNote + "</div>" +
+      "<div class='import-field'><label>" + t("import.col.conflict") + "</label>" + conflictFieldHtml(row) + "</div>"
+    );
+  }
+
+  function renderImportTable() {
+    renderImportSummary();
+    $("import-table-body").innerHTML = currentImportRows.map(function (row, i) {
+      var checked = row.status !== "unknown_protocol" ? "checked" : "";
+      var disabled = row.status === "unknown_protocol" ? "disabled" : "";
+      var checkboxLabel = t("import.checkboxAriaLabel", { name: escapeAttr(row.friendly_name) });
+      var toggleLabel = t(row.expanded ? "import.collapse" : "import.modify");
+      var toggleAria = t("import.toggleAriaLabel", { name: escapeAttr(row.friendly_name) });
+      return "<div class='import-row status-" + row.status + (row.expanded ? " expanded" : "") + "' data-index='" + i + "'>" +
+        "<div class='import-row-head'>" +
+          "<label class='import-check-wrap'><input type='checkbox' class='import-check' aria-label='" + checkboxLabel + "' " + checked + " " + disabled + "></label>" +
+          "<div class='import-row-main'>" +
+            "<div class='import-row-name'>" + row.friendly_name + "</div>" +
+            "<div class='import-row-sub'>" + row.key + "<span class='import-sub-protocol'> · " + row.protocol_name + "</span></div>" +
+          "</div>" +
+          "<div class='import-protocol'>" + row.protocol_name + "</div>" +
+          "<span class='status-pill " + row.status + "'>" + row.status + "</span>" +
+          "<button type='button' class='import-toggle' data-action='toggle' aria-label='" + toggleAria + "' aria-expanded='" + (row.expanded ? "true" : "false") + "'>" + toggleLabel + "</button>" +
+        "</div>" +
+        "<div class='import-details'>" + importRowFieldsHtml(row) + "</div>" +
+      "</div>";
+    }).join("");
+  }
+
+  $("import-preview-btn").addEventListener("click", function () {
+    hide("import-error");
+    var yamlText = $("import-yaml-textarea").value;
+    if (!yamlText.trim()) return;
+    api("api/import/preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ yaml_text: yamlText, box: state.box }),
+    }).then(function (res) {
+      if (!res.ok) {
+        var err = $("import-error");
+        err.textContent = res.body.text || res.body.error || t("import.parseError");
+        show(err.id);
+        return;
+      }
+      currentImportRows = res.body.rows.map(function (row) {
+        row.expanded = row.status !== "new";
+        return row;
+      });
+      renderImportTable();
+      hide("import-step-input");
+      show("import-step-preview");
+    });
+  });
+
+  $("import-table-body").addEventListener("click", function (e) {
+    var btn = e.target.closest(".import-toggle");
+    if (!btn) return;
+    var row = btn.closest(".import-row");
+    var idx = Number.parseInt(row.dataset.index, 10);
+    currentImportRows[idx].expanded = !currentImportRows[idx].expanded;
+    renderImportTable();
+  });
+
+  $("import-table-body").addEventListener("change", function (e) {
+    var row = e.target.closest(".import-row");
+    if (!row) return;
+    var idx = Number.parseInt(row.dataset.index, 10);
+    var field = e.target.dataset.field;
+    if (!field) return;
+    if (field === "conflict_action") {
+      currentImportRows[idx].conflict_action = e.target.value;
+      return;
+    }
+    currentImportRows[idx][field] = e.target.value;
+    if (field === "domain") {
+      currentImportRows[idx].kind = null;
+      renderImportTable();
+    }
+  });
+
+  $("import-commit-btn").addEventListener("click", function () {
+    var checks = document.querySelectorAll(".import-check");
+    var rowsToCommit = currentImportRows.map(function (row, i) {
+      var checked = checks[i].checked;
+      var action = "skip";
+      if (checked) {
+        action = row.status === "conflict" ? (row.conflict_action || "keep_existing") : "import";
+      }
+      var copy = { ...row };
+      copy.action = action;
+      return copy;
+    });
+
+    $("import-commit-btn").disabled = true;
+    api("api/import/commit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rows: rowsToCommit }),
+    }).then(function (res) {
+      $("import-commit-btn").disabled = false;
+      var result = $("import-result");
+      if (!res.ok) {
+        result.className = "banner error";
+        result.textContent = res.body.text || t("import.commitError");
+        show(result.id);
+        return;
+      }
+      var body = res.body;
+      result.className = body.errors.length ? "banner warn" : "banner ok";
+      result.textContent = t("import.resultSummary", { added: body.added, overwritten: body.overwritten, skipped: body.skipped }) +
+        (body.errors.length ? t("import.resultErrors", { errors: body.errors.join(" | ") }) : "");
+      show(result.id);
+    });
+  });
+
+
+  loadBoxes().then(loadDevices);
+})();
+</script>
+</body>
+</html>
