@@ -1,5 +1,8 @@
 ## Unreleased
 
+### ♻️ Changed
+- **ci:** move addon files from addons/airsend-hub to repo root (#71)
+
 ## 1.1.1 - 2026-07-24
 
 ### 🚀 Added
