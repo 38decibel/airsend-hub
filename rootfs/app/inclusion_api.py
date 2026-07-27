@@ -21,9 +21,10 @@ from bind_manager import BindManager
 from catalog_data import search_brands
 from channel_aliases import expected_receive_channels
 from device_registry import Device, DeviceRegistry
-from inclusion import InclusionState
+from inclusion import Candidate, InclusionState
 from mqtt_bridge import MqttBridge
 from protocol_catalog import BAND_868_MHZ, ProtocolCatalog
+from runtime_settings import RuntimeSettings
 from yaml_import import load_yaml_devices, parse_airsend_yaml
 
 _LOGGER = logging.getLogger("airsend.inclusion_api")
@@ -45,6 +46,28 @@ KIND_TO_DOMAIN: dict[str, str] = {
     "volet_roulant": "cover",
     "niveau": "cover",
 }
+
+# Purely cosmetic, user-facing grouping (icon/label in the UI). Stored in
+# device.options["display_category"] and never consulted for domain/kind
+# logic: several categories legitimately map to the same technical kind
+# (e.g. automotive_keyfob and doorbell are both "1_bouton"/"event").
+DISPLAY_CATEGORIES: frozenset[str] = frozenset({
+    "other",
+    "temp_humidity",
+    "weather_station",
+    "tpms",
+    "energy_water_meter",
+    "smoke_security_alarm",
+    "gate_garage_remote",
+    "automotive_keyfob",
+    "remote_keyfob",
+    "home_automation_blinds",
+    "ceiling_fan",
+    "kitchen_thermometer",
+    "doorbell",
+    "rolling_code",
+    "restaurant_pager",
+})
 
 def _slugify(text: str) -> str:
     slug = re.sub(r"[^a-z0-9]+", "_", text.strip().lower()).strip("_")
@@ -87,6 +110,7 @@ class InclusionApi:
         registry: DeviceRegistry,
         catalog: ProtocolCatalog,
         mqtt_bridge: MqttBridge,
+        settings: RuntimeSettings,
     ) -> None:
         self._boxes = boxes_by_slug
         self._client = client
@@ -95,6 +119,7 @@ class InclusionApi:
         self._registry = registry
         self._catalog = catalog
         self._mqtt_bridge = mqtt_bridge
+        self._settings = settings
         self._sessions: dict[str, ListenSession] = {}
         self._listening_boxes: set[str] = set()
         self._background_tasks: set[asyncio.Task] = set()
@@ -116,6 +141,11 @@ class InclusionApi:
         self.app.router.add_get("/api/backup/export", self._handle_backup_export)
         self.app.router.add_post("/api/backup/import/preview", self._handle_backup_import_preview)
         self.app.router.add_post("/api/backup/import/commit", self._handle_backup_import_commit)
+        self.app.router.add_get("/api/inbox", self._handle_list_inbox)
+        self.app.router.add_post("/api/inbox/forget", self._handle_inbox_forget)
+        self.app.router.add_post("/api/inbox/confirm", self._handle_inbox_confirm)
+        self.app.router.add_get("/api/settings", self._handle_get_settings)
+        self.app.router.add_patch("/api/settings", self._handle_patch_settings)
         self.app.router.add_get("/{tail:.*}", self._handle_static)
 
 
@@ -176,6 +206,90 @@ class InclusionApi:
             }
         )
 
+
+    def _candidate_row(self, c: Candidate) -> dict[str, Any]:
+        entry = self._catalog.entry_for(c.box, c.channel_id)
+        return {
+            "box": c.box,
+            "channel_id": c.channel_id,
+            "channel_source": c.channel_source,
+            "protocol_name": c.protocol_name,
+            "decoded": c.decoded,
+            "band": entry.get("band") if entry else None,
+            "seen_count": c.seen_count,
+            "first_seen": c.first_seen,
+            "last_seen": c.last_seen,
+        }
+
+    async def _handle_list_inbox(self, request: web.Request) -> web.Response:
+        rows = [self._candidate_row(c) for c in self._inclusion.list_candidates()]
+        rows.sort(key=lambda r: r["last_seen"], reverse=True)
+        return web.json_response(
+            {"candidates": rows, "capture_unknown_events": self._settings.capture_unknown_events}
+        )
+
+    def _parse_candidate_ref(self, body: dict[str, Any]) -> tuple[str, int, int]:
+        try:
+            box_slug = str(body["box"])
+            channel_id = int(body["channel_id"])
+            channel_source = int(body["channel_source"])
+        except (KeyError, ValueError, TypeError):
+            raise web.HTTPBadRequest(text="missing or invalid box/channel_id/channel_source")
+        return box_slug, channel_id, channel_source
+
+    async def _handle_inbox_forget(self, request: web.Request) -> web.Response:
+        body = await request.json()
+        box_slug, channel_id, channel_source = self._parse_candidate_ref(body)
+        forgotten = self._inclusion.forget_candidate(box_slug, channel_id, channel_source)
+        return web.json_response({"forgotten": forgotten})
+
+    async def _handle_inbox_confirm(self, request: web.Request) -> web.Response:
+        body = await request.json()
+        box_slug, channel_id, channel_source = self._parse_candidate_ref(body)
+
+        try:
+            kind = str(body["kind"])
+            friendly_name = str(body["friendly_name"]).strip()
+        except (KeyError, TypeError):
+            raise web.HTTPBadRequest(text="missing or invalid fields")
+        if not friendly_name:
+            raise web.HTTPBadRequest(text=_FRIENDLY_NAME_EMPTY)
+
+        candidate = next(
+            (
+                c for c in self._inclusion.list_candidates()
+                if c.match_key == (box_slug, channel_id, channel_source)
+            ),
+            None,
+        )
+        if candidate is None:
+            raise web.HTTPNotFound(text="candidate not found (already included or forgotten?)")
+
+        device = self._create_device(
+            box_slug=box_slug,
+            channel_id=channel_id,
+            channel_source=channel_source,
+            protocol_name=candidate.protocol_name,
+            kind=kind,
+            friendly_name=friendly_name,
+            options=body.get("options") or {},
+            source_of_creation="rf_inbox",
+        )
+        self._inclusion.pop_candidate(box_slug, channel_id, channel_source)
+        return web.json_response({"key": device.key})
+
+    async def _handle_get_settings(self, request: web.Request) -> web.Response:
+        return web.json_response({"capture_unknown_events": self._settings.capture_unknown_events})
+
+    async def _handle_patch_settings(self, request: web.Request) -> web.Response:
+        body = await request.json()
+        if "capture_unknown_events" not in body:
+            raise web.HTTPBadRequest(text="missing 'capture_unknown_events'")
+        value = body["capture_unknown_events"]
+        if not isinstance(value, bool):
+            raise web.HTTPBadRequest(text="'capture_unknown_events' must be a boolean")
+        self._mqtt_bridge.set_capture_unknown_events(value)
+        return web.json_response({"capture_unknown_events": self._settings.capture_unknown_events})
 
     def _prune_stale_sessions(self) -> None:
         for sid in [sid for sid, s in self._sessions.items() if s.is_stale]:
@@ -292,6 +406,10 @@ class InclusionApi:
         domain = KIND_TO_DOMAIN.get(kind)
         if domain is None:
             raise web.HTTPBadRequest(text=f"unknown kind: {kind}")
+
+        display_category = (options or {}).get("display_category")
+        if display_category is not None and display_category not in DISPLAY_CATEGORIES:
+            raise web.HTTPBadRequest(text=f"unknown display_category: {display_category}")
 
         if key is None:
             base_key = _slugify(friendly_name)
@@ -714,6 +832,7 @@ def create_ingress_app(
     registry: DeviceRegistry,
     catalog: ProtocolCatalog,
     mqtt_bridge: MqttBridge,
+    settings: RuntimeSettings,
 ) -> web.Application:
     api = InclusionApi(
         boxes_by_slug=boxes_by_slug,
@@ -723,5 +842,6 @@ def create_ingress_app(
         registry=registry,
         catalog=catalog,
         mqtt_bridge=mqtt_bridge,
+        settings=settings,
     )
     return api.app
