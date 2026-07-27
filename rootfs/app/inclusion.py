@@ -23,6 +23,8 @@ class Candidate:
     channel_id: int
     channel_source: int
     protocol_name: str | None
+    decoded: bool = True
+    seen_count: int = 1
     first_seen: float = field(default_factory=time.time)
     last_seen: float = field(default_factory=time.time)
 
@@ -35,6 +37,11 @@ class InclusionState:
     def __init__(self) -> None:
         self.active: bool = False
         self._candidates: dict[tuple[str, int, int], Candidate] = {}
+        # Keys the user explicitly dismissed ("forget"): never re-surfaced,
+        # even if the same source keeps transmitting. In-memory only, reset
+        # on addon restart (acceptable: not persisted on purpose, see PR
+        # discussion - a noisy neighbour source is easy to forget again).
+        self._ignored: set[tuple[str, int, int]] = set()
 
     def upsert_candidate(
         self,
@@ -42,11 +49,17 @@ class InclusionState:
         channel_id: int,
         channel_source: int,
         protocol_name: str | None,
-    ) -> Candidate:
+        decoded: bool = True,
+    ) -> Candidate | None:
         key = (box, channel_id, channel_source)
+        if key in self._ignored:
+            return None
+
         existing = self._candidates.get(key)
         if existing is not None:
             existing.last_seen = time.time()
+            existing.seen_count += 1
+            existing.decoded = existing.decoded or decoded
             return existing
 
         candidate = Candidate(
@@ -54,11 +67,12 @@ class InclusionState:
             channel_id=channel_id,
             channel_source=channel_source,
             protocol_name=protocol_name,
+            decoded=decoded,
         )
         self._candidates[key] = candidate
         _LOGGER.info(
-            "New inclusion candidate: box=%s channel=%s/%s protocol=%s",
-            box, channel_id, channel_source, protocol_name,
+            "New inclusion candidate: box=%s channel=%s/%s protocol=%s decoded=%s",
+            box, channel_id, channel_source, protocol_name, decoded,
         )
         return candidate
 
@@ -67,3 +81,10 @@ class InclusionState:
 
     def pop_candidate(self, box: str, channel_id: int, channel_source: int) -> Candidate | None:
         return self._candidates.pop((box, channel_id, channel_source), None)
+
+    def forget_candidate(self, box: str, channel_id: int, channel_source: int) -> bool:
+        """Dismiss a candidate for good: removes it and prevents it from
+        being re-created by further frames from the same source."""
+        key = (box, channel_id, channel_source)
+        self._ignored.add(key)
+        return self._candidates.pop(key, None) is not None

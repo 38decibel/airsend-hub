@@ -21,6 +21,16 @@ _LOGGER = logging.getLogger("airsend.callback_server")
 
 StateSink = Callable[[str, str, object, dict], None]
 
+# ThingEvent.type values (see AirSendWebService.yaml). GOT is a fully decoded
+# frame (channel + thingnotes usable). UNKNOWN/UNSUPPORTED/INCOMPLETE are
+# frames the box received but could not fully decode - only surfaced as
+# inclusion inbox candidates when RuntimeSettings.capture_unknown_events is on.
+_EVENT_TYPE_GOT = 3
+_EVENT_TYPE_UNKNOWN = 256
+_EVENT_TYPE_UNSUPPORTED = 262
+_EVENT_TYPE_INCOMPLETE = 263
+_UNDECODED_CAPTURABLE_TYPES = (_EVENT_TYPE_UNKNOWN, _EVENT_TYPE_UNSUPPORTED, _EVENT_TYPE_INCOMPLETE)
+
 
 class CallbackServer:
     def __init__(
@@ -86,6 +96,39 @@ class CallbackServer:
             return False
         return RuntimeSettings.RELIABILITY_MIN < reliability < RuntimeSettings.RELIABILITY_MAX
 
+    def _resolve_decoded_flag(self, event_type: object) -> bool | None:
+        """Returns True for a fully decoded (GOT) frame, False for a frame
+        the box could not decode but that we still want to capture (only
+        when capture_unknown_events is on), or None if the event should be
+        ignored entirely."""
+        if event_type == _EVENT_TYPE_GOT:
+            return True
+        if self._settings.capture_unknown_events and event_type in _UNDECODED_CAPTURABLE_TYPES:
+            return False
+        return None
+
+    def _log_reliability_sample(self, box_slug: str, channel_id: int, channel_source: int, event: dict) -> None:
+        catalog_entry = self._catalog.entry_for(box_slug, channel_id)
+        _LOGGER.info(
+            "reliability_sample value=%s protocol=%s band=%s box=%s channel=%s/%s",
+            event.get("reliability"),
+            catalog_entry.get("name") if catalog_entry else None,
+            catalog_entry.get("band") if catalog_entry else None,
+            box_slug, channel_id, channel_source,
+        )
+
+    def _record_candidate(
+        self, box_slug: str, channel_id: int, channel_source: int, decoded: bool,
+    ) -> None:
+        protocol_name = self._catalog.protocol_name_for(box_slug, channel_id)
+        self._inclusion.upsert_candidate(
+            box=box_slug,
+            channel_id=channel_id,
+            channel_source=channel_source,
+            protocol_name=protocol_name,
+            decoded=decoded,
+        )
+
     async def _handle_event(self, box_slug: str, event: dict) -> None:
         channel = event.get("channel") or {}
         thingnotes = event.get("thingnotes") or {}
@@ -98,9 +141,7 @@ class CallbackServer:
             _LOGGER.debug("Event without channel id/source, ignored: %r", event)
             return
 
-        has_uid = "uid" in thingnotes and thingnotes.get("uid") is not None
-
-        if has_uid:
+        if "uid" in thingnotes and thingnotes.get("uid") is not None:
             _LOGGER.debug(
                 "Command ack event (uid=%s) type=%s on box=%s channel=%s/%s",
                 thingnotes.get("uid"), event_type, box_slug, channel_id, channel_source,
@@ -109,53 +150,33 @@ class CallbackServer:
 
         _LOGGER.info("raw_event_body box=%s channel=%s/%s body=%s", box_slug, channel_id, channel_source, json.dumps(event))
 
-        if event_type != 3:
+        decoded = self._resolve_decoded_flag(event_type)
+        if decoded is None:
             _LOGGER.debug(
-                "Interrupt event ignored (type=%s != GOT) on box=%s channel=%s/%s",
-                event_type, box_slug, channel_id, channel_source,
+                "Event ignored (type=%s, capture_unknown_events=%s) on box=%s channel=%s/%s",
+                event_type, self._settings.capture_unknown_events, box_slug, channel_id, channel_source,
             )
             return
 
-        reliability = event.get("reliability")
-
-        catalog_entry = self._catalog.entry_for(box_slug, channel_id)
-        _LOGGER.info(
-            "reliability_sample value=%s protocol=%s band=%s box=%s channel=%s/%s",
-            reliability,
-            catalog_entry.get("name") if catalog_entry else None,
-            catalog_entry.get("band") if catalog_entry else None,
-            box_slug, channel_id, channel_source,
-        )
-
-        if not self._is_valid_reliability(event):
-            _LOGGER.debug(
-                "Interrupt event dropped (reliability=%s out of range [%s, %s]) on box=%s channel=%s/%s",
-                reliability,
-                RuntimeSettings.RELIABILITY_MIN,
-                RuntimeSettings.RELIABILITY_MAX,
-                box_slug, channel_id, channel_source,
-            )
-            return
+        if decoded:
+            self._log_reliability_sample(box_slug, channel_id, channel_source, event)
+            if not self._is_valid_reliability(event):
+                _LOGGER.debug(
+                    "Event dropped (reliability=%s out of range [%s, %s]) on box=%s channel=%s/%s",
+                    event.get("reliability"),
+                    RuntimeSettings.RELIABILITY_MIN,
+                    RuntimeSettings.RELIABILITY_MAX,
+                    box_slug, channel_id, channel_source,
+                )
+                return
 
         device = self._registry.match(box_slug, channel_id, channel_source)
-
         if device is not None:
-            states = convert_notes_to_states(notes)
-            for stype, svalue in states:
-                self._on_state(device.key, stype, svalue, channel)
+            if decoded:
+                for stype, svalue in convert_notes_to_states(notes):
+                    self._on_state(device.key, stype, svalue, channel)
             return
 
-        if not self._inclusion.active:
-            _LOGGER.debug(
-                "Unknown device, inclusion mode OFF, ignored: box=%s channel=%s/%s",
-                box_slug, channel_id, channel_source,
-            )
-            return
-
-        protocol_name = self._catalog.protocol_name_for(box_slug, channel_id)
-        self._inclusion.upsert_candidate(
-            box=box_slug,
-            channel_id=channel_id,
-            channel_source=channel_source,
-            protocol_name=protocol_name,
-        )
+        # Unmatched frame: always recorded as an inclusion inbox candidate,
+        # whether or not the wizard UI currently has a session open.
+        self._record_candidate(box_slug, channel_id, channel_source, decoded)

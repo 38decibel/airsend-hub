@@ -39,6 +39,12 @@ _BIND_DURATION_COMMAND_TOPIC = "airsend/settings/bind_duration/set"
 _BIND_DURATION_STATE_TOPIC = "airsend/settings/bind_duration/state"
 _BIND_DURATION_DISCOVERY_TOPIC = "homeassistant/number/bind_duration_airsend/config"
 
+_CAPTURE_UNKNOWN_COMMAND_TOPIC = "airsend/settings/capture_unknown_events/set"
+_CAPTURE_UNKNOWN_STATE_TOPIC = "airsend/settings/capture_unknown_events/state"
+_CAPTURE_UNKNOWN_DISCOVERY_TOPIC = "homeassistant/switch/capture_unknown_events_airsend/config"
+_CAPTURE_UNKNOWN_PAYLOAD_ON = "ON"
+_CAPTURE_UNKNOWN_PAYLOAD_OFF = "OFF"
+
 _LEGACY_INCLUSION_DISCOVERY_TOPICS = (
     "homeassistant/switch/inclusion_mode_airsend/config",
     "homeassistant/switch/airsend_inclusion_mode/config",
@@ -122,11 +128,14 @@ class MqttBridge:
         client.subscribe("airsend/+/set_position")
         client.subscribe(_RELIABILITY_COMMAND_TOPIC)
         client.subscribe(_BIND_DURATION_COMMAND_TOPIC)
+        client.subscribe(_CAPTURE_UNKNOWN_COMMAND_TOPIC)
         self._cleanup_legacy_discovery_topics()
         for device in self._registry.all():
             self.publish_discovery(device)
         self._publish_bind_duration_discovery()
         self._publish_bind_duration_state()
+        self._publish_capture_unknown_discovery()
+        self._publish_capture_unknown_state()
         for box in self._boxes_by_slug.values():
             self.publish_box_diagnostics(box)
 
@@ -211,6 +220,44 @@ class MqttBridge:
 
     def _publish_bind_duration_state(self) -> None:
         self._mqtt.publish(_BIND_DURATION_STATE_TOPIC, str(int(self._settings.bind_duration_s)), retain=True)
+
+    def _publish_capture_unknown_discovery(self) -> None:
+        box_slug = self._primary_box_slug()
+        device_info = (
+            self._device_info_for_box(box_slug)
+            if box_slug
+            else build_device_info("airsend_addon", "AirSend")
+        )
+        config = {
+            "name": "Capture protocoles inconnus",
+            "default_entity_id": "switch.capture_unknown_events",
+            "has_entity_name": True,
+            "unique_id": "capture_unknown_events_airsend",
+            "entity_category": "config",
+            "command_topic": _CAPTURE_UNKNOWN_COMMAND_TOPIC,
+            "state_topic": _CAPTURE_UNKNOWN_STATE_TOPIC,
+            "payload_on": _CAPTURE_UNKNOWN_PAYLOAD_ON,
+            "payload_off": _CAPTURE_UNKNOWN_PAYLOAD_OFF,
+            "state_on": _CAPTURE_UNKNOWN_PAYLOAD_ON,
+            "state_off": _CAPTURE_UNKNOWN_PAYLOAD_OFF,
+            "availability_topic": AVAILABILITY_TOPIC,
+            "payload_available": AVAILABILITY_ONLINE,
+            "payload_not_available": AVAILABILITY_OFFLINE,
+            "device": device_info,
+        }
+        self._mqtt.publish(_CAPTURE_UNKNOWN_DISCOVERY_TOPIC, json.dumps(config), retain=True)
+
+    def _publish_capture_unknown_state(self) -> None:
+        payload = _CAPTURE_UNKNOWN_PAYLOAD_ON if self._settings.capture_unknown_events else _CAPTURE_UNKNOWN_PAYLOAD_OFF
+        self._mqtt.publish(_CAPTURE_UNKNOWN_STATE_TOPIC, payload, retain=True)
+
+    def set_capture_unknown_events(self, enabled: bool) -> None:
+        """Single entry point for toggling promiscuous capture, used both by
+        the MQTT switch command and by the Ingress `/api/settings` route, so
+        the two stay consistent."""
+        self._settings.capture_unknown_events = enabled
+        self._publish_capture_unknown_state()
+        _LOGGER.info("capture_unknown_events updated to %s", enabled)
 
 
     def _diagnostic_sensor_topics_and_config(
@@ -324,6 +371,12 @@ class MqttBridge:
             value,
         )
 
+    def _handle_capture_unknown_command(self, payload: str) -> None:
+        if payload not in (_CAPTURE_UNKNOWN_PAYLOAD_ON, _CAPTURE_UNKNOWN_PAYLOAD_OFF):
+            _LOGGER.warning("Invalid capture_unknown_events payload: %r", payload)
+            return
+        self.set_capture_unknown_events(payload == _CAPTURE_UNKNOWN_PAYLOAD_ON)
+
     async def _handle_device_command(self, topic: str, payload: str) -> None:
         parts = topic.split("/")
         if len(parts) < 3:
@@ -429,5 +482,7 @@ class MqttBridge:
             _LOGGER.debug("Ignoring stale message on removed reliability_min topic")
         elif topic == _BIND_DURATION_COMMAND_TOPIC:
             self._handle_bind_duration_command(payload)
+        elif topic == _CAPTURE_UNKNOWN_COMMAND_TOPIC:
+            self._handle_capture_unknown_command(payload)
         else:
             await self._handle_device_command(topic, payload)
