@@ -170,6 +170,7 @@ async def async_main() -> None:
         registry=registry,
         catalog=catalog,
         mqtt_bridge=mqtt_bridge,
+        settings=settings,
     )
     ingress_runner = web.AppRunner(ingress_app)
     await ingress_runner.setup()
