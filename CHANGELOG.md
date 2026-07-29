@@ -1,5 +1,12 @@
 ---
 
+## 1.5.2 - 2026-07-29
+
+### ♻️ Changed
+- Fix(index): deleted calls applyI18n
+
+---
+
 ## 1.5.1 - 2026-07-29
 
 ### 🚀 Added
