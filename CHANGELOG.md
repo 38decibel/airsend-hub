@@ -1,5 +1,12 @@
 ---
 
+## 1.5.1 - 2026-07-29
+
+### 🚀 Added
+- **wizard:** redesign inclusion flow with accordion UI and auto-generated source
+
+---
+
 ## 1.5.0 - 2026-07-29
 
 ### ♻️ Changed
