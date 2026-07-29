@@ -283,6 +283,49 @@
     </div>
   </div>
 
+  <div id="step-registration" class="hidden" style="margin-top:14px;">
+    <h2 id="reg-title" data-i18n="wizard.registration.title">Procédure d'appairage</h2>
+    <p class="muted" data-i18n="wizard.registration.info">Cette procédure est parfois appelée «&nbsp;appairage&nbsp;», «&nbsp;programmation&nbsp;» ou «&nbsp;mémorisation&nbsp;».</p>
+
+    <!-- Sub-type selector (shown only for multi-procedure protocols) -->
+    <div id="reg-subtype-wrap" class="hidden" style="margin-bottom:14px;">
+      <label class="field-label" for="reg-subtype-select" data-i18n="wizard.registration.processType">Type de procédure</label>
+      <select id="reg-subtype-select" style="width:100%;padding:6px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:0.97em;"></select>
+    </div>
+
+    <!-- FLOR install_code input (shown only for FLOR/Code sub-type) -->
+    <div id="reg-code-wrap" class="hidden" style="margin-bottom:14px;">
+      <p id="reg-code-warning" class="banner warn" style="margin-bottom:8px;"></p>
+      <label class="field-label" for="reg-code-input" data-i18n="wizard.registration.installCode">Code d'installation</label>
+      <input type="number" id="reg-code-input" style="width:100%;padding:6px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text);" min="0" placeholder="ex: 1234">
+    </div>
+
+    <!-- NSL direction buttons (shown at step 2 of NSL) -->
+    <div id="reg-nsl-buttons" class="hidden" style="display:flex;gap:8px;margin-bottom:14px;">
+      <button class="btn secondary" id="reg-nsl-down" data-i18n="wizard.registration.cmdDown">Descendre</button>
+      <button class="btn secondary" id="reg-nsl-stop" data-i18n="wizard.registration.cmdStop">Stop</button>
+      <button class="btn secondary" id="reg-nsl-up" data-i18n="wizard.registration.cmdUp">Monter</button>
+    </div>
+
+    <!-- Instruction steps rendered here -->
+    <ol id="reg-steps-list" style="padding-left:20px;margin-bottom:16px;line-height:1.8;"></ol>
+
+    <!-- Please-wait countdown -->
+    <div id="reg-wait-banner" class="banner hidden" style="margin-bottom:12px;"></div>
+
+    <!-- Error banner -->
+    <div id="reg-error-banner" class="banner error hidden" style="margin-bottom:12px;"></div>
+
+    <!-- Action buttons -->
+    <div id="reg-action-buttons" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+
+    <!-- Post-success buttons (Recommencer / Terminer) -->
+    <div id="reg-done-buttons" class="hidden" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+      <button class="btn secondary" id="reg-btn-restart" data-i18n="wizard.registration.restart">Recommencer</button>
+      <button class="btn" id="reg-btn-finish" data-i18n="wizard.registration.finish">Terminer</button>
+    </div>
+  </div>
+
   <div id="step-done" class="hidden" style="margin-top:14px;">
     <div class="banner ok" data-i18n="wizard.done.success">✓ Appareil ajouté avec succès.</div>
     <button class="btn" id="btn-done-back" data-i18n="common.back">Retour</button>
@@ -467,6 +510,43 @@
       "wizard.kind.tryAnyway": "Continuer quand même",
 
       "wizard.done.success": "✓ Appareil ajouté avec succès.",
+
+      "wizard.registration.title": "Procédure d'appairage",
+      "wizard.registration.info": "Cette procédure est parfois appelée «\u00a0appairage\u00a0», «\u00a0programmation\u00a0» ou «\u00a0mémorisation\u00a0».",
+      "wizard.registration.processType": "Type de procédure",
+      "wizard.registration.installCode": "Code d'installation",
+      "wizard.registration.restart": "Recommencer",
+      "wizard.registration.finish": "Terminer",
+      "wizard.registration.sending": "Envoi des commandes radio…",
+      "wizard.registration.error": "Erreur lors de l'envoi de la commande RF.",
+      "wizard.registration.done": "L'enregistrement est terminé.",
+      "wizard.registration.doneWait": "L'enregistrement est terminé, veuillez patienter {seconds} secondes avant de tester.",
+      "wizard.registration.seeManual": "Veuillez consulter la notice de votre automatisme (section : Ajouter une télécommande supplémentaire) afin d'enregistrer la télécommande ci-dessous.",
+      "wizard.registration.pending": "Procédure en cours de documentation — consultez la notice de votre automatisme.",
+      "wizard.registration.cmdDown": "Descendre",
+      "wizard.registration.cmdStop": "Stop",
+      "wizard.registration.cmdUp": "Monter",
+      "wizard.registration.pleaseWait": "Veuillez patienter {seconds} secondes…",
+      "wizard.registration.proximityTip": "💡 Rapprochez-vous de votre automatisme pour optimiser la portée RF.",
+      "wizard.registration.subtype.remote": "A distance",
+      "wizard.registration.subtype.automation": "Depuis l'automatisme",
+      "wizard.registration.subtype.standard": "Standard",
+      "wizard.registration.subtype.beninca": "Benincà",
+      "wizard.registration.subtype.clarus": "Clarus",
+      "wizard.registration.subtype.situo": "Situo / Smoove",
+      "wizard.registration.subtype.keygo": "Keygo",
+      "wizard.registration.subtype.velux3ur": "Velux 3UR B01",
+      "wizard.registration.subtype.veluxkli": "Velux KLI",
+      "wizard.registration.subtype.florStandard": "Standard",
+      "wizard.registration.subtype.florShort": "Short",
+      "wizard.registration.subtype.florAlternative": "Alternative",
+      "wizard.registration.subtype.florCode": "Code",
+      "wizard.registration.actionButton": "ACTION",
+      "wizard.registration.actionInvButton": "ACTION (inversion)",
+      "wizard.registration.pairButton": "Appairer",
+      "wizard.registration.unpairButton": "Désappairer",
+      "wizard.registration.startButton": "Commencer",
+      "wizard.registration.progButton": "PROG",
 
       "kind.1_bouton": "1 bouton",
       "kind.on_off": "On / Off",
@@ -657,6 +737,43 @@
       "wizard.kind.tryAnyway": "Continue anyway",
 
       "wizard.done.success": "✓ Device added successfully.",
+
+      "wizard.registration.title": "Pairing procedure",
+      "wizard.registration.info": "This process is sometimes called \"pairing\", \"programming\" or \"memorizing\".",
+      "wizard.registration.processType": "Process type",
+      "wizard.registration.installCode": "Installation code",
+      "wizard.registration.restart": "Restart",
+      "wizard.registration.finish": "Finish",
+      "wizard.registration.sending": "Sending radio commands…",
+      "wizard.registration.error": "Error sending RF command.",
+      "wizard.registration.done": "Registration is complete.",
+      "wizard.registration.doneWait": "Registration is complete, please wait {seconds} seconds before testing.",
+      "wizard.registration.seeManual": "Please consult your automation manual (section: Adding an additional remote control) in order to register the remote control below.",
+      "wizard.registration.pending": "Procedure pending documentation — please consult your automation manual.",
+      "wizard.registration.cmdDown": "Down",
+      "wizard.registration.cmdStop": "Stop",
+      "wizard.registration.cmdUp": "Up",
+      "wizard.registration.pleaseWait": "Please wait {seconds} seconds…",
+      "wizard.registration.proximityTip": "💡 Move closer to your automation to optimise RF range.",
+      "wizard.registration.subtype.remote": "Remotely",
+      "wizard.registration.subtype.automation": "From the automation",
+      "wizard.registration.subtype.standard": "Standard",
+      "wizard.registration.subtype.beninca": "Benincà",
+      "wizard.registration.subtype.clarus": "Clarus",
+      "wizard.registration.subtype.situo": "Situo / Smoove",
+      "wizard.registration.subtype.keygo": "Keygo",
+      "wizard.registration.subtype.velux3ur": "Velux 3UR B01",
+      "wizard.registration.subtype.veluxkli": "Velux KLI",
+      "wizard.registration.subtype.florStandard": "Standard",
+      "wizard.registration.subtype.florShort": "Short",
+      "wizard.registration.subtype.florAlternative": "Alternative",
+      "wizard.registration.subtype.florCode": "Code",
+      "wizard.registration.actionButton": "ACTION",
+      "wizard.registration.actionInvButton": "ACTION (inversion)",
+      "wizard.registration.pairButton": "Pair",
+      "wizard.registration.unpairButton": "Unpair",
+      "wizard.registration.startButton": "Start",
+      "wizard.registration.progButton": "PROG",
 
       "kind.1_bouton": "Single button",
       "kind.on_off": "On / Off",
@@ -867,6 +984,7 @@
     listenPoll: null,
     candidate: null,
     kind: null,
+    deviceKey: null,
     editingDevice: null,
     rollingCodeRisk: false,
   };
@@ -879,7 +997,7 @@
   function show(id) { $(id).classList.remove("hidden"); }
   function hide(id) { $(id).classList.add("hidden"); }
   function showOnly(ids) {
-    ["step-branch", "step-catalog", "step-listen", "step-manual", "step-kind", "step-done"]
+    ["step-branch", "step-catalog", "step-listen", "step-manual", "step-kind", "step-registration", "step-done"]
       .forEach(function (s) { ids.includes(s) ? show(s) : hide(s); });
   }
 
@@ -1370,8 +1488,864 @@
         $("btn-confirm").disabled = false;
         return;
       }
-      showOnly(["step-done"]);
+      // Device created – store key and enter registration flow
+      state.deviceKey = res.body.key;
+      startRegistration();
     });
+  }
+
+  // -----------------------------------------------------------------------
+  // Registration flow
+  // -----------------------------------------------------------------------
+
+  // Strings sourced from the official Devmel cloud app (reformatted_js).
+  // Keys ending in _html may contain <b> tags rendered via innerHTML.
+  var REG_STRINGS = {
+    fr: {
+      AVD: {
+        pressBoth_html: "Sur votre <b>télécommande d'origine</b>, presser simultanément sur <b>ALL MONTÉE</b> et <b>ALL DESCENTE</b>",
+        pressBothAgain_html: "Sur votre <b>télécommande d'origine</b>, presser de nouveau simultanément sur <b>ALL MONTÉE</b> et <b>ALL DESCENTE</b>",
+        automationReaction: "Votre automatisme réagit (voyant qui s'allume ou clignote, bip sonore, mouvement…)",
+        pressAction_html: "Presser sur la touche <b>ACTION</b> ou <b>ACTION (inversion)</b> ci-dessous",
+        automationProgMode: "Passer l'automatisme en mode apprentissage",
+        pressProg_html: "Soit en <b>appuyant sur PROG</b> en façade du module jusqu'à ce que le <b>voyant clignote</b>.",
+        pressSet_html: "Soit en <b>appuyant 3 secondes sur «–»</b>, puis en <b>appuyant sur SET</b> jusqu'à ce que qu'un <b>voyant clignote</b>.",
+        moveWithMobile: "Muni de votre smartphone, rapprochez vous de votre automatisme",
+      },
+      BID: {
+        registrationSeeManual: "Veuillez consulter la notice de votre automatisme (section : Ajouter une télécommande supplémentaire) afin d'enregistrer la télécommande ci-dessous.",
+      },
+      BFT: {
+        moveWithRemoteMobile: "Muni de votre télécommande d'origine et de votre smartphone, rapprochez vous de votre automatisme",
+        pressHidden_html: "Sur votre <b>télécommande d'origine</b>, appuyer sur la <b>touche cachée</b> à l'arrière. <br />Si il n'y a pas de touche caché, pressez simultanément sur les 2 boutons du haut de votre télécommande.",
+        pressToggle_html: "Sur votre <b>télécommande d'origine</b>, appuyer sur le <b>bouton à copier</b>.<br />Si l'automatisme se met en mouvement, il faut recommencer à l'étape 1.",
+        pressAction_html: "Presser sur la touche <b>ACTION</b> ci-dessous",
+        registrationDoneWait: "L'enregistrement est terminé, veuillez patienter 45 secondes avant de tester.",
+      },
+      BNA: {
+        pressHidden_html: "Sur votre <b>télécommande d'origine</b>, appuyer sur la <b>touche cachée</b>. <br />En ce qui concerne les émetteurs classiques, le bouton caché est un bouton à l'intérieur de la télécommande qui doit être enfoncé à l'aide d'une agrafe ou d'un fil de fer.",
+        pressToggle_html: "Sur votre <b>télécommande d'origine</b>, appuyer sur le <b>bouton à copier</b>.",
+        pressAction_html: "Presser sur la touche <b>ACTION</b> ci-dessous",
+        pressBoth_html: "Sur votre <b>télécommande d'origine</b>, presser simultanément sur <b>MONTÉE</b> et <b>DESCENTE</b> jusqu'à l'allumage de la diode M.",
+        alertLedM_html: "Sur votre <b>télécommande d'origine</b>, vérifier que la <b>diode M seulement est allumée</b>. <br />(Attention : la diode D supprime votre émetteur).",
+        pressStop_html: "Sur votre <b>télécommande d'origine</b>, presser sur <b>STOP</b>",
+        automatePowerOff_html: "<b>Couper l'alimentation électrique</b> de votre automatisme.",
+        pleaseWait10: "Veuillez patienter 10 secondes…",
+        automatePowerOn_html: "<b>Rétablir l'alimentation électrique</b> de votre automatisme pour passer en mode programmation.",
+      },
+      CBL: {
+        pressS_html: "Sur votre <b>automatisme</b>, appuyer sur le bouton <b>S</b> pendant 2 secondes.",
+        automationReaction: "Votre automatisme réagit (voyant qui s'allume ou clignote, bip sonore, mouvement…)",
+        pressAction_html: "Presser sur la touche <b>ACTION</b> ci-dessous",
+      },
+      CBN: {
+        batteryReplace_html: "Sur votre <b>télécommande d'origine</b>, <b>enlever</b> la pile, attendre au moins 5 secondes, puis <b>remettre la pile</b> pour passer en mode programmation",
+        pressBoth_html: "Sur votre <b>télécommande d'origine</b>, presser simultanément sur <b>STOP</b> et <b>MONTÉE</b>",
+        automationReaction: "Votre automatisme réagit (voyant qui s'allume ou clignote, bip sonore, mouvement…)",
+        pressStop_html: "Sur votre <b>télécommande d'origine</b>, presser sur <b>STOP</b>",
+        automationReactionAgain: "Votre automatisme réagit de nouveau",
+        pressAction_html: "Presser sur la touche <b>ACTION</b> ci-dessous",
+      },
+      CME: {
+        press3P_html: "Sur votre <b>télécommande d'origine</b>, presser sur le bouton <b>3P</b>",
+        automationReaction: "Votre automatisme réagit (voyant qui s'allume ou clignote, bip sonore, mouvement…)",
+        pressAction_html: "Presser sur la touche <b>ACTION</b> ci-dessous",
+      },
+      CRD: {
+        pressHidden_html: "Sur votre <b>télécommande d'origine</b>, appuyer sur <b>la touche cachée</b>. <br />En ce qui concerne les émetteurs classiques, le bouton caché est un bouton à l'intérieur de la télécommande qui doit être enfoncé à l'aide d'une agrafe ou d'un fil de fer.",
+        pressToggle_html: "Sur votre <b>télécommande d'origine</b>, appuyer sur <b>le bouton à copier</b>.",
+        pressAction_html: "Presser sur la touche <b>ACTION</b> ci-dessous",
+      },
+      DEA: {
+        pressBoth_html: "Sur votre <b>télécommande d'origine</b>, <b>presser simultanément</b> sur les <b>2 boutons</b> du haut.",
+        automationReaction: "Votre automatisme réagit (voyant qui s'allume ou clignote, bip sonore, mouvement…)",
+        pressAction_html: "Presser sur la touche <b>ACTION</b> ci-dessous",
+      },
+      DGL: {
+        moveWithRemoteMobile: "Muni de votre télécommande d'origine et de votre smartphone, rapprochez vous de votre automatisme",
+        pressP1Long_html: "Sur votre <b>télécommande d'origine</b>, <b>presser P1</b> pendant <b>au moins 10 secondes</b>.",
+        pressProg_html: "Sur votre <b>télécommande d'origine</b>, presser sur <b>PROG</b>.",
+        pressAction_html: "Presser sur la touche <b>ACTION</b> ci-dessous",
+        registrationDoneWait: "L'enregistrement est terminé, veuillez patienter 10 secondes avant de tester.",
+      },
+      DTC: {
+        moveWithRemoteMobile: "Muni de votre télécommande d'origine et de votre smartphone, rapprochez vous de votre automatisme",
+        pressPush_html: "Sur votre <b>télécommande d'origine</b>, <b>presser</b> le <b>poussoir situé sous l'orifice central</b> (à l'aide d'un trombone) pendant <b>5 secondes</b>",
+        remoteBlink: "La LED de la télécommande d'origine clignote",
+        pleaseWait5: "Veuillez patienter 5 secondes…",
+        pressAction_html: "Presser sur la touche <b>ACTION</b> ci-dessous",
+        openAutomation_html: "<b>Ouvrir le boîtier</b>",
+        automationProgMode: "Passer l'automatisme en mode apprentissage",
+        withoutDisplay_html: "Si votre carte <b>n'a pas d'afficheur</b>, <b>appuyer</b> sur le bouton d'apprentissage <b>PRG</b>",
+        withDisplay_html: "Si votre carte <b>a un afficheur</b>, presser <b>Entrer</b>, puis utiliser les flèches jusqu'à afficher <b>«RO»</b> et presser <b>Entrer</b>. Rechercher <b>«SR»</b> et presser <b>Entrer</b>",
+        registrationDoneWait: "L'enregistrement est terminé, veuillez patienter 10 secondes avant de tester.",
+      },
+      ECS: {
+        pressP_html: "Sur votre <b>automatisme</b>, appuyer sur <b>P</b>. <br />Parfois, ce bouton est à l'intérieur.",
+        automationBlink: "La LED de votre automatisme clignote",
+        pressAction_html: "Presser sur la touche <b>ACTION</b> ci-dessous",
+      },
+      FLOR: {
+        codeWarning: "Ce type de procédure ne fonctionne pas avec tous les appareils, n'hésitez pas à essayer un autre type.",
+        press3Time_html: "Sur votre <b>télécommande d'origine</b>, <b>presser 3 fois</b> lentement la touche <b>STOP</b>",
+        pressUntilCounter_html: "Sur votre <b>télécommande d'origine</b>, <b>presser la touche STOP</b> jusqu'à la <b>fin du compteur ci-contre</b>",
+        pressAction_html: "Presser sur la touche <b>ACTION</b> ci-dessous",
+      },
+      FTM: {
+        pressHidden_html: "Sur votre <b>télécommande d'origine</b>, appuyer sur <b>la touche cachée</b> pendant 2 secondes. <br />En ce qui concerne les émetteurs classiques, le bouton caché est un bouton à l'intérieur de la télécommande qui doit être enfoncé à l'aide d'une agrafe ou d'un fil de fer.",
+        pressStop_html: "Sur votre <b>télécommande d'origine</b>, appuyer sur <b>STOP</b> pendant 2 secondes.",
+        pressAction_html: "Presser sur la touche <b>ACTION</b> ci-dessous",
+      },
+      GNS: {
+        moveWithRemoteMobile: "Muni de votre télécommande d'origine et de votre smartphone, rapprochez vous de votre automatisme",
+        pressBoth_html: "Sur votre <b>télécommande d'origine</b>, <b>presser simultanément</b> sur les boutons <b>P1 et P2</b> pendant <b>5 secondes</b>.",
+        pressToggle_html: "Sur votre <b>télécommande d'origine</b>, appuyer sur <b>le bouton à copier</b>.",
+        automationReaction: "Votre automatisme réagit (voyant qui s'allume ou clignote, bip sonore, mouvement…)",
+        pressAction_html: "Presser sur la touche <b>ACTION</b> ci-dessous",
+        openAutomation_html: "<b>Ouvrir le boîtier</b>",
+        pressSW_html: "Sur votre <b>automatisme</b>, appuyer sur bouton <b>SW1</b> ou <b>SW2</b> selon le canal à mémoriser.",
+        registrationDoneWait: "L'enregistrement est terminé, veuillez patienter 10 secondes avant de tester.",
+      },
+      INL: {
+        pressBoth_html: "Sur votre <b>télécommande d'origine</b>, presser simultanément sur <b>MONTÉE</b> et <b>DESCENTE</b>",
+        automationReaction: "Votre automatisme réagit (voyant qui s'allume ou clignote, bip sonore, mouvement…)",
+        pressAction_html: "Presser sur la touche <b>ACTION</b> ci-dessous",
+      },
+      IOU: {
+        pressProg_html: "Sur votre <b>télécommande d'origine</b>, presser sur <b>PROG</b> pendant <b>2 ou 3 secondes</b>",
+        automationReaction: "Votre automatisme réagit (voyant qui s'allume ou clignote, bip sonore, mouvement…)",
+        pressPairUnpair_html: "Presser sur la touche <b>APPAIRER</b> ou <b>DÉSAPPAIRER</b> ci-dessous",
+        pressBoth_html: "Sur votre <b>télécommande d'origine</b>, <b>appuyez simultanément</b> sur les boutons <b>1 (bas gauche)</b> et <b>3 (bas droite)</b> jusqu'à ce que la diode de la télécommande clignote",
+        pressToggle_html: "Sur votre <b>télécommande d'origine</b>, <b>appuyez</b> pendant <b>2 secondes</b> sur le <b>bouton à recopier</b> (= celui qui actionne votre automatisme)",
+        pressReset_html: "Sur votre <b>télécommande d'origine</b>, presser sur <b>RESET</b> pendant <b>10 secondes</b>",
+        pressSetting_html: "Sur votre <b>télécommande d'origine</b>, presser sur <b>RÉGLAGE</b> pendant <b>une seconde</b>",
+        pressProgAutomate_html: "Sur votre <b>automatisme</b>, appuyer sur la bouton <b>PROG</b> pendant <b>2 secondes</b>",
+      },
+      MLN: {
+        automatePowerOff_html: "<b>Couper l'alimentation électrique</b> de votre automatisme.",
+        pressAction_html: "Presser sur la touche <b>ACTION</b> ci-dessous",
+        automatePowerOn_html: "<b>Rétablir l'alimentation électrique</b> de votre automatisme pour passer en mode programmation.",
+      },
+      NSL: {
+        pressSet_html: "Sur votre <b>automatisme</b>, appuyer sur <b>SET</b>.<br />Parfois, ce bouton est à l'intérieur.",
+        pressButton: "Presser la touche à mémoriser ci-dessous",
+        automationBlink: "La LED de votre automatisme clignote, ce qui indique la mémorisation du code.",
+      },
+      PFX: {
+        shutterAdjust_html: "A l'aide de la télécommande déjà programmée, <b>ajuster</b> le volet à environ <b>5 cm</b> de la <b>fin de course haute</b>.",
+        shutterAdjusted: "Mon volet est à environ 5 cm",
+        withRemote_html: "A l'aide d'une <b>télécommande déjà programmée</b> :",
+        pressUp_html: "Appuyer sur <b>MONTÉE</b>",
+        movingUp: "Laisser monter le volet jusqu'à la fin de course haute.",
+        pressDownWait_html: "Appuyer sur <b>DESCENTE</b> durant <b>3 secondes</b>",
+        pressStop_html: "Appuyer sur <b>STOP</b>",
+        shutterConfirm: "Le volet effectue un va-et-vient de confirmation",
+      },
+    },
+    en: {
+      AVD: {
+        pressBoth_html: "On your <b>original remote control</b>, simultaneously press <b>ALL UP</b> and <b>ALL DOWN</b>",
+        pressBothAgain_html: "On your <b>original remote control</b>, again simultaneously press <b>ALL UP</b> and <b>ALL DOWN</b>",
+        automationReaction: "Your automation reacts (indicator light coming on or flashing, beep, movement, etc.)",
+        pressAction_html: "Press the <b>ACTION</b> or <b>ACTION (inversion)</b> key below",
+        automationProgMode: "Switch the automation to learning mode",
+        pressProg_html: "Either by <b>pressing PROG</b> on the front of the module until the <b>LED flashes</b>.",
+        pressSet_html: "Either by <b>pressing '-' for 3 seconds</b>, then <b>pressing SET</b> until a <b>light flashes</b>.",
+        moveWithMobile: "With your smartphone, get closer to your automation",
+      },
+      BID: {
+        registrationSeeManual: "Please consult your automation manual (section: Adding an additional remote control) in order to register the remote control below.",
+      },
+      BFT: {
+        moveWithRemoteMobile: "With your original remote control and your smartphone, get closer to your automation",
+        pressHidden_html: "On your <b>original remote control</b>, press the <b>hidden key</b> at the back. <br />If there is no hidden key, press simultaneously on the 2 top buttons of your remote control.",
+        pressToggle_html: "On your <b>original remote control</b>, press the <b>button to copy</b>.<br />If the automation starts to move, start over at step 1.",
+        pressAction_html: "Press the <b>ACTION</b> key below",
+        registrationDoneWait: "Registration is complete, please wait 45 seconds before testing.",
+      },
+      BNA: {
+        pressHidden_html: "On your <b>original remote control</b>, press the <b>hidden key</b>. <br />For conventional transmitters, the hidden button is a button inside the remote control that must be pushed in with a clip or wire.",
+        pressToggle_html: "On your <b>original remote control</b>, press the <b>button to copy</b>.",
+        pressAction_html: "Press the <b>ACTION</b> key below",
+        pressBoth_html: "On your <b>original remote control</b>, simultaneously press <b>UP</b> and <b>DOWN</b> until LED M comes on.",
+        alertLedM_html: "On your <b>original remote control</b>, check that the <b>M diode only is on</b>. <br />(Warning: diode D suppresses your transmitter).",
+        pressStop_html: "On your <b>original remote control</b>, press <b>STOP</b>",
+        automatePowerOff_html: "<b>Cut the electrical supply</b> to your automation.",
+        pleaseWait10: "Please wait 10 seconds…",
+        automatePowerOn_html: "<b>Restore the electrical supply</b> to your automation to switch to programming mode.",
+      },
+      CBL: {
+        pressS_html: "On your <b>automation</b>, press the <b>S</b> button for 2 seconds.",
+        automationReaction: "Your automation reacts (indicator light coming on or flashing, beep, movement, etc.)",
+        pressAction_html: "Press the <b>ACTION</b> key below",
+      },
+      CBN: {
+        batteryReplace_html: "On your <b>original remote control</b>, <b>remove the battery</b>, wait for 5 seconds, then <b>replace the battery</b> to enter programming mode",
+        pressBoth_html: "On your <b>original remote control</b>, simultaneously press <b>STOP</b> and <b>UP</b>",
+        automationReaction: "Your automation reacts (indicator light coming on or flashing, beep, movement, etc.)",
+        pressStop_html: "On your <b>original remote control</b>, press <b>STOP</b>",
+        automationReactionAgain: "Your automation reacts again",
+        pressAction_html: "Press the <b>ACTION</b> key below",
+      },
+      CME: {
+        press3P_html: "On your <b>original remote control</b>, press the <b>3P</b> button",
+        automationReaction: "Your automation reacts (indicator light coming on or flashing, beep, movement, etc.)",
+        pressAction_html: "Press the <b>ACTION</b> key below",
+      },
+      CRD: {
+        pressHidden_html: "On your <b>original remote control</b>, press <b>the hidden key</b>. <br />For conventional transmitters, the hidden button is a button inside the remote control that must be pushed in with a clip or wire.",
+        pressToggle_html: "On your <b>original remote control</b>, press <b>the button to copy</b>.",
+        pressAction_html: "Press the <b>ACTION</b> key below",
+      },
+      DEA: {
+        pressBoth_html: "On your <b>original remote control</b>, <b>simultaneously press</b> on the <b>2 buttons</b>.",
+        automationReaction: "Your automation reacts (indicator light coming on or flashing, beep, movement, etc.)",
+        pressAction_html: "Press the <b>ACTION</b> key below",
+      },
+      DGL: {
+        moveWithRemoteMobile: "With your original remote control and your smartphone, get closer to your automation",
+        pressP1Long_html: "On your <b>original remote control</b>, <b>press P1</b> for <b>at least 10 seconds</b>.",
+        pressProg_html: "On your <b>original remote control</b>, press <b>PROG</b>.",
+        pressAction_html: "Press the <b>ACTION</b> key below",
+        registrationDoneWait: "Registration is complete, please wait 10 seconds before testing.",
+      },
+      DTC: {
+        moveWithRemoteMobile: "With your original remote control and your smartphone, get closer to your automation",
+        pressPush_html: "On your <b>original remote control</b>, <b>press</b> the <b>button located under the central hole</b> (using a paper clip) for <b>5 seconds</b>",
+        remoteBlink: "The LED of the original remote control flashes",
+        pleaseWait5: "Please wait 5 seconds…",
+        pressAction_html: "Press the <b>ACTION</b> key below",
+        openAutomation_html: "<b>Open the box</b>",
+        automationProgMode: "Switch the automation to learning mode",
+        withoutDisplay_html: "If your card <b>does not have a display</b>, <b>press</b> on the learning button <b>PRG</b>",
+        withDisplay_html: "If your card <b>has a display</b>, press <b>Enter</b>, then use the arrows until display <b>\"RO\"</b> and press <b>Enter</b>. Search for <b>\"SR\"</b> and press <b>Enter</b>",
+        registrationDoneWait: "Registration is complete, please wait 10 seconds before testing.",
+      },
+      ECS: {
+        pressP_html: "On your <b>automation</b>, press the <b>P</b>. <br />Sometimes that button is on the inside.",
+        automationBlink: "The LED of your automation is flashing",
+        pressAction_html: "Press the <b>ACTION</b> key below",
+      },
+      FLOR: {
+        codeWarning: "This type of procedure does not work with all devices, do not hesitate to try another type.",
+        press3Time_html: "On your <b>original remote control</b>, press the <b>STOP key 3 times</b> slowly",
+        pressUntilCounter_html: "On your <b>original remote control</b>, <b>press the STOP key</b> until the <b>end of the counter opposite</b>",
+        pressAction_html: "Press the <b>ACTION</b> key below",
+      },
+      FTM: {
+        pressHidden_html: "On your <b>original remote control</b>, press the <b>hidden key</b> for 2 seconds. <br />For conventional transmitters, the hidden button is a button inside the remote control that must be pushed in with a clip or wire.",
+        pressStop_html: "On your <b>original remote control</b>, press <b>STOP</b> for 2 seconds.",
+        pressAction_html: "Press the <b>ACTION</b> key below",
+      },
+      GNS: {
+        moveWithRemoteMobile: "With your original remote control and your smartphone, get closer to your automation",
+        pressBoth_html: "On your <b>original remote control</b>, <b>press simultaneously</b> the <b>P1 and P2</b> buttons for <b>5 seconds</b>.",
+        pressToggle_html: "On your <b>original remote control</b>, press <b>the button to copy</b>.",
+        automationReaction: "Your automation reacts (indicator light coming on or flashing, beep, movement, etc.)",
+        pressAction_html: "Press the <b>ACTION</b> key below",
+        openAutomation_html: "<b>Open the box</b>",
+        pressSW_html: "On your <b>automation</b>, press button <b>SW1</b> or <b>SW2</b> depending on the channel to be stored.",
+        registrationDoneWait: "Registration is complete, please wait 10 seconds before testing.",
+      },
+      INL: {
+        pressBoth_html: "On your <b>original remote control</b>, simultaneously press <b>UP</b> and <b>DOWN</b>",
+        automationReaction: "Your automation reacts (indicator light coming on or flashing, beep, movement, etc.)",
+        pressAction_html: "Press the <b>ACTION</b> key below",
+      },
+      IOU: {
+        pressProg_html: "On your <b>original remote control</b>, press the <b>PROG</b> button for <b>2 or 3 seconds</b>",
+        automationReaction: "Your automation reacts (indicator light coming on or flashing, beep, movement, etc.)",
+        pressPairUnpair_html: "Press the <b>PAIR</b> or <b>UNPAIR</b> button below",
+        pressBoth_html: "On your <b>original remote control</b>, <b>simultaneously press</b> the <b>1 (bottom left)</b> and <b>3 (bottom right)</b> buttons until the remote control's LED flashes",
+        pressToggle_html: "On your <b>original remote control</b>, <b>press</b> and hold the <b>button to be copied</b> (= the one that operates your automation) for <b>2 seconds</b>",
+        pressReset_html: "On your <b>original remote control</b>, press the <b>RESET</b> button for <b>10 seconds</b>",
+        pressSetting_html: "On your <b>original remote control</b>, press the <b>SETTINGS</b> button for <b>one second</b>",
+        pressProgAutomate_html: "On your <b>automation system</b>, press the <b>PROG</b> button for <b>2 seconds</b>",
+      },
+      MLN: {
+        automatePowerOff_html: "<b>Cut the electrical supply</b> to your automation.",
+        pressAction_html: "Press the <b>ACTION</b> key below",
+        automatePowerOn_html: "<b>Restore the electrical supply</b> to your automation to switch to programming mode.",
+      },
+      NSL: {
+        pressSet_html: "On your <b>automation</b>, press the <b>SET</b>. <br />Sometimes that button is on the inside.",
+        pressButton: "Press the key to memorize below",
+        automationBlink: "The LED of your automation flashes, which indicates that the code has been stored.",
+      },
+      PFX: {
+        shutterAdjust_html: "Using the remote control already programmed, <b>adjust</b> the shutter to approximately <b>5 cm</b> from the <b>upper limit switch</b>.",
+        shutterAdjusted: "My shutter is about 5 cm",
+        withRemote_html: "Using a <b>remote control already programmed</b>:",
+        pressUp_html: "Press <b>UP</b>",
+        movingUp: "Let the shutter rise to the top end of travel.",
+        pressDownWait_html: "Press <b>DOWN</b> for <b>3 seconds</b>",
+        pressStop_html: "Press <b>STOP</b>",
+        shutterConfirm: "The shutter moves back and forth for confirmation",
+      },
+    },
+  };
+
+  function rs(protocol, key) {
+    var lang = Object.keys(I18N).includes(currentLang) ? currentLang : "fr";
+    var proto = (REG_STRINGS[lang] || {})[protocol] || {};
+    return proto[key] || (REG_STRINGS["en"][protocol] || {})[key] || key;
+  }
+
+  // REGISTRATION_FLOWS[protocol] describes the registration procedure.
+  // Each flow is either:
+  //   { subtypes: [...], flows: { subtypeKey: flowDef } }  – multi-procedure
+  //   flowDef                                               – single procedure
+  //
+  // flowDef:
+  //   {
+  //     tip: string|null,           // optional proximity tip line
+  //     steps: [string],            // instruction keys for <ol> list
+  //     buttons: [buttonDef],       // action buttons shown simultaneously
+  //     doneMessage: string|null,   // message shown on success (overrides default)
+  //   }
+  //
+  // buttonDef:
+  //   {
+  //     labelKey: string,           // i18n key for label
+  //     labelRs: [protocol, key],   // alt: get label from REG_STRINGS
+  //     commands: [cmdDef],         // RF commands to send in sequence
+  //     showDoneButtons: bool,      // show [Recommencer]/[Terminer] on success
+  //     doneMessage: string|null,
+  //   }
+  //
+  // cmdDef: { cmd: int, duration?: int, seed?: "FLOR_CODE" }
+
+  var REGISTRATION_FLOWS = {
+    PFX: {
+      steps: ["PFX.shutterAdjust_html"],
+      buttons: [{
+        labelRs: ["PFX", "shutterAdjusted"],
+        commands: [{ cmd: 2, duration: 5000 }, { cmd: 3 }],
+        postSteps: ["PFX.withRemote_html", "PFX.pressUp_html", "PFX.movingUp",
+                    "PFX.pressDownWait_html", "PFX.pressStop_html",
+                    "PFX.pressUp_html", "PFX.movingUp", "PFX.shutterConfirm"],
+        showDoneButtons: true,
+      }],
+    },
+
+    AVD: {
+      subtypes: ["wizard.registration.subtype.remote", "wizard.registration.subtype.automation"],
+      flows: {
+        0: {
+          steps: ["AVD.pressBoth_html", "AVD.pressBothAgain_html",
+                  "AVD.automationReaction", "AVD.pressAction_html"],
+          buttons: [
+            { labelKey: "wizard.registration.actionButton", commands: [{ cmd: 0, duration: 2500 }], showDoneButtons: true },
+            { labelKey: "wizard.registration.actionInvButton", commands: [{ cmd: 1, duration: 2500 }], showDoneButtons: true },
+          ],
+        },
+        1: {
+          tip: "AVD.moveWithMobile",
+          steps: ["AVD.automationProgMode", "AVD.pressProg_html", "AVD.pressSet_html", "AVD.pressAction_html"],
+          buttons: [
+            { labelKey: "wizard.registration.actionButton", commands: [{ cmd: 6, duration: 2500 }], showDoneButtons: true },
+          ],
+        },
+      },
+    },
+
+    BID: {
+      steps: ["BID.registrationSeeManual"],
+      buttons: [
+        { labelKey: "wizard.registration.progButton", commands: [{ cmd: 2 }], showDoneButtons: false },
+      ],
+      alwaysShowFinish: true,
+    },
+
+    BFT: {
+      tip: "BFT.moveWithRemoteMobile",
+      steps: ["BFT.pressHidden_html", "BFT.pressToggle_html", "BFT.pressAction_html"],
+      buttons: [
+        { labelKey: "wizard.registration.actionButton", commands: [{ cmd: 2 }, { cmd: 6 }], showDoneButtons: true, doneMessage: "BFT.registrationDoneWait" },
+      ],
+    },
+
+    BNA: {
+      subtypes: ["wizard.registration.subtype.standard", "wizard.registration.subtype.beninca",
+                 "wizard.registration.subtype.clarus", "wizard.registration.subtype.automation"],
+      flows: {
+        0: {
+          steps: ["BNA.pressHidden_html", "BNA.pressToggle_html", "BNA.pressAction_html"],
+          buttons: [{ labelKey: "wizard.registration.actionButton", commands: [{ cmd: 6, duration: 2500 }], showDoneButtons: true }],
+        },
+        1: {
+          steps: ["BNA.pressHidden_html", "BNA.pressToggle_html", "BNA.pressAction_html"],
+          buttons: [{ labelKey: "wizard.registration.actionButton", commands: [{ cmd: 2 }], showDoneButtons: true }],
+        },
+        2: {
+          steps: ["BNA.pressBoth_html", "BNA.alertLedM_html", "BNA.pressStop_html", "BNA.pressAction_html"],
+          buttons: [{ labelKey: "wizard.registration.actionButton", commands: [{ cmd: 3, duration: 3500 }], showDoneButtons: true }],
+        },
+        3: {
+          steps: ["BNA.automatePowerOff_html", "BNA.pleaseWait10", "BNA.automatePowerOn_html", "BNA.pressAction_html"],
+          buttons: [{ labelKey: "wizard.registration.actionButton", commands: [{ cmd: 2, duration: 3500 }], showDoneButtons: true }],
+        },
+      },
+    },
+
+    CBL: {
+      steps: ["CBL.pressS_html", "CBL.automationReaction", "CBL.pressAction_html"],
+      buttons: [{ labelKey: "wizard.registration.actionButton", commands: [{ cmd: 3 }], showDoneButtons: true }],
+    },
+
+    CBN: {
+      steps: ["CBN.batteryReplace_html", "CBN.pressBoth_html", "CBN.automationReaction",
+              "CBN.pressStop_html", "CBN.automationReactionAgain", "CBN.pressAction_html"],
+      buttons: [{ labelKey: "wizard.registration.actionButton", commands: [{ cmd: 3, duration: 2500 }], showDoneButtons: true }],
+    },
+
+    CME: {
+      steps: ["CME.press3P_html", "CME.automationReaction", "CME.pressAction_html"],
+      buttons: [{ labelKey: "wizard.registration.actionButton", commands: [{ cmd: 5 }], showDoneButtons: true }],
+    },
+
+    CRD: {
+      steps: ["CRD.pressHidden_html", "CRD.pressToggle_html", "CRD.pressAction_html"],
+      buttons: [{ labelKey: "wizard.registration.actionButton", commands: [{ cmd: 6, duration: 2500 }], showDoneButtons: true }],
+    },
+
+    DEA: {
+      steps: ["DEA.pressBoth_html", "DEA.automationReaction", "DEA.pressAction_html"],
+      buttons: [{ labelKey: "wizard.registration.actionButton", commands: [{ cmd: 6 }], showDoneButtons: true }],
+    },
+
+    DGL: {
+      subtypes: ["wizard.registration.subtype.remote", "wizard.registration.subtype.automation"],
+      flows: {
+        0: {
+          tip: "DGL.moveWithRemoteMobile",
+          steps: ["DGL.pressP1Long_html", "DGL.pressAction_html"],
+          buttons: [{ labelKey: "wizard.registration.actionButton", commands: [{ cmd: 64 }, { cmd: 2 }, { cmd: 6 }], showDoneButtons: true, doneMessage: "DGL.registrationDoneWait" }],
+        },
+        1: {
+          tip: "DGL.moveWithRemoteMobile",
+          steps: ["DGL.pressProg_html", "DGL.pressAction_html"],
+          buttons: [{ labelKey: "wizard.registration.actionButton", commands: [{ cmd: 64 }, { cmd: 2 }, { cmd: 6 }], showDoneButtons: true, doneMessage: "DGL.registrationDoneWait" }],
+        },
+      },
+    },
+
+    DTC: {
+      subtypes: ["wizard.registration.subtype.remote", "wizard.registration.subtype.automation"],
+      flows: {
+        0: {
+          tip: "DTC.moveWithRemoteMobile",
+          steps: ["DTC.pressPush_html", "DTC.remoteBlink", "DTC.pleaseWait5", "DTC.pressAction_html"],
+          buttons: [{ labelKey: "wizard.registration.actionButton", commands: [{ cmd: 6 }], showDoneButtons: true, doneMessage: "DTC.registrationDoneWait" }],
+        },
+        1: {
+          tip: "DTC.moveWithRemoteMobile",
+          steps: ["DTC.openAutomation_html", "DTC.automationProgMode",
+                  "DTC.withoutDisplay_html", "DTC.withDisplay_html", "DTC.pressAction_html"],
+          buttons: [{ labelKey: "wizard.registration.actionButton", commands: [{ cmd: 6 }], showDoneButtons: true, doneMessage: "DTC.registrationDoneWait" }],
+        },
+      },
+    },
+
+    ECS: {
+      steps: ["ECS.pressP_html", "ECS.automationBlink", "ECS.pressAction_html"],
+      buttons: [{ labelKey: "wizard.registration.actionButton", commands: [{ cmd: 6, duration: 5500 }], showDoneButtons: true }],
+    },
+
+    FLOR: {
+      subtypes: ["wizard.registration.subtype.florStandard", "wizard.registration.subtype.florShort",
+                 "wizard.registration.subtype.florAlternative", "wizard.registration.subtype.florCode"],
+      flows: {
+        0: {
+          steps: [],
+          buttons: [{ labelKey: "wizard.registration.startButton", commands: [{ cmd: 6, duration: 5000 }], postSteps: ["FLOR.press3Time_html"], postCommands: [{ cmd: 6 }], showDoneButtons: true }],
+        },
+        1: {
+          steps: [],
+          buttons: [{ labelKey: "wizard.registration.startButton", commands: [{ cmd: 6, duration: 2000 }], postSteps: ["FLOR.press3Time_html"], postCommands: [{ cmd: 6 }], showDoneButtons: true }],
+        },
+        2: {
+          steps: [],
+          buttons: [{ labelKey: "wizard.registration.startButton", commands: [{ cmd: 6, duration: 2000 }], postSteps: ["FLOR.pressUntilCounter_html"], postCommands: [{ cmd: 6, duration: 2000 }], showDoneButtons: true }],
+        },
+        3: {
+          showCodeInput: true,
+          steps: ["FLOR.codeWarning"],
+          buttons: [{ labelKey: "wizard.registration.startButton", commands: [{ cmd: 6, seed: "FLOR_CODE" }], postCommands: [{ cmd: 6 }], showDoneButtons: true }],
+        },
+      },
+    },
+
+    FTM: {
+      steps: ["FTM.pressHidden_html", "FTM.pressStop_html", "FTM.pressAction_html"],
+      buttons: [{ labelKey: "wizard.registration.actionButton", commands: [{ cmd: 3, duration: 3500 }], showDoneButtons: true }],
+    },
+
+    GNS: {
+      subtypes: ["wizard.registration.subtype.remote", "wizard.registration.subtype.automation"],
+      flows: {
+        0: {
+          tip: "GNS.moveWithRemoteMobile",
+          steps: ["GNS.pressBoth_html", "GNS.pressToggle_html", "GNS.automationReaction", "GNS.pressAction_html"],
+          buttons: [{ labelKey: "wizard.registration.actionButton", commands: [{ cmd: 6, duration: 2500 }], showDoneButtons: true, doneMessage: "GNS.registrationDoneWait" }],
+        },
+        1: {
+          tip: "GNS.moveWithRemoteMobile",
+          steps: ["GNS.openAutomation_html", "GNS.pressSW_html", "GNS.automationReaction", "GNS.pressAction_html"],
+          buttons: [{ labelKey: "wizard.registration.actionButton", commands: [{ cmd: 6, duration: 2500 }], showDoneButtons: true, doneMessage: "GNS.registrationDoneWait" }],
+        },
+      },
+    },
+
+    INL: {
+      steps: ["INL.pressBoth_html", "INL.automationReaction", "INL.pressAction_html"],
+      buttons: [{ labelKey: "wizard.registration.actionButton", commands: [{ cmd: 5, duration: 3500 }], showDoneButtons: true }],
+    },
+
+    IOU: {
+      subtypes: ["wizard.registration.subtype.situo", "wizard.registration.subtype.keygo",
+                 "wizard.registration.subtype.velux3ur", "wizard.registration.subtype.veluxkli",
+                 "wizard.registration.subtype.automation"],
+      flows: {
+        0: { steps: ["IOU.pressProg_html", "IOU.automationReaction", "IOU.pressPairUnpair_html"], iouPairUnpair: true },
+        1: { steps: ["IOU.pressBoth_html", "IOU.pressToggle_html", "IOU.pressPairUnpair_html"], iouPairUnpair: true },
+        2: { steps: ["IOU.pressReset_html", "IOU.automationReaction", "IOU.pressPairUnpair_html"], iouPairUnpair: true },
+        3: { steps: ["IOU.pressSetting_html", "IOU.automationReaction", "IOU.pressPairUnpair_html"], iouPairUnpair: true },
+        4: { steps: ["IOU.pressProgAutomate_html", "IOU.automationReaction", "IOU.pressPairUnpair_html"], iouPairUnpair: true },
+      },
+    },
+
+    MLN: {
+      steps: ["MLN.automatePowerOff_html", "MLN.pressAction_html"],
+      buttons: [{
+        labelKey: "wizard.registration.actionButton",
+        commands: [{ cmd: 5, duration: 1000 }],
+        prefixStep: "MLN.automatePowerOn_html",
+        showDoneButtons: true,
+      }],
+    },
+
+    NSL: {
+      steps: ["NSL.pressSet_html", "NSL.pressButton"],
+      nslButtons: true,
+      postNslStep: "NSL.automationBlink",
+      showDoneButtons: true,
+    },
+  };
+
+  // Protocols documented in the cloud app but not yet fully detailed here.
+  var REG_PENDING_PROTOCOLS = new Set([
+    "ALT","AMC","AOK","APL","ARB","ARW","ATR","AVD868","AWR",
+    "B12","B12868","B14","B18","B20","B24","B24868","B26","B28","B32",
+    "BFT","BHS","BID868","BLY","BLYP0","BNAA","CBF","CBK","CBN868","CBN",
+    "CCS","CDV","CFN","CHM","CHP","CLS","CMO","CRD868","CRDS","CRS","CRSBV",
+    "DC","DD","DFN","DGL868","DIO","DIO1","DIO2","DKT","DKT868","DPT",
+    "DTS","DYA","EBR","ERC","ERCA","ERP1","EVF","EWFS","EWV","EXM",
+    "FCK","FCS","FDN","FDN868","FIT","FKBS","FLOR868","FLOX","FTR","FOE",
+    "GBD","GBM","GF0","GNS868","GO","GOJCM","GSA","GSA868","GT7000",
+    "HBS","HBSA","HCTEL","HDK","HES","HPD","HSM","HTR","HUA",
+    "IFT","INL868","IOBL","IOU868","JLY","KGF","KGS","KGT","KLQ","KLQ868","KLQ_MC",
+    "LEB","LFD","LTP","LVO","MBL","MCZ","MTC","MTH","MVO",
+    "NHS","NSL868","NXS","OS1","OS2","OS3","OTI","OZR",
+    "PLN","PLN2","PRM","PRT","PTC","RF1","RFY","RTR","RTW",
+    "SEA","SKM","SLH","SLH868","SMO","STL","STN","TCO","TGO","TIC",
+    "TLC","TLC868","TMC","TMC868","TX43","V2","V2868","V2E","WDB","WDI",
+    "WMB_S","WSR","WST","WVN","X10","X10S","X2D868","X3D","XCF","ZFR",
+  ]);
+
+  // Resolve a step key like "PFX.pressUp_html" into rendered HTML.
+  function resolveStep(key) {
+    var dot = key.indexOf(".");
+    if (dot < 0) { return key; }
+    var proto = key.slice(0, dot);
+    var field = key.slice(dot + 1);
+    return rs(proto, field);
+  }
+
+  function renderStepList(keys) {
+    var list = $("reg-steps-list");
+    list.innerHTML = "";
+    keys.forEach(function (key) {
+      var li = document.createElement("li");
+      li.innerHTML = resolveStep(key);
+      list.appendChild(li);
+    });
+  }
+
+  function appendStep(key) {
+    var list = $("reg-steps-list");
+    var li = document.createElement("li");
+    li.innerHTML = resolveStep(key);
+    list.appendChild(li);
+  }
+
+  function showRegError(msg) {
+    var b = $("reg-error-banner");
+    b.textContent = msg;
+    show("reg-error-banner");
+  }
+
+  function hideRegError() { hide("reg-error-banner"); }
+
+  function showRegWait(msg) {
+    var b = $("reg-wait-banner");
+    b.textContent = msg;
+    b.className = "banner";
+    show("reg-wait-banner");
+  }
+
+  function hideRegWait() { hide("reg-wait-banner"); }
+
+  function showRegDoneButtons() {
+    show("reg-done-buttons");
+  }
+
+  // Send one RF command to the backend and return a Promise<bool> (true=ok).
+  function sendRegCommand(deviceKey, cmdDef, florCode) {
+    var body = { command: cmdDef.cmd };
+    if (cmdDef.duration !== undefined) { body.duration = cmdDef.duration; }
+    if (cmdDef.seed === "FLOR_CODE" && florCode !== null) { body.seed = florCode; }
+    return api("api/registration/" + deviceKey + "/command", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }).then(function (res) { return res.ok; });
+  }
+
+  // Send a sequence of commands; resolve true only if all succeed.
+  function sendRegSequence(deviceKey, cmds, florCode) {
+    return cmds.reduce(function (chain, cmdDef) {
+      return chain.then(function (ok) {
+        if (!ok) { return false; }
+        return sendRegCommand(deviceKey, cmdDef, florCode);
+      });
+    }, Promise.resolve(true));
+  }
+
+  function setActionButtonsDisabled(wrap, disabled) {
+    var btns = wrap.querySelectorAll("button");
+    btns.forEach(function (b) { b.disabled = disabled; });
+  }
+
+  // Build action buttons for a flowDef and mount them in #reg-action-buttons.
+  function buildActionButtons(flowDef, deviceKey, subtype) {
+    var wrap = $("reg-action-buttons");
+    wrap.innerHTML = "";
+    hide("reg-done-buttons");
+    hideRegError();
+    hideRegWait();
+
+    var florCode = null;
+
+    // IOU pair/unpair special layout
+    if (flowDef.iouPairUnpair) {
+      var btnPair = document.createElement("button");
+      btnPair.className = "btn";
+      btnPair.textContent = t("wizard.registration.pairButton");
+      btnPair.addEventListener("click", function () {
+        setActionButtonsDisabled(wrap, true);
+        hideRegError();
+        showRegWait(t("wizard.registration.sending"));
+        sendRegCommand(deviceKey, { cmd: 2 }, null).then(function (ok) {
+          hideRegWait();
+          setActionButtonsDisabled(wrap, false);
+          if (ok) {
+            showRegDoneButtons();
+          } else {
+            showRegError(t("wizard.registration.error"));
+          }
+        });
+      });
+      wrap.appendChild(btnPair);
+      // Unpair button: no RF command in the addon (cloud-only orphan feature – skip silently)
+      var btnUnpair = document.createElement("button");
+      btnUnpair.className = "btn secondary";
+      btnUnpair.textContent = t("wizard.registration.unpairButton");
+      btnUnpair.title = "Feature requires cloud access – not available in local mode";
+      btnUnpair.disabled = true;
+      wrap.appendChild(btnUnpair);
+      return;
+    }
+
+    // NSL direction buttons shown in HTML, wired here
+    if (flowDef.nslButtons) {
+      show("reg-nsl-buttons");
+      ["down", "stop", "up"].forEach(function (dir) {
+        var cmdMap = { down: 4, stop: 3, up: 5 };
+        $("reg-nsl-" + dir).onclick = function () {
+          setActionButtonsDisabled($("reg-nsl-buttons"), true);
+          hideRegError();
+          sendRegCommand(deviceKey, { cmd: cmdMap[dir] }, null).then(function (ok) {
+            setActionButtonsDisabled($("reg-nsl-buttons"), false);
+            if (ok) {
+              appendStep(flowDef.postNslStep);
+              if (flowDef.showDoneButtons) { showRegDoneButtons(); }
+            } else {
+              showRegError(t("wizard.registration.error"));
+            }
+          });
+        };
+      });
+      return;
+    }
+
+    // Standard buttons from flowDef.buttons
+    (flowDef.buttons || []).forEach(function (btnDef) {
+      var btn = document.createElement("button");
+      btn.className = "btn";
+      var label = btnDef.labelKey ? t(btnDef.labelKey) : rs(btnDef.labelRs[0], btnDef.labelRs[1]);
+      btn.textContent = label;
+
+      btn.addEventListener("click", function () {
+        // FLOR Code: read seed input
+        if (flowDef.showCodeInput) {
+          var raw = Number.parseInt($("reg-code-input").value, 10);
+          florCode = Number.isNaN(raw) ? null : raw;
+        }
+        // MLN: show power-on step before sending
+        if (btnDef.prefixStep) { appendStep(btnDef.prefixStep); }
+
+        setActionButtonsDisabled(wrap, true);
+        hideRegError();
+        showRegWait(t("wizard.registration.sending"));
+
+        sendRegSequence(deviceKey, btnDef.commands, florCode).then(function (ok) {
+          hideRegWait();
+          if (!ok) {
+            setActionButtonsDisabled(wrap, false);
+            showRegError(t("wizard.registration.error"));
+            return;
+          }
+          // Post-steps (PFX step 2, FLOR post-command)
+          if (btnDef.postSteps) {
+            renderStepList(btnDef.postSteps);
+          }
+          if (btnDef.postCommands) {
+            return sendRegSequence(deviceKey, btnDef.postCommands, florCode).then(function (ok2) {
+              if (!ok2) {
+                setActionButtonsDisabled(wrap, false);
+                showRegError(t("wizard.registration.error"));
+                return;
+              }
+              finishRegSuccess(btnDef);
+            });
+          }
+          finishRegSuccess(btnDef);
+        });
+      });
+      wrap.appendChild(btn);
+    });
+
+    // BID / alwaysShowFinish: show Terminer immediately
+    if (flowDef.alwaysShowFinish) { showRegDoneButtons(); }
+  }
+
+  function finishRegSuccess(btnDef) {
+    var doneMsg;
+    if (btnDef.doneMessage) {
+      doneMsg = rs(btnDef.doneMessage.split(".")[0], btnDef.doneMessage.split(".")[1]);
+    } else {
+      doneMsg = t("wizard.registration.done");
+    }
+    showRegWait(doneMsg);
+    if (btnDef.showDoneButtons) { showRegDoneButtons(); }
+  }
+
+  function resolveFlow(protocol) {
+    var flow = REGISTRATION_FLOWS[protocol];
+    if (!flow) { return null; }
+    return flow;
+  }
+
+  function startRegistration() {
+    var protocol = state.candidate ? state.candidate.protocol_name : null;
+    if (!protocol && state.channelId) {
+      // When selected from catalog, protocol_name may be on the session entry
+      protocol = state.protocolName;
+    }
+    // Normalise: strip trailing 868 aliases to match flow keys where possible
+    if (protocol && !REGISTRATION_FLOWS[protocol] && protocol.endsWith("868")) {
+      var base = protocol.slice(0, -3);
+      if (REGISTRATION_FLOWS[base]) { protocol = base; }
+    }
+
+    showOnly(["step-registration"]);
+    applyI18n();
+    hide("reg-nsl-buttons");
+    hide("reg-subtype-wrap");
+    hide("reg-code-wrap");
+    hide("reg-done-buttons");
+    hideRegError();
+    hideRegWait();
+    $("reg-action-buttons").innerHTML = "";
+    $("reg-steps-list").innerHTML = "";
+
+    if (!protocol || REG_PENDING_PROTOCOLS.has(protocol)) {
+      renderStepList([]);
+      var li = document.createElement("li");
+      li.textContent = t("wizard.registration.pending");
+      $("reg-steps-list").appendChild(li);
+      show("reg-done-buttons");
+      hide("reg-btn-restart");
+      return;
+    }
+
+    var flowDef = resolveFlow(protocol);
+    if (!flowDef) {
+      // Protocol not in flows and not in pending: show generic done
+      show("reg-done-buttons");
+      hide("reg-btn-restart");
+      return;
+    }
+
+    // Multi-subtype: show selector first
+    if (flowDef.subtypes) {
+      var sel = $("reg-subtype-select");
+      sel.innerHTML = "";
+      flowDef.subtypes.forEach(function (labelKey, idx) {
+        var opt = document.createElement("option");
+        opt.value = idx;
+        opt.textContent = t(labelKey);
+        sel.appendChild(opt);
+      });
+      show("reg-subtype-wrap");
+
+      function loadSubtype() {
+        var idx = Number.parseInt(sel.value, 10);
+        var subFlow = flowDef.flows[idx] || {};
+        renderFlow(protocol, subFlow);
+      }
+      sel.onchange = loadSubtype;
+      loadSubtype();
+    } else {
+      renderFlow(protocol, flowDef);
+    }
+
+    // Restart button: re-run startRegistration
+    $("reg-btn-restart").onclick = function () { startRegistration(); };
+    // Finish button: go to step-done
+    $("reg-btn-finish").onclick = function () { showOnly(["step-done"]); applyI18n(); };
+  }
+
+  function renderFlow(protocol, flowDef) {
+    hide("reg-nsl-buttons");
+    hide("reg-code-wrap");
+    hide("reg-done-buttons");
+    hideRegError();
+    hideRegWait();
+
+    var steps = flowDef.steps || [];
+    if (flowDef.tip) {
+      steps = [flowDef.tip].concat(steps);
+    }
+    renderStepList(steps);
+
+    if (flowDef.showCodeInput) {
+      show("reg-code-wrap");
+      $("reg-code-warning").innerHTML = rs(protocol, "codeWarning");
+    }
+
+    buildActionButtons(flowDef, state.deviceKey, protocol);
   }
 
   var KIND_LABEL_KEYS = {

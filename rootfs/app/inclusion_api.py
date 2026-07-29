@@ -24,6 +24,7 @@ from device_registry import Device, DeviceRegistry
 from inclusion import Candidate, InclusionState
 from mqtt_bridge import MqttBridge
 from protocol_catalog import BAND_868_MHZ, ProtocolCatalog
+from registration_api import RegistrationApi
 from runtime_settings import RuntimeSettings
 from yaml_import import load_yaml_devices, parse_airsend_yaml
 
@@ -844,4 +845,10 @@ def create_ingress_app(
         mqtt_bridge=mqtt_bridge,
         settings=settings,
     )
+    registration = RegistrationApi(
+        boxes_by_slug=boxes_by_slug,
+        client=client,
+        registry=registry,
+    )
+    registration.attach_to(api.app)
     return api.app
