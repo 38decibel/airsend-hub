@@ -1,5 +1,12 @@
 ---
 
+## 1.6.0 - 2026-07-29
+
+### 🐛 Fixed
+- **runtime:** added reliability constantes
+
+---
+
 ## 1.5.3 - 2026-07-29
 
 ### 🐛 Fixed
