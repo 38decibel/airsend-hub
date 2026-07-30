@@ -11,6 +11,7 @@ import asyncio
 import json
 import logging
 import os
+from dataclasses import dataclass
 
 from aiohttp import web
 
@@ -34,6 +35,61 @@ INGRESS_PORT = 8127
 INGRESS_HOST = "0.0.0.0"
 
 _DEFAULT_NAME_PREFIX = "AIRSEND_"
+_OPTIONS_FILE = "/data/options.json"
+
+
+@dataclass
+class _MqttConfig:
+    host: str
+    port: int
+    username: str | None
+    password: str | None
+    use_ssl: bool
+
+
+def _load_mqtt_config() -> _MqttConfig:
+    """Resolve MQTT credentials with the following priority:
+
+    1. Supervisor-injected env vars  MQTT__HOST / __PORT / __USERNAME / __PASSWORD
+       (set automatically when ``services: mqtt:need`` is declared in config.yaml)
+    2. Manual addon config in /data/options.json  →  mqtt.host / .port / …
+    3. Hard-coded defaults (core-mosquitto:1883, no auth)
+    """
+
+    # --- Priority 1: Supervisor environment variables ---
+    if os.environ.get("MQTT__HOST"):
+        host = os.environ["MQTT__HOST"]
+        port = int(os.environ.get("MQTT__PORT") or 1883)
+        username = os.environ.get("MQTT__USERNAME") or None
+        password = os.environ.get("MQTT__PASSWORD") or None
+        use_ssl = os.environ.get("MQTT__SSL", "").lower() == "true"
+        _LOGGER.info("MQTT config from Supervisor env (host=%s:%s)", host, port)
+        return _MqttConfig(host=host, port=port, username=username, password=password, use_ssl=use_ssl)
+
+    # --- Priority 2: /data/options.json manual config ---
+    try:
+        with open(_OPTIONS_FILE) as f:
+            options = json.load(f)
+        mqtt_opts = options.get("mqtt") or {}
+        manual_host = mqtt_opts.get("host") or ""
+        if manual_host and manual_host != "null":
+            port = int(mqtt_opts.get("port") or 1883)
+            username = mqtt_opts.get("username") or None
+            password = mqtt_opts.get("password") or None
+            use_ssl = bool(mqtt_opts.get("ssl", False))
+            _LOGGER.info("MQTT config from addon options (host=%s:%s)", manual_host, port)
+            return _MqttConfig(host=manual_host, port=port, username=username, password=password, use_ssl=use_ssl)
+    except FileNotFoundError:
+        _LOGGER.debug("%s not found, skipping manual MQTT config", _OPTIONS_FILE)
+    except Exception:
+        _LOGGER.exception("Failed to read MQTT config from %s", _OPTIONS_FILE)
+
+    # --- Priority 3: hard-coded defaults ---
+    _LOGGER.warning(
+        "MQTT credentials unavailable from all sources, "
+        "falling back to core-mosquitto:1883 without authentication"
+    )
+    return _MqttConfig(host="core-mosquitto", port=1883, username=None, password=None, use_ssl=False)
 
 
 def _derive_name(entry_name: str, localip: str) -> str:
@@ -120,7 +176,7 @@ async def async_main() -> None:
         else:
             duo_label = "unknown"
         _LOGGER.info(
-            "Box '%s' detection (best effort): %s",
+            "Box '%s' detection : %s",
             box.name,
             duo_label,
         )
@@ -128,17 +184,18 @@ async def async_main() -> None:
     boxes_by_slug = {box.slug: box for box in boxes}
     settings = RuntimeSettings()
 
+        mqtt_cfg = _load_mqtt_config()
     mqtt_bridge = MqttBridge(
         registry=registry,
         client=client,
         boxes_by_slug=boxes_by_slug,
         catalog=catalog,
         settings=settings,
-        host=os.environ.get("MQTT_HOST") or "core-mosquitto",
-        port=int(os.environ.get("MQTT_PORT") or 1883),
-        username=os.environ.get("MQTT_USER") or None,
-        password=os.environ.get("MQTT_PASS") or None,
-        use_ssl=os.environ.get("MQTT_SSL", "false").lower() == "true",
+        host=mqtt_cfg.host,
+        port=mqtt_cfg.port,
+        username=mqtt_cfg.username,
+        password=mqtt_cfg.password,
+        use_ssl=mqtt_cfg.use_ssl,
     )
     await mqtt_bridge.start()
     for box in boxes:
