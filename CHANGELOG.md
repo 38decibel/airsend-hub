@@ -1,5 +1,12 @@
 ---
 
+## 1.7.1 - 2026-07-30
+
+### ♻️ Changed
+- **web:** extract screen modules (wizard, import, backup, inbox)
+
+---
+
 ## 1.7.0 - 2026-07-30
 
 ### 🐛 Fixed
