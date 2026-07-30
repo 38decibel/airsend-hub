@@ -184,7 +184,7 @@ async def async_main() -> None:
     boxes_by_slug = {box.slug: box for box in boxes}
     settings = RuntimeSettings()
 
-        mqtt_cfg = _load_mqtt_config()
+    mqtt_cfg = _load_mqtt_config()
     mqtt_bridge = MqttBridge(
         registry=registry,
         client=client,
