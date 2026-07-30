@@ -1,5 +1,12 @@
 ---
 
+## 1.8.1 - 2026-07-30
+
+### ♻️ Changed
+- Merge pull request #77 from 38decibel/dependabot/pip/rootfs/app/python-dependencies-cb16c77914
+
+---
+
 ## 1.8.0 - 2026-07-30
 
 ### 🐛 Fixed
