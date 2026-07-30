@@ -1528,10 +1528,11 @@
   function renderCandidates(list) {
     var box = $("listen-candidates");
     box.innerHTML = "";
-    // If a brand was selected in step 2, prepend its canonical protocol as a suggestion,
-    // unless the scan already returned an exact match for that channel_id.
+    // If a brand was selected in step 2 AND the scan captured at least one signal,
+    // prepend its canonical protocol as a suggestion — unless the scan already
+    // returned an exact match for that channel_id.
     var displayList = list.slice();
-    if (state.channelId != null) {
+    if (list.length > 0 && state.channelId != null) {
       var alreadyPresent = displayList.some(function (c) { return c.channel_id === state.channelId; });
       if (!alreadyPresent) {
         displayList.unshift({
