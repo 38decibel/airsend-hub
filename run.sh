@@ -13,10 +13,20 @@ esac
 ulimit -n 4096
 bashio::log.info "AirSendWebService arch: ${arch}"
 
-export MQTT_HOST=$(bashio::services mqtt "host")
-export MQTT_PORT=$(bashio::services mqtt "port")
-export MQTT_USER=$(bashio::services mqtt "username")
-export MQTT_PASS=$(bashio::services mqtt "password")
+if bashio::services.available "mqtt"; then
+    export MQTT_HOST=$(bashio::services mqtt "host")
+    export MQTT_PORT=$(bashio::services mqtt "port")
+    export MQTT_USER=$(bashio::services mqtt "username")
+    export MQTT_PASS=$(bashio::services mqtt "password")
+    bashio::log.info "MQTT credentials loaded from Supervisor service API (host=${MQTT_HOST}:${MQTT_PORT})"
+else
+    bashio::log.warning "MQTT service not available via Supervisor API, falling back to manual config"
+    export MQTT_HOST=$(bashio::config 'mqtt.host' 'core-mosquitto')
+    export MQTT_PORT=$(bashio::config 'mqtt.port' '1883')
+    export MQTT_USER=$(bashio::config 'mqtt.username' '')
+    export MQTT_PASS=$(bashio::config 'mqtt.password' '')
+    bashio::log.info "MQTT manual config (host=${MQTT_HOST}:${MQTT_PORT})"
+fi
 export MQTT_SSL=$(bashio::config 'mqtt.ssl' 'false')
 export BOXES_JSON=$(bashio::config 'boxes' | jq -c .)
 bashio::log.info "BOXES_JSON=${BOXES_JSON}"
