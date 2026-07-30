@@ -1,5 +1,12 @@
 ---
 
+## 1.8.3 - 2026-07-30
+
+### 🐛 Fixed
+- **run:** reRefactor MQTT credential loading
+
+---
+
 ## 1.8.2 - 2026-07-30
 
 ### 🐛 Fixed
