@@ -7,6 +7,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import mimetypes
 import re
 import time
 import uuid
@@ -159,6 +160,14 @@ class InclusionApi:
             raise web.HTTPForbidden()
         if not candidate.is_file():
             candidate = _WEB_DIR / "index.html"
+        mime, _ = mimetypes.guess_type(candidate.name)
+        mime = mime or "application/octet-stream"
+        if mime.startswith("text/"):
+            return web.Response(
+                text=candidate.read_text(encoding="utf-8"),
+                content_type=mime,
+                charset="utf-8",
+            )
         return web.FileResponse(candidate)
 
 
