@@ -1,5 +1,12 @@
 ---
 
+## 1.6.3 - 2026-07-30
+
+### ♻️ Changed
+- **web:** extract CSS to separate file
+
+---
+
 ## 1.6.2 - 2026-07-30
 
 ### 🚀 Added
