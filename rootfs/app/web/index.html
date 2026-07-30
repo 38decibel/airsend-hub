@@ -81,6 +81,12 @@
     display: flex; justify-content: space-between; align-items: center;
     padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px;
   }
+  .candidate.brand-suggestion { border-color: var(--accent); }
+  .brand-suggestion-badge {
+    display: inline-block; font-size: 0.75rem; font-weight: 600;
+    background: var(--accent); color: #fff; border-radius: 4px; padding: 1px 6px; margin-left: 8px;
+    vertical-align: middle;
+  }
   .device-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; gap: 8px; }
   .device-row:last-child { border-bottom: none; }
   .device-row .device-info { flex: 1; min-width: 0; }
@@ -531,6 +537,7 @@
       "wizard.listen.done": "Écoute terminée.",
       "wizard.listen.channelFallback": "canal {id}",
       "wizard.listen.useThis": "Utiliser celui-ci",
+      "wizard.listen.brandSuggestion": "protocole de la marque",
 
       "wizard.manual.uidCheckboxLabel": "Saisir un identifiant unique connu",
       "wizard.manual.sourcePlaceholder": "ex: 24679",
@@ -760,6 +767,7 @@
       "wizard.listen.done": "Listening finished.",
       "wizard.listen.channelFallback": "channel {id}",
       "wizard.listen.useThis": "Use this one",
+      "wizard.listen.brandSuggestion": "brand protocol",
 
       "wizard.manual.uidCheckboxLabel": "Enter a known unique identifier",
       "wizard.manual.sourcePlaceholder": "e.g. 24679",
@@ -1492,30 +1500,50 @@
     }, 1200);
   }
 
+  function buildCandidateRow(c) {
+    var row = document.createElement("div");
+    row.className = "candidate" + (c.is_brand_suggestion ? " brand-suggestion" : "");
+    var labelText = c.protocol_name || t("wizard.listen.channelFallback", { id: c.channel_id });
+    var sourceText = c.channel_source != null ? " <span class='muted'>(id " + c.channel_source + ")</span>" : "";
+    var badgeHtml = c.is_brand_suggestion
+      ? "<span class='brand-suggestion-badge'>" + t("wizard.listen.brandSuggestion") + "</span>"
+      : "";
+    row.innerHTML = "<span>" + labelText + " <span class='muted'>(" + c.channel_id + ")</span>" + sourceText + badgeHtml + "</span>";
+    var btn = document.createElement("button");
+    btn.className = "btn";
+    btn.textContent = t("wizard.listen.useThis");
+    btn.addEventListener("click", function () {
+      state.candidate = c;
+      if (state.listenPoll) { clearInterval(state.listenPoll); state.listenPoll = null; }
+      api("api/channel/" + c.channel_id + "?box=" + encodeURIComponent(state.box)).then(function (res) {
+        state.rollingCodeRisk = !!(res.body && res.body.rolling_code_risk);
+        showOnly(["step-kind"]);
+        updateKindRollingBanner();
+      });
+    });
+    row.appendChild(btn);
+    return row;
+  }
+
   function renderCandidates(list) {
     var box = $("listen-candidates");
     box.innerHTML = "";
-    if (!list.length) return;
-    list.forEach(function (c) {
-      var row = document.createElement("div");
-      row.className = "candidate";
-      row.innerHTML = "<span>" + (c.protocol_name || t("wizard.listen.channelFallback", { id: c.channel_id })) +
-        " <span class='muted'>(id " + c.channel_source + ")</span></span>";
-      var btn = document.createElement("button");
-      btn.className = "btn";
-      btn.textContent = t("wizard.listen.useThis");
-      btn.addEventListener("click", function () {
-        state.candidate = c;
-        if (state.listenPoll) { clearInterval(state.listenPoll); state.listenPoll = null; }
-        api("api/channel/" + c.channel_id + "?box=" + encodeURIComponent(state.box)).then(function (res) {
-          state.rollingCodeRisk = !!(res.body && res.body.rolling_code_risk);
-          showOnly(["step-kind"]);
-          updateKindRollingBanner();
+    // If a brand was selected in step 2, prepend its canonical protocol as a suggestion,
+    // unless the scan already returned an exact match for that channel_id.
+    var displayList = list.slice();
+    if (state.channelId != null) {
+      var alreadyPresent = displayList.some(function (c) { return c.channel_id === state.channelId; });
+      if (!alreadyPresent) {
+        displayList.unshift({
+          channel_id: state.channelId,
+          protocol_name: state.protocolName,
+          channel_source: null,
+          is_brand_suggestion: true,
         });
-      });
-      row.appendChild(btn);
-      box.appendChild(row);
-    });
+      }
+    }
+    if (!displayList.length) return;
+    displayList.forEach(function (c) { box.appendChild(buildCandidateRow(c)); });
   }
 
 
@@ -1569,7 +1597,7 @@
     hide(banner.id);
 
     var payload, url;
-    if (state.branch === "A") {
+    if (state.branch === "A" && !(state.candidate && state.candidate.is_brand_suggestion)) {
       url = "api/devices";
       payload = {
         session_id: state.sessionId,
@@ -1580,10 +1608,14 @@
       };
     } else {
       url = "api/devices/manual";
+      var rawSource = state.candidate.channel_source;
+      // Brand-suggestion candidates have no captured source: generate a random one,
+      // mirroring the cloud app's addr=0 behaviour for new virtual remotes.
+      var resolvedSource = (rawSource != null) ? rawSource : (Math.floor(Math.random() * 16777215) + 1);
       payload = {
         box: state.box,
         channel_id: state.candidate.channel_id,
-        channel_source: state.candidate.channel_source,
+        channel_source: resolvedSource,
         kind: state.kind,
         friendly_name: friendlyName,
         options: options,
