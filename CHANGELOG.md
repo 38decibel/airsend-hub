@@ -1,5 +1,12 @@
 ---
 
+## 1.10.0 - 2026-07-30
+
+### 🐛 Fixed
+- **mqtt_bridge:** fixed indentation will_set
+
+---
+
 ## 1.9.0 - 2026-07-30
 
 ### ♻️ Changed
