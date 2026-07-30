@@ -1,5 +1,12 @@
 ---
 
+## 1.8.2 - 2026-07-30
+
+### 🐛 Fixed
+- **run:** changed MQTT configuration loading logic
+
+---
+
 ## 1.8.1 - 2026-07-30
 
 ### ♻️ Changed
