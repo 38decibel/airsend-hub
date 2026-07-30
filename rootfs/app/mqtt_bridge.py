@@ -99,8 +99,9 @@ class MqttBridge:
             self._mqtt.username_pw_set(username, password)
         if use_ssl:
             self._mqtt.tls_set()
-        self._mqtt.will_set(AVAILABILITY_TOPIC, AVAILABILITY_OFFLINE, retain=True)
+                self._mqtt.will_set(AVAILABILITY_TOPIC, AVAILABILITY_OFFLINE, retain=True)
         self._mqtt.on_connect = self._on_connect
+        self._mqtt.on_connect_fail = self._on_connect_fail
         self._mqtt.on_message = self._on_message
 
         self._host = host
@@ -121,8 +122,21 @@ class MqttBridge:
         self._mqtt.loop_stop()
         self._mqtt.disconnect()
 
-    def _on_connect(self, client, userdata, flags, reason_code, properties=None) -> None:
-        _LOGGER.info("MQTT connected (reason_code=%s)", reason_code)
+        def _on_connect(self, client, userdata, flags, reason_code, properties=None) -> None:
+        # reason_code is a ReasonCode object in paho v2; value 0 means success.
+        rc_value = reason_code.value if hasattr(reason_code, "value") else int(reason_code)
+        if rc_value != 0:
+            _LOGGER.error(
+                "MQTT connection refused (reason_code=%s). "
+                "Check MQTT credentials (MQTT_USER / MQTT_PASS). "
+                "Stopping reconnect loop.",
+                reason_code,
+            )
+            # Disable automatic reconnection for permanent errors (auth failure, etc.)
+            client.loop_stop()
+            return
+
+        _LOGGER.info("MQTT connected successfully")
         client.publish(AVAILABILITY_TOPIC, AVAILABILITY_ONLINE, retain=True)
         client.subscribe("airsend/+/set")
         client.subscribe("airsend/+/set_position")
@@ -138,6 +152,9 @@ class MqttBridge:
         self._publish_capture_unknown_state()
         for box in self._boxes_by_slug.values():
             self.publish_box_diagnostics(box)
+
+    def _on_connect_fail(self, client, userdata) -> None:
+        _LOGGER.warning("MQTT connection attempt failed (network unreachable?), paho will retry")
 
     def _cleanup_legacy_discovery_topics(self) -> None:
 
