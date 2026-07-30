@@ -99,7 +99,7 @@ class MqttBridge:
             self._mqtt.username_pw_set(username, password)
         if use_ssl:
             self._mqtt.tls_set()
-                self._mqtt.will_set(AVAILABILITY_TOPIC, AVAILABILITY_OFFLINE, retain=True)
+        self._mqtt.will_set(AVAILABILITY_TOPIC, AVAILABILITY_OFFLINE, retain=True)
         self._mqtt.on_connect = self._on_connect
         self._mqtt.on_connect_fail = self._on_connect_fail
         self._mqtt.on_message = self._on_message
