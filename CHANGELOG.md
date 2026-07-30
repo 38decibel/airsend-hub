@@ -1,5 +1,12 @@
 ---
 
+## 1.8.4 - 2026-07-30
+
+### 🐛 Fixed
+- **run:** Add null check for MQTT host configuration
+
+---
+
 ## 1.8.3 - 2026-07-30
 
 ### 🐛 Fixed
