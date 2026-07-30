@@ -1,5 +1,12 @@
 ---
 
+## 1.6.5 - 2026-07-30
+
+### ♻️ Changed
+- **web:** extract i18n dictionary to separate script
+
+---
+
 ## 1.6.4 - 2026-07-30
 
 ### 🐛 Fixed
