@@ -1,5 +1,12 @@
 ---
 
+## 1.9.0 - 2026-07-30
+
+### ♻️ Changed
+- add(mqtt_bridge): Implement on_connect_fail method for MQTT client
+
+---
+
 ## 1.8.4 - 2026-07-30
 
 ### 🐛 Fixed
