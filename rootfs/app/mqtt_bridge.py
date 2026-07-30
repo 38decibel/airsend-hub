@@ -122,7 +122,7 @@ class MqttBridge:
         self._mqtt.loop_stop()
         self._mqtt.disconnect()
 
-        def _on_connect(self, client, userdata, flags, reason_code, properties=None) -> None:
+    def _on_connect(self, client, userdata, flags, reason_code, properties=None) -> None:
         # reason_code is a ReasonCode object in paho v2; value 0 means success.
         rc_value = reason_code.value if hasattr(reason_code, "value") else int(reason_code)
         if rc_value != 0:
