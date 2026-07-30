@@ -1,5 +1,12 @@
 ---
 
+## 1.7.0 - 2026-07-30
+
+### 🐛 Fixed
+- **web:** serve text assets with explicit charset for Android WebView
+
+---
+
 ## 1.6.5 - 2026-07-30
 
 ### ♻️ Changed
