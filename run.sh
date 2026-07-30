@@ -13,38 +13,6 @@ esac
 ulimit -n 4096
 bashio::log.info "AirSendWebService arch: ${arch}"
 
-# MQTT credentials — priority order:
-#   1. Manual addon config (mqtt.host explicitly set by the user)
-#   2. Supervisor-injected env vars MQTT__HOST/PORT/USERNAME/PASSWORD (services: mqtt:need)
-#   3. bashio::services mqtt (older Supervisor fallback)
-#   4. Hardcoded defaults (last resort)
-_mqtt_host_manual=$(bashio::config 'mqtt.host' '')
-if [[ -n "${_mqtt_host_manual}" ]] && [[ "${_mqtt_host_manual}" != "null" ]]; then
-    export MQTT_HOST="${_mqtt_host_manual}"
-    export MQTT_PORT=$(bashio::config 'mqtt.port' '1883')
-    export MQTT_USER=$(bashio::config 'mqtt.username' '')
-    export MQTT_PASS=$(bashio::config 'mqtt.password' '')
-    bashio::log.info "MQTT credentials loaded from addon config (host=${MQTT_HOST}:${MQTT_PORT})"
-elif [[ -n "${MQTT__HOST:-}" ]]; then
-    export MQTT_HOST="${MQTT__HOST}"
-    export MQTT_PORT="${MQTT__PORT:-1883}"
-    export MQTT_USER="${MQTT__USERNAME:-}"
-    export MQTT_PASS="${MQTT__PASSWORD:-}"
-    bashio::log.info "MQTT credentials loaded from Supervisor environment (host=${MQTT_HOST}:${MQTT_PORT})"
-elif bashio::services.available "mqtt" 2>/dev/null; then
-    export MQTT_HOST=$(bashio::services mqtt "host")
-    export MQTT_PORT=$(bashio::services mqtt "port")
-    export MQTT_USER=$(bashio::services mqtt "username")
-    export MQTT_PASS=$(bashio::services mqtt "password")
-    bashio::log.info "MQTT credentials loaded from Supervisor service API (host=${MQTT_HOST}:${MQTT_PORT})"
-else
-    bashio::log.warning "MQTT credentials unavailable (all sources failed), using defaults"
-    export MQTT_HOST="core-mosquitto"
-    export MQTT_PORT="1883"
-    export MQTT_USER=""
-    export MQTT_PASS=""
-fi
-export MQTT_SSL=$(bashio::config 'mqtt.ssl' 'false')
 export BOXES_JSON=$(bashio::config 'boxes' | jq -c .)
 bashio::log.info "BOXES_JSON=${BOXES_JSON}"
 export LOG_LEVEL=$(bashio::config 'system.log_level' 'INFO')
