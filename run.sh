@@ -19,7 +19,7 @@ bashio::log.info "AirSendWebService arch: ${arch}"
 #   3. bashio::services mqtt (older Supervisor fallback)
 #   4. Hardcoded defaults (last resort)
 _mqtt_host_manual=$(bashio::config 'mqtt.host' '')
-if [[ -n "${_mqtt_host_manual}" ]]; then
+if [[ -n "${_mqtt_host_manual}" ]] && [[ "${_mqtt_host_manual}" != "null" ]]; then
     export MQTT_HOST="${_mqtt_host_manual}"
     export MQTT_PORT=$(bashio::config 'mqtt.port' '1883')
     export MQTT_USER=$(bashio::config 'mqtt.username' '')
