@@ -1,5 +1,12 @@
 ---
 
+## 1.8.0 - 2026-07-30
+
+### 🐛 Fixed
+- **main:** add MQTT_HOST callback
+
+---
+
 ## 1.7.1 - 2026-07-30
 
 ### ♻️ Changed
