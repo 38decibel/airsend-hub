@@ -134,7 +134,7 @@ async def async_main() -> None:
         boxes_by_slug=boxes_by_slug,
         catalog=catalog,
         settings=settings,
-        host=os.environ.get("MQTT_HOST", "core-mosquitto"),
+        host=os.environ.get("MQTT_HOST") or "core-mosquitto",
         port=int(os.environ.get("MQTT_PORT") or 1883),
         username=os.environ.get("MQTT_USER") or None,
         password=os.environ.get("MQTT_PASS") or None,
