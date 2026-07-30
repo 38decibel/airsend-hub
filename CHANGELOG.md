@@ -1,5 +1,12 @@
 ---
 
+## 1.13.0 - 2026-07-30
+
+### 🐛 Fixed
+- **mqtt_bridge:** removed indentat _on_connect
+
+---
+
 ## 1.12.0 - 2026-07-30
 
 ### 🐛 Fixed
