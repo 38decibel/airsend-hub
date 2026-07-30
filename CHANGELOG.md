@@ -1,5 +1,12 @@
 ---
 
+## 1.6.2 - 2026-07-30
+
+### 🚀 Added
+- **inclusion:** show brand canonical protocol as suggestion in RF scan results
+
+---
+
 ## 1.6.1 - 2026-07-30
 
 ### 🚀 Added
