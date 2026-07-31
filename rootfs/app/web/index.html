@@ -1889,6 +1889,12 @@
     selectEl.value = previous || "";
   }
 
+  // Shared helper: escape special characters for safe use in HTML attribute values.
+  // Used by screen-import.js and screen-backup.js via window.AirSend.escapeAttr.
+  function escapeAttr(text) {
+    return String(text).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
     // Expose shared API for the deferred screen modules
   window.AirSend = {
     t:                   t,
