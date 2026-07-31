@@ -1530,6 +1530,160 @@
       postNslStep: "NSL.automationBlink",
       showDoneButtons: true,
     },
+
+    // PLN2 – Somfy-compatible roller shutter motor (868 MHz, rolling code).
+    // The cloud app uses proprietary large command IDs (1025, 1095233437728…)
+    // that have no equivalent in the local AirSendWebService STATE enum.
+    // Approximation: send PROG (cmd 2) together with the direction choice so
+    // the motor enters programming mode and learns the direction in one step.
+    PLN2: {
+      steps: ["PLN2.pressUpDownP_html", "PLN2.pressAction_html"],
+      buttons: [
+        {
+          labelKey: "wizard.registration.cmdDown",
+          commands: [{ cmd: 2 }, { cmd: 4 }],
+          showDoneButtons: true,
+        },
+        {
+          labelKey: "wizard.registration.cmdUp",
+          commands: [{ cmd: 2 }, { cmd: 5 }],
+          showDoneButtons: true,
+        },
+      ],
+    },
+
+    // PTC – simple TOGGLE with hold duration.
+    PTC: {
+      tip: "PTC.moveWithMobile",
+      steps: ["PTC.automationOpen_html", "PTC.pressButton_html", "PTC.pressAction_html"],
+      buttons: [
+        {
+          labelKey: "wizard.registration.actionButton",
+          commands: [{ cmd: 6, duration: 2500 }],
+          showDoneButtons: true,
+          doneMessage: "PTC.registrationDoneWait",
+        },
+      ],
+    },
+
+    // RFY – Somfy RFY protocol.  Two sub-procedures depending on the device.
+    RFY: {
+      subtypes: [
+        "wizard.registration.subtype.fromRemote",
+        "wizard.registration.subtype.forAnAutomaticGate",
+      ],
+      flows: {
+        0: {
+          steps: ["RFY.pressProg_html", "RFY.automationReaction", "RFY.pressAction_html"],
+          buttons: [
+            {
+              labelKey: "wizard.registration.actionButton",
+              commands: [{ cmd: 2 }],
+              showDoneButtons: true,
+            },
+          ],
+        },
+        1: {
+          steps: ["RFY.airsendOnTarget", "RFY.pressPower", "RFY.pressAction_html"],
+          buttons: [
+            {
+              labelKey: "wizard.registration.actionButton",
+              commands: [{ cmd: 3, duration: 2500 }, { cmd: 3, duration: 2500 }],
+              showDoneButtons: true,
+            },
+          ],
+        },
+      },
+    },
+
+    // TMC – motor controller.  The LED blinks once to confirm registration.
+    TMC: {
+      tip: "TMC.moveWithMobile",
+      steps: ["TMC.automationOpen_html", "TMC.pressButton_html", "TMC.waitDigit_html",
+              "TMC.pressAction_html"],
+      buttons: [
+        {
+          labelKey: "wizard.registration.actionButton",
+          commands: [{ cmd: 6 }],
+          showDoneButtons: true,
+          doneMessage: "TMC.ledBlinked",
+        },
+      ],
+    },
+
+    // V2E – Somfy V2E motor.  Two series (Adler / Proteo) share the same
+    // final direction step: send DOWN or UP so the motor learns the direction.
+    V2E: {
+      subtypes: [
+        "wizard.registration.subtype.adlerSerie",
+        "wizard.registration.subtype.proteoSerie",
+      ],
+      flows: {
+        0: {
+          steps: ["V2E.pressBoth_html", "V2E.automationReaction", "V2E.chooseDirection_html"],
+          buttons: [
+            {
+              labelKey: "wizard.registration.cmdDown",
+              commands: [{ cmd: 4, duration: 2500 }],
+              showDoneButtons: true,
+              doneMessage: "V2E.registrationDone",
+            },
+            {
+              labelKey: "wizard.registration.cmdUp",
+              commands: [{ cmd: 5, duration: 2500 }],
+              showDoneButtons: true,
+              doneMessage: "V2E.registrationDone",
+            },
+          ],
+        },
+        1: {
+          steps: ["V2E.switchLocation", "V2E.switchOn_html", "V2E.pressProg_html",
+                  "V2E.automationReaction", "V2E.chooseDirection_html"],
+          buttons: [
+            {
+              labelKey: "wizard.registration.cmdDown",
+              commands: [{ cmd: 4, duration: 2500 }],
+              showDoneButtons: true,
+              doneMessage: "V2E.registrationDone",
+            },
+            {
+              labelKey: "wizard.registration.cmdUp",
+              commands: [{ cmd: 5, duration: 2500 }],
+              showDoneButtons: true,
+              doneMessage: "V2E.registrationDone",
+            },
+          ],
+        },
+      },
+    },
+
+    // WSR – Wibutler / Somfy WSR roller shutter.
+    // The cloud app offers two variants: PROG+STOP (standard) and cmd26+STOP.
+    // Command 26 has no equivalent in the local AirSendWebService STATE enum,
+    // so only the standard PROG variant is available in local mode.
+    WSR: {
+      steps: ["WSR.pressBoth_html", "WSR.press8xStop_html", "WSR.automationReaction",
+              "WSR.pressAction_html"],
+      buttons: [
+        {
+          labelKey: "wizard.registration.actionButton",
+          commands: [{ cmd: 2, duration: 3500 }, { cmd: 3 }],
+          showDoneButtons: true,
+        },
+      ],
+    },
+
+    // X2D868 – Delta Dore X2D protocol (868 MHz).  Two PROG commands required.
+    X2D868: {
+      steps: ["X2D.pressStop_html", "X2D.automationReaction", "X2D.pressAction_html"],
+      buttons: [
+        {
+          labelKey: "wizard.registration.actionButton",
+          commands: [{ cmd: 2 }, { cmd: 2 }],
+          showDoneButtons: true,
+        },
+      ],
+    },
   };
 
   // Protocols documented in the cloud app but not yet fully detailed here.
