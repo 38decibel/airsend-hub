@@ -1,5 +1,12 @@
 ---
 
+## 1.15.0 - 2026-07-31
+
+### ♻️ Changed
+- **app:** split flat modules into core, catalog, registry and api subpackages
+
+---
+
 ## 1.14.1 - 2026-07-31
 
 ### 🐛 Fixed
