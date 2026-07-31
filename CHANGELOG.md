@@ -1,5 +1,12 @@
 ---
 
+## 1.14.1 - 2026-07-31
+
+### 🐛 Fixed
+- **web:** restore missing escapeAttr helper lost during screen module extraction
+
+---
+
 ## 1.14.0 - 2026-07-31
 
 ### ♻️ Changed
