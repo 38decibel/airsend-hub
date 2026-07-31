@@ -1,5 +1,12 @@
 ---
 
+## 1.15.2 - 2026-07-31
+
+### ♻️ Changed
+- Merge branch 'main' of https://github.com/38decibel/airsend-hub
+
+---
+
 ## 1.15.1 - 2026-07-31
 
 ### ♻️ Changed
