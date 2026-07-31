@@ -31,7 +31,7 @@ from registry.yaml_import import load_yaml_devices, parse_airsend_yaml
 
 _LOGGER = logging.getLogger("airsend.inclusion_api")
 
-_WEB_DIR = Path(__file__).parent / "web"
+_WEB_DIR = Path(__file__).parent.parent / "web"
 
 _DEFAULT_LISTEN_DURATION_S = 20.0
 _MAX_LISTEN_DURATION_S = 60.0
