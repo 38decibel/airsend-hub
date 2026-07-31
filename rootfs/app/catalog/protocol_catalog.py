@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 import time
 
-from airsend_client import AirSendClient, AirSendError, BoxConfig
+from core.airsend_client import AirSendClient, AirSendError, BoxConfig
 
 _LOGGER = logging.getLogger("airsend.protocol_catalog")
 

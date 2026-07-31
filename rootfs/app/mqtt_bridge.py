@@ -17,8 +17,8 @@ from dataclasses import dataclass
 
 import paho.mqtt.client as mqtt
 
-from airsend_client import AirSendClient, AirSendError, BoxConfig
-from device_registry import Device, DeviceRegistry
+from core.airsend_client import AirSendClient, AirSendError, BoxConfig
+from registry.device_registry import Device, DeviceRegistry
 from domains import get_domain_module
 from domains.topics import (
     AVAILABILITY_OFFLINE,
@@ -27,8 +27,8 @@ from domains.topics import (
     DeviceTopics,
     build_device_info,
 )
-from net_utils import mac_from_link_local
-from protocol_catalog import ProtocolCatalog
+from core.net_utils import mac_from_link_local
+from catalog.protocol_catalog import ProtocolCatalog
 from runtime_settings import RuntimeSettings
 
 _LOGGER = logging.getLogger("airsend.mqtt_bridge")

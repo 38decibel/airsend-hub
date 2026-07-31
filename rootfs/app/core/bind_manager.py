@@ -7,7 +7,7 @@ from __future__ import annotations
 import asyncio
 import logging
 
-from airsend_client import AirSendClient, AirSendError, BoxConfig
+from core.airsend_client import AirSendClient, AirSendError, BoxConfig
 from runtime_settings import RuntimeSettings
 
 _LOGGER = logging.getLogger("airsend.bind_manager")

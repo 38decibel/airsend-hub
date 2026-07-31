@@ -24,8 +24,8 @@ from typing import Any
 
 from aiohttp import web
 
-from airsend_client import AirSendClient, AirSendError, BoxConfig
-from device_registry import DeviceRegistry
+from core.airsend_client import AirSendClient, AirSendError, BoxConfig
+from registry.device_registry import DeviceRegistry
 
 _LOGGER = logging.getLogger(__name__)
 

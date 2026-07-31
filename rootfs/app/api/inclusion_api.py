@@ -16,18 +16,18 @@ from typing import Any
 
 from aiohttp import web
 
-from airsend_client import AirSendClient, AirSendError, BoxConfig
-from backup_export import build_backup, diff_backup_devices, parse_backup
-from bind_manager import BindManager
-from catalog_data import search_brands
-from channel_aliases import expected_receive_channels
-from device_registry import Device, DeviceRegistry
+from core.airsend_client import AirSendClient, AirSendError, BoxConfig
+from registry.backup_export import build_backup, diff_backup_devices, parse_backup
+from core.bind_manager import BindManager
+from catalog.catalog_data import search_brands
+from catalog.channel_aliases import expected_receive_channels
+from registry.device_registry import Device, DeviceRegistry
 from inclusion import Candidate, InclusionState
 from mqtt_bridge import MqttBridge
-from protocol_catalog import BAND_868_MHZ, ProtocolCatalog
-from registration_api import RegistrationApi
+from catalog.protocol_catalog import BAND_868_MHZ, ProtocolCatalog
+from api.registration_api import RegistrationApi
 from runtime_settings import RuntimeSettings
-from yaml_import import load_yaml_devices, parse_airsend_yaml
+from registry.yaml_import import load_yaml_devices, parse_airsend_yaml
 
 _LOGGER = logging.getLogger("airsend.inclusion_api")
 

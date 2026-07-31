@@ -11,11 +11,11 @@ from typing import Callable
 
 from aiohttp import web
 
-from device_registry import DeviceRegistry
+from registry.device_registry import DeviceRegistry
 from inclusion import InclusionState
-from protocol_catalog import ProtocolCatalog
+from catalog.protocol_catalog import ProtocolCatalog
 from runtime_settings import RuntimeSettings
-from thing_notes import convert_notes_to_states
+from core.thing_notes import convert_notes_to_states
 
 _LOGGER = logging.getLogger("airsend.callback_server")
 
