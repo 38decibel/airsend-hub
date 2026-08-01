@@ -18,7 +18,7 @@ from __future__ import annotations
 import json
 import os
 
-_CATALOG_PATH = os.path.join(os.path.dirname(__file__), "data", "catalog.json")
+_CATALOG_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "catalog.json")
 
 _catalog: dict[str, list[dict]] | None = None
 
