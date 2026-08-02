@@ -113,7 +113,7 @@
         </div>
 
         <label class="field-label" for="name-input-b" data-i18n="wizard.kind.nameLabel">Nom</label>
-        <input type="text" id="name-input-b" data-i18n-placeholder="wizard.kind.namePlaceholder" placeholder="ex: Volet salon" style="width:100%;margin-bottom:10px;">
+        <input type="text" id="name-input-b" data-i18n-placeholder="common.namePlaceholder" placeholder="ex: Volet salon terrasse" style="width:100%;margin-bottom:10px;">
 
         <label class="field-label" for="kind-select-b" data-i18n="wizard.manual.kindLabel">Type de télécommande</label>
         <select id="kind-select-b" style="width:100%;padding:6px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:0.97em;">
@@ -294,6 +294,7 @@
   <div style="margin-top:14px;">
     <h2 data-i18n="memory.title">Mémoire boîtier</h2>
     <p class="muted" data-i18n="memory.instructions">Liste des appareils enregistrés dans la mémoire interne du boîtier AirSend. Les appareils liés sont déjà gérés par l'addon. Les orphelins sont présents en mémoire mais absents de la configuration.</p>
+    <div id="memory-usage-badge" class="hidden" style="margin-top:8px;font-size:0.92em;font-weight:600;"></div>
   </div>
 
   <div id="memory-loading" class="muted" style="margin-top:14px;" data-i18n="home.loading">Chargement…</div>
@@ -321,6 +322,8 @@
 </div>
 
 <div id="screen-inbox" class="card hidden">
+
+  <button class="btn secondary" id="btn-inbox-cancel" data-i18n="common.backCancel">&larr; Annuler</button>
 
   <div style="margin-top:14px;">
     <h2 data-i18n="inbox.title">Signaux captés</h2>
@@ -619,6 +622,7 @@
 
   $("btn-cancel").addEventListener("click", backToHome);
   $("btn-done-back").addEventListener("click", backToHome);
+  $("btn-inbox-cancel").addEventListener("click", backToHome);
 
   function backToHome() {
     if (state.listenPoll) { clearInterval(state.listenPoll); state.listenPoll = null; }
