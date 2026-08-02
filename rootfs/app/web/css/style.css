@@ -152,3 +152,5 @@
     .import-field label { display: none; }
     .import-note { grid-column: 1 / -1; margin-top: 6px; }
   }
+  .tag-linked { color: #4caf50; font-size: 0.85em; font-weight: 600; }
+  .tag-orphan { color: #ff9800; font-size: 0.85em; font-weight: 600; }
