@@ -14,6 +14,26 @@ DEFAULT_TRAVEL_TIME_S = 20.0
 _MIN_TRAVEL_TIME_S = 1.0
 _MAX_TRAVEL_TIME_S = 180.0
 
+_POSITION_OPEN = 100
+_POSITION_CLOSED = 0
+
+
+def _is_inverted(device) -> bool:
+    return bool(device.options.get("invert", False))
+
+
+def _has_travel_time(device) -> bool:
+    """Return True when the device has an explicit travel_time option set."""
+    return "travel_time" in device.options
+
+
+def travel_time_s(device) -> float:
+    try:
+        value = float(device.options.get("travel_time", DEFAULT_TRAVEL_TIME_S))
+    except (TypeError, ValueError):
+        return DEFAULT_TRAVEL_TIME_S
+    return max(_MIN_TRAVEL_TIME_S, min(_MAX_TRAVEL_TIME_S, value))
+
 
 def discovery_config(device, topics: DeviceTopics, device_info: dict) -> dict:
     payload = base_discovery_payload(device, COMPONENT, topics, device_info)
@@ -31,18 +51,24 @@ def discovery_config(device, topics: DeviceTopics, device_info: dict) -> dict:
             {
                 "position_topic": topics.position,
                 "set_position_topic": topics.set_position,
-                "position_open": 100,
-                "position_closed": 0,
+                "position_open": _POSITION_OPEN,
+                "position_closed": _POSITION_CLOSED,
+            }
+        )
+    elif device.kind == "volet_roulant" and _has_travel_time(device):
+        # Timer-based position tracking: position is estimated on the addon side.
+        payload.update(
+            {
+                "position_topic": topics.position,
+                "set_position_topic": topics.set_position,
+                "position_open": _POSITION_OPEN,
+                "position_closed": _POSITION_CLOSED,
             }
         )
     else:
         payload["optimistic"] = True
 
     return payload
-
-
-def _is_inverted(device) -> bool:
-    return bool(device.options.get("invert", False))
 
 
 def encode_state(device, stype: str, svalue) -> list[tuple[str, str]]:
@@ -69,7 +95,6 @@ def encode_state(device, stype: str, svalue) -> list[tuple[str, str]]:
 
 
 def encode_optimistic_state(device, topic: str, payload: str) -> list[tuple[str, str]]:
-
     topics = DeviceTopics.for_device(COMPONENT, device.key)
 
     if topic == topics.command and device.kind == "volet_roulant":
@@ -96,6 +121,12 @@ def encode_optimistic_state(device, topic: str, payload: str) -> list[tuple[str,
 
 
 def decode_command(device, topic: str, payload: str) -> dict | None:
+    """Decode an MQTT command into a thingnotes dict.
+
+    For volet_roulant with travel_time, set_position commands return a dict
+    with an extra ``_target_position`` key (int 0-100) alongside ``notes``.
+    This key is consumed by mqtt_bridge and never forwarded to the box.
+    """
     topics = DeviceTopics.for_device(COMPONENT, device.key)
     inverted = _is_inverted(device)
 
@@ -108,6 +139,15 @@ def decode_command(device, topic: str, payload: str) -> dict | None:
         raw_byte = round(raw_position / 100 * 255)
         return {"notes": [{"method": 1, "type": 1, "value": raw_byte}]}
 
+    if topic == topics.set_position and device.kind == "volet_roulant" and _has_travel_time(device):
+        try:
+            target = max(0, min(100, int(payload)))
+        except ValueError:
+            return None
+        # Direction is resolved in mqtt_bridge once current position is known.
+        # We embed the target so mqtt_bridge can compute duration and send STOP.
+        return {"notes": [], "_target_position": target}
+
     if topic == topics.command:
         cmd = payload.upper()
         if inverted:
@@ -118,15 +158,6 @@ def decode_command(device, topic: str, payload: str) -> dict | None:
         return {"notes": [{"method": 1, "type": 0, "value": value}]}
 
     return None
-
-
-def travel_time_s(device) -> float:
-
-    try:
-        value = float(device.options.get("travel_time", DEFAULT_TRAVEL_TIME_S))
-    except (TypeError, ValueError):
-        return DEFAULT_TRAVEL_TIME_S
-    return max(_MIN_TRAVEL_TIME_S, min(_MAX_TRAVEL_TIME_S, value))
 
 
 def motion_command(device, topic: str, payload: str) -> str | None:

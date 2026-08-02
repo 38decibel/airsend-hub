@@ -69,6 +69,12 @@ class _CoverMotion:
     motion_state: str
     started_at: float
     travel_time_s: float
+    # Position (0-100) at the moment this motion started.  None when the cover
+    # has no travel_time option and position tracking is disabled.
+    start_position: float | None = None
+    # Position requested via set_position.  When set, the timer runs only for
+    # the partial travel duration and then sends STOP automatically.
+    target_position: float | None = None
 
 
 class MqttBridge:
@@ -93,6 +99,8 @@ class MqttBridge:
         self._loop = asyncio.get_event_loop()
         self._health_task: asyncio.Task | None = None
         self._cover_tasks: dict[str, _CoverMotion] = {}
+        # Last known position (0-100) for volet_roulant covers with travel_time.
+        self._cover_positions: dict[str, float] = {}
 
         self._mqtt = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="airsend-addon")
         if username:
@@ -413,12 +421,37 @@ class MqttBridge:
             _LOGGER.debug("Command payload %r on %s not understood by domain %s", payload, topic, device.domain)
             return
 
+        # Extract the optional target_position injected by cover.decode_command
+        # for volet_roulant set_position commands.  It must not be forwarded to
+        # the box — strip it before building the transfer payload.
+        target_position: float | None = None
+        if "_target_position" in thingnotes:
+            target_position = float(thingnotes.pop("_target_position"))
+
         box = self._boxes_by_slug.get(device.box)
         if box is None:
             _LOGGER.error("Command for device %s references unknown box '%s'", device.key, device.box)
             return
 
         channel = {"id": device.channel_id, "source": device.channel_source}
+
+        if target_position is not None:
+            await self._handle_set_position(device, module, box, channel, target_position)
+        else:
+            await self._send_standard_command(device, module, box, channel, thingnotes, topic, payload)
+
+
+    async def _send_standard_command(
+        self,
+        device: Device,
+        module,
+        box: BoxConfig,
+        channel: dict,
+        thingnotes: dict,
+        topic: str,
+        payload: str,
+    ) -> None:
+        """Transfer ``thingnotes`` to the box then publish optimistic/motion state."""
         try:
             await self._client.transfer(box, channel=channel, thingnotes=thingnotes, wait=True)
         except AirSendError as exc:
@@ -435,23 +468,79 @@ class MqttBridge:
         if motion_fn is not None:
             self._apply_cover_motion(device, module, motion_fn(device, topic, payload))
 
+    async def _handle_set_position(
+        self,
+        device: Device,
+        module,
+        box: BoxConfig,
+        channel: dict,
+        target_position: float,
+    ) -> None:
+        """Send a directional RF command and start a partial-travel motion timer
+        to reach ``target_position`` (0-100) on a volet_roulant with travel_time.
+        """
+        current = self._cover_positions.get(device.key, 0.0)
+        if abs(target_position - current) < 1.0:
+            _LOGGER.debug("Cover %s already at target %.0f%%, ignoring", device.key, target_position)
+            return
+        direction_up = target_position > current
+        rf_value = 35 if direction_up else 34  # UP / DOWN (_STATE_UP / _STATE_DOWN)
+        motion_state = "opening" if direction_up else "closing"
+        directional_notes = {"notes": [{"method": 1, "type": 0, "value": rf_value}]}
+        try:
+            await self._client.transfer(box, channel=channel, thingnotes=directional_notes, wait=True)
+        except AirSendError as exc:
+            _LOGGER.warning("Failed to send set_position direction for device %s: %s", device.key, exc)
+            return
+        # Publish the transitional state optimistically.
+        pos_topics = DeviceTopics.for_device("cover", device.key)
+        self._mqtt.publish(pos_topics.state, motion_state, retain=True)
+        tt = module.travel_time_s(device)
+        self._start_cover_motion(device, motion_state, tt, current, target_position)
 
-    def _apply_cover_motion(self, device: Device, module, motion: str | None) -> None:
+    def _apply_cover_motion(
+        self,
+        device: Device,
+        module,
+        motion: str | None,
+        target_position: float | None = None,
+    ) -> None:
         if motion == "stop":
             self._handle_cover_stop(device)
         elif motion is not None:
-            self._start_cover_motion(device, motion, module.travel_time_s(device))
+            tt = module.travel_time_s(device)
+            current = self._cover_positions.get(device.key)
+            self._start_cover_motion(device, motion, tt, current, target_position)
 
-    def _start_cover_motion(self, device: Device, motion_state: str, travel_time_s: float) -> None:
+    def _start_cover_motion(
+        self,
+        device: Device,
+        motion_state: str,
+        travel_time_s: float,
+        start_position: float | None = None,
+        target_position: float | None = None,
+    ) -> None:
         old = self._cover_tasks.pop(device.key, None)
         if old is not None:
             old.task.cancel()
-        task = asyncio.create_task(self._cover_motion_timer(device, motion_state, travel_time_s))
+
+        # When a target is given, run the timer only for the partial travel duration.
+        if target_position is not None and start_position is not None and travel_time_s > 0:
+            delta = abs(target_position - start_position)
+            timer_duration = delta / 100.0 * travel_time_s
+        else:
+            timer_duration = travel_time_s
+
+        task = asyncio.create_task(
+            self._cover_motion_timer(device, motion_state, travel_time_s, timer_duration)
+        )
         self._cover_tasks[device.key] = _CoverMotion(
             task=task,
             motion_state=motion_state,
             started_at=self._loop.time(),
             travel_time_s=travel_time_s,
+            start_position=start_position,
+            target_position=target_position,
         )
 
     def _handle_cover_stop(self, device: Device) -> None:
@@ -463,36 +552,113 @@ class MqttBridge:
         motion.task.cancel()
 
         elapsed = self._loop.time() - motion.started_at
-        ratio = elapsed / motion.travel_time_s if motion.travel_time_s > 0 else 1.0
-        reached_destination = ratio >= _COVER_STOP_REACHED_RATIO
+        topics = DeviceTopics.for_device("cover", device.key)
 
-        if motion.motion_state == "opening":
-            final_state = "open" if reached_destination else "closed"
+        if motion.start_position is not None and motion.travel_time_s > 0:
+            # Position-tracking mode: compute estimated position from elapsed time.
+            direction = 1.0 if motion.motion_state == "opening" else -1.0
+            progress = min(elapsed / motion.travel_time_s, 1.0) * 100.0
+            estimated = motion.start_position + direction * progress
+            position = round(max(0.0, min(100.0, estimated)))
+            self._cover_positions[device.key] = float(position)
+            self._mqtt.publish(topics.position, str(position), retain=True)
+            final_state = "open" if position > 0 else "closed"
+            self._mqtt.publish(topics.state, final_state, retain=True)
+            _LOGGER.debug(
+                "Cover %s stopped after %.1fs/%.1fs (%s) -> position %d%% (%s)",
+                device.key,
+                elapsed,
+                motion.travel_time_s,
+                motion.motion_state,
+                position,
+                final_state,
+            )
         else:
-            final_state = "closed" if reached_destination else "open"
+            # Legacy optimistic mode (no travel_time set).
+            ratio = elapsed / motion.travel_time_s if motion.travel_time_s > 0 else 1.0
+            reached_destination = ratio >= _COVER_STOP_REACHED_RATIO
+            if motion.motion_state == "opening":
+                final_state = "open" if reached_destination else "closed"
+            else:
+                final_state = "closed" if reached_destination else "open"
+            self._mqtt.publish(topics.state, final_state, retain=True)
+            _LOGGER.debug(
+                "Cover %s stopped after %.1fs/%.1fs (%s) -> assumed %s",
+                device.key,
+                elapsed,
+                motion.travel_time_s,
+                motion.motion_state,
+                final_state,
+            )
 
+    async def _cover_motion_timer(
+        self,
+        device: Device,
+        motion_state: str,
+        travel_time_s: float,
+        timer_duration: float,
+    ) -> None:
+        """Run for ``timer_duration`` seconds then publish the final position.
+
+        ``travel_time_s`` is the full open↔close travel time and is used to
+        compute intermediate positions.  ``timer_duration`` equals
+        ``travel_time_s`` for full-travel commands and is shorter when a
+        specific target position was requested.
+        """
         topics = DeviceTopics.for_device("cover", device.key)
-        self._mqtt.publish(topics.state, final_state, retain=True)
-        _LOGGER.debug(
-            "Cover %s stopped after %.1fs/%.1fs (%s) -> assumed %s",
-            device.key,
-            elapsed,
-            motion.travel_time_s,
-            motion.motion_state,
-            final_state,
-        )
-
-    async def _cover_motion_timer(self, device: Device, motion_state: str, travel_time_s: float) -> None:
-
-        topics = DeviceTopics.for_device("cover", device.key)
+        motion = self._cover_tasks.get(device.key)
         try:
-            await asyncio.sleep(travel_time_s)
+            await asyncio.sleep(timer_duration)
+        except asyncio.CancelledError:
+            self._cover_tasks.pop(device.key, None)
+            raise
         finally:
             self._cover_tasks.pop(device.key, None)
 
-        final_state = "open" if motion_state == "opening" else "closed"
+        if motion is not None and motion.start_position is not None and travel_time_s > 0:
+            # Position-tracking mode.
+            if motion.target_position is not None:
+                # Partial travel: we reached the requested target exactly.
+                position = round(motion.target_position)
+            else:
+                # Full travel: cover reached the physical end stop.
+                position = 100 if motion_state == "opening" else 0
+            self._cover_positions[device.key] = float(position)
+            self._mqtt.publish(topics.position, str(position), retain=True)
+            final_state = "open" if position > 0 else "closed"
+
+            # For partial travel (set_position), send STOP to the box so the
+            # motor halts at the estimated position.
+            if motion.target_position is not None:
+                box = self._boxes_by_slug.get(device.box)
+                if box is not None:
+                    channel = {"id": device.channel_id, "source": device.channel_source}
+                    stop_notes = {"notes": [{"method": 1, "type": 0, "value": 17}]}
+                    stop_task = asyncio.create_task(
+                        self._client.transfer(box, channel=channel, thingnotes=stop_notes, wait=False)
+                    )
+                    # Hold a strong reference until the task completes.
+                    stop_task.add_done_callback(
+                        lambda t: _LOGGER.debug(
+                            "Cover %s auto-STOP sent (target %d%%)", device.key, position
+                        )
+                        if not t.exception()
+                        else _LOGGER.warning(
+                            "Cover %s auto-STOP failed: %s", device.key, t.exception()
+                        )
+                    )
+        else:
+            # Legacy optimistic mode.
+            final_state = "open" if motion_state == "opening" else "closed"
+
         self._mqtt.publish(topics.state, final_state, retain=True)
-        _LOGGER.debug("Cover %s reached assumed %s after %.1fs", device.key, final_state, travel_time_s)
+        _LOGGER.debug(
+            "Cover %s timer elapsed (%.1fs/%s) -> %s",
+            device.key,
+            timer_duration,
+            f"{travel_time_s:.1f}s",
+            final_state,
+        )
 
     async def _handle_command(self, topic: str, payload: str) -> None:
         if topic == _RELIABILITY_COMMAND_TOPIC:
