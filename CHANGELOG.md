@@ -1,5 +1,12 @@
 ---
 
+## 1.19.0 - 2026-08-02
+
+### 🚀 Added
+- **inclusion:** remove send-only devices from box memory on deletion
+
+---
+
 ## 1.18.0 - 2026-08-02
 
 ### 🚀 Added
