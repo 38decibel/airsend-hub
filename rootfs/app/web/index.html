@@ -9,6 +9,7 @@
 <script src="js/screen-import.js" defer></script>
 <script src="js/screen-backup.js" defer></script>
 <script src="js/screen-inbox.js" defer></script>
+<script src="js/screen-memory.js" defer></script>
 </head>
 <body>
 
@@ -28,6 +29,7 @@
     <button class="btn secondary" id="btn-open-inbox" data-i18n="home.inbox">📡 Signaux captés</button>
     <button class="btn secondary" id="btn-open-import" data-i18n="home.importYaml">Importer depuis YAML</button>
     <button class="btn secondary" id="btn-open-backup" data-i18n="home.backup">Sauvegarde / restauration</button>
+    <button class="btn secondary" id="btn-open-memory" data-i18n="home.memory">🧠 Mémoire boîtier</button>
   </div>
 </div>
 
@@ -286,8 +288,39 @@
   </div>
 </div>
 
+<div id="screen-memory" class="card hidden">
+  <button class="btn secondary" id="btn-memory-cancel" data-i18n="common.backCancel">&larr; Annuler</button>
+
+  <div style="margin-top:14px;">
+    <h2 data-i18n="memory.title">Mémoire boîtier</h2>
+    <p class="muted" data-i18n="memory.instructions">Liste des appareils enregistrés dans la mémoire interne du boîtier AirSend. Les appareils liés sont déjà gérés par l'addon. Les orphelins sont présents en mémoire mais absents de la configuration.</p>
+  </div>
+
+  <div id="memory-loading" class="muted" style="margin-top:14px;" data-i18n="home.loading">Chargement…</div>
+  <div id="memory-error" class="banner error hidden" style="margin-top:14px;"></div>
+  <div id="memory-list" style="margin-top:10px;"></div>
+
+  <div id="memory-add-form" class="hidden" style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border);">
+    <h2 data-i18n="memory.addTitle">Ajouter cet appareil</h2>
+    <div class="btn-grid" id="memory-kind-choices">
+      <div class="choice-box" data-kind="1_bouton"><strong data-i18n="kind.1_bouton">1 bouton</strong></div>
+      <div class="choice-box" data-kind="on_off"><strong data-i18n="kind.on_off">On / Off</strong></div>
+      <div class="choice-box" data-kind="volet_roulant"><strong data-i18n="kind.volet_roulant">Volet roulant</strong></div>
+      <div class="choice-box" data-kind="niveau"><strong data-i18n="kind.niveau">Niveau (position)</strong></div>
+    </div>
+    <label class="field-label" for="memory-name-input" data-i18n="wizard.kind.nameLabel">Nom de l'appareil</label>
+    <input type="text" id="memory-name-input" data-i18n-placeholder="common.namePlaceholder" placeholder="ex: Volet salon terrasse">
+    <label class="field-label" for="memory-category-select" data-i18n="wizard.kind.categoryLabel">Catégorie (icône, facultatif)</label>
+    <select id="memory-category-select"></select>
+    <div id="memory-add-banner" class="banner hidden" style="margin-top:10px;"></div>
+    <div style="margin-top:14px;">
+      <button class="btn" id="btn-memory-add-confirm" disabled data-i18n="wizard.kind.confirm">Ajouter l'appareil</button>
+      <button class="btn secondary" id="btn-memory-add-cancel" data-i18n="common.cancel">Annuler</button>
+    </div>
+  </div>
+</div>
+
 <div id="screen-inbox" class="card hidden">
-  <button class="btn secondary" id="btn-inbox-cancel" data-i18n="common.backCancel">&larr; Annuler</button>
 
   <div style="margin-top:14px;">
     <h2 data-i18n="inbox.title">Signaux captés</h2>
@@ -593,6 +626,7 @@
     hide("screen-import");
     hide("screen-backup");
     hide("screen-inbox");
+    hide("screen-memory");
     show("screen-home");
     loadDevices();
   }

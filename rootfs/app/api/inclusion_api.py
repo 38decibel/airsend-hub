@@ -148,6 +148,7 @@ class InclusionApi:
         self.app.router.add_post("/api/inbox/confirm", self._handle_inbox_confirm)
         self.app.router.add_get("/api/settings", self._handle_get_settings)
         self.app.router.add_patch("/api/settings", self._handle_patch_settings)
+        self.app.router.add_get("/api/memory", self._handle_memory)
         self.app.router.add_get("/{tail:.*}", self._handle_static)
 
 
@@ -300,6 +301,50 @@ class InclusionApi:
             raise web.HTTPBadRequest(text="'capture_unknown_events' must be a boolean")
         self._mqtt_bridge.set_capture_unknown_events(value)
         return web.json_response({"capture_unknown_events": self._settings.capture_unknown_events})
+
+    async def _handle_memory(self, request: web.Request) -> web.Response:
+        """Return the box internal RF memory table, enriched with device info.
+
+        Each entry contains: id (channel_id), source, counter, protocol_name,
+        and optionally device_key / device_name when a matching device exists
+        in devices.json.
+        """
+        box_slug = request.query.get("box") or next(iter(self._boxes), None)
+        if box_slug is None:
+            return web.json_response({"error": "no box configured"}, status=503)
+        box = self._boxes.get(box_slug)
+        if box is None:
+            return web.json_response({"error": f"unknown box {box_slug!r}"}, status=404)
+
+        try:
+            entries = await self._client.read_memory(box)
+        except AirSendError as exc:
+            return web.json_response({"error": str(exc)}, status=502)
+
+        # Build a lookup (channel_id, source) → device for quick matching
+        device_lookup: dict[tuple[int, int], Device] = {
+            (d.channel_id, d.channel_source): d
+            for d in self._registry.all()
+        }
+
+        result = []
+        for entry in entries:
+            ch_id  = entry["id"]
+            source = entry["source"]
+            ch_entry = self._catalog.entry_for(box_slug, ch_id)
+            protocol_name = ch_entry.get("name") if ch_entry else None
+            device = device_lookup.get((ch_id, source))
+            row: dict[str, Any] = {
+                "channel_id":    ch_id,
+                "source":        source,
+                "counter":       entry["counter"],
+                "protocol_name": protocol_name,
+                "device_key":    device.key if device else None,
+                "device_name":   device.friendly_name if device else None,
+            }
+            result.append(row)
+
+        return web.json_response(result)
 
     def _prune_stale_sessions(self) -> None:
         for sid in [sid for sid, s in self._sessions.items() if s.is_stale]:
