@@ -175,6 +175,7 @@ const I18N = {
       "memory.add": "Ajouter",
       "memory.counter": "Compteur : {n}",
       "memory.creationError": "Erreur lors de la création de l'appareil.",
+      "memory.usage": "Mémoire utilisée : {n} / {max} appareils",
 
       "inbox.title": "Signaux captés",
       "inbox.instructions": "Toute trame RF reçue par le boîtier et ne correspondant à aucun appareil déjà ajouté apparaît ici, que le protocole soit reconnu ou non — que l'assistant d'ajout soit ouvert ou non.",
@@ -415,6 +416,7 @@ const I18N = {
       "memory.add": "Add",
       "memory.counter": "Counter: {n}",
       "memory.creationError": "Error while creating device.",
+      "memory.usage": "Memory used: {n} / {max} devices",
 
       "inbox.title": "Captured signals",
       "inbox.instructions": "Every RF frame received by the box that doesn't match an already-added device shows up here, whether the protocol is recognized or not — whether the add-device wizard is open or not.",
