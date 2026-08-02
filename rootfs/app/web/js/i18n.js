@@ -165,6 +165,16 @@ const I18N = {
 
       "home.backup": "Sauvegarde / restauration",
       "home.inbox": "📡 Signaux captés",
+      "home.memory": "🧠 Mémoire boîtier",
+      "memory.title": "Mémoire boîtier",
+      "memory.instructions": "Liste des appareils enregistrés dans la mémoire interne du boîtier AirSend. Les appareils liés sont déjà gérés par l'addon. Les orphelins sont présents en mémoire mais absents de la configuration.",
+      "memory.linked": "Lié",
+      "memory.orphan": "Orphelin",
+      "memory.loadError": "Erreur lors du chargement de la mémoire.",
+      "memory.addTitle": "Ajouter cet appareil",
+      "memory.add": "Ajouter",
+      "memory.counter": "Compteur : {n}",
+      "memory.creationError": "Erreur lors de la création de l'appareil.",
 
       "inbox.title": "Signaux captés",
       "inbox.instructions": "Toute trame RF reçue par le boîtier et ne correspondant à aucun appareil déjà ajouté apparaît ici, que le protocole soit reconnu ou non — que l'assistant d'ajout soit ouvert ou non.",
@@ -395,6 +405,16 @@ const I18N = {
 
       "home.backup": "Backup / restore",
       "home.inbox": "📡 Captured signals",
+      "home.memory": "🧠 Box memory",
+      "memory.title": "Box memory",
+      "memory.instructions": "List of devices registered in the AirSend box internal memory. Linked devices are already managed by the addon. Orphans are present in memory but missing from the configuration.",
+      "memory.linked": "Linked",
+      "memory.orphan": "Orphan",
+      "memory.loadError": "Error loading memory.",
+      "memory.addTitle": "Add this device",
+      "memory.add": "Add",
+      "memory.counter": "Counter: {n}",
+      "memory.creationError": "Error while creating device.",
 
       "inbox.title": "Captured signals",
       "inbox.instructions": "Every RF frame received by the box that doesn't match an already-added device shows up here, whether the protocol is recognized or not — whether the add-device wizard is open or not.",
