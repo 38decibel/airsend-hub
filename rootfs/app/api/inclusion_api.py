@@ -449,6 +449,43 @@ class InclusionApi:
         )
         return device
 
+    async def _write_memory_if_needed(
+        self, box_slug: str, channel_id: int, channel_source: int
+    ) -> None:
+        """Register the device in the box internal memory if the protocol is
+        send-only (getDecoder==0, i.e. rolling-code).
+
+        For decodable protocols the box learns the source automatically when it
+        receives an RF frame; for send-only ones (PFX, PTC, …) we must
+        explicitly PUT the entry so the motor can verify the counter.
+
+        Failures are logged as warnings and never propagated — a failed memory
+        write must not prevent the device from being saved to devices.json.
+        """
+        entry = self._catalog.entry_for(box_slug, channel_id)
+        if entry is None or entry.get("getDecoder") != 0:
+            return
+
+        box = self._boxes.get(box_slug)
+        if box is None:
+            _LOGGER.warning("_write_memory_if_needed: unknown box '%s'", box_slug)
+            return
+
+        try:
+            success = await self._client.write_memory_entry(
+                box, channel_id, channel_source, counter=0
+            )
+            if not success:
+                _LOGGER.warning(
+                    "Box memory write not acknowledged for channel_id=%d source=%d",
+                    channel_id, channel_source,
+                )
+        except AirSendError as exc:
+            _LOGGER.warning(
+                "Could not write box memory for channel_id=%d source=%d: %s",
+                channel_id, channel_source, exc,
+            )
+
     async def _handle_confirm_device(self, request: web.Request) -> web.Response:
         body = await request.json()
         session = self._sessions.get(body.get("session_id"))
@@ -487,6 +524,7 @@ class InclusionApi:
             options=body.get("options") or {},
             source_of_creation="rf_listen",
         )
+        await self._write_memory_if_needed(session.box_slug, candidate.channel_id, channel_source)
         self._inclusion.pop_candidate(session.box_slug, candidate.channel_id, channel_source)
         self._sessions.pop(session.id, None)
         return web.json_response({"key": device.key})
@@ -507,23 +545,6 @@ class InclusionApi:
         if not friendly_name:
             raise web.HTTPBadRequest(text=_FRIENDLY_NAME_EMPTY)
 
-        entry = self._catalog.entry_for(box_slug, channel_id)
-        rolling_code_risk = bool(entry.get("counter")) if entry else False
-        if rolling_code_risk and not body.get("confirm_rolling_code_risk"):
-            return web.json_response(
-                {
-                    "warning": "rolling_code_risk",
-                    "message": (
-                        "\u26a0\ufe0f Under active development: rolling-code counter "
-                        "synchronization is not working yet. Without actually capturing "
-                        "your remote control, the counter will not be synchronized, and "
-                        "commands sent to this device will likely fail. Adding it now "
-                        "will result in an incomplete, non-functional inclusion."
-                    ),
-                },
-                status=409,
-            )
-
         device = self._create_device(
             box_slug=box_slug,
             channel_id=channel_id,
@@ -534,6 +555,7 @@ class InclusionApi:
             options=body.get("options") or {},
             source_of_creation="manual",
         )
+        await self._write_memory_if_needed(box_slug, channel_id, channel_source)
         return web.json_response({"key": device.key})
 
     async def _handle_update_device(self, request: web.Request) -> web.Response:
