@@ -1,5 +1,12 @@
 ---
 
+## 1.18.0 - 2026-08-02
+
+### 🚀 Added
+- **inclusion:** register send-only devices in box memory on creation
+
+---
+
 ## 1.17.0 - 2026-08-02
 
 ### ♻️ Changed
