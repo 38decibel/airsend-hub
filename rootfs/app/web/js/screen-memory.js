@@ -92,10 +92,14 @@
         return;
       }
       var entries = res.body;
+      var badge = $("memory-usage-badge");
       if (!Array.isArray(entries) || !entries.length) {
         list.textContent = t("home.noDevices");
+        hide("memory-usage-badge");
         return;
       }
+      badge.textContent = t("memory.usage", { n: entries.length, max: 45 });
+      show("memory-usage-badge");
       entries.forEach(function (entry) { list.appendChild(buildMemoryRow(entry)); });
     });
   }

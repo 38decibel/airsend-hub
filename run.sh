@@ -50,7 +50,8 @@ else
 fi
 
 export BOXES_JSON=$(bashio::config 'boxes' | jq -c .)
-bashio::log.info "BOXES_JSON=${BOXES_JSON}"
+BOXES_JSON_REDACTED=$(echo "${BOXES_JSON}" | jq -c '[.[] | .password = "******"]' 2>/dev/null || echo "[redacted]")
+bashio::log.info "BOXES_JSON=${BOXES_JSON_REDACTED}"
 export LOG_LEVEL=$(bashio::config 'system.log_level' 'INFO')
 
 cd /opt/airsend
