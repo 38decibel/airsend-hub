@@ -22,6 +22,8 @@ _MEMORY_ENTRY_SIZE = 14
 _MEMORY_ENTRY_BITS = _MEMORY_ENTRY_SIZE * 8
 # memory==3 in the channel response means PUT was acknowledged.
 _MEMORY_ACK_PUT = 3
+# memory==4 in the channel response means REMOVE was acknowledged.
+_MEMORY_ACK_REMOVE = 4
 
 class AirSendError(Exception):
     pass
@@ -227,6 +229,48 @@ class AirSendClient:
         else:
             _LOGGER.warning(
                 "Memory write returned unexpected ack memory=%r for channel_id=%d source=%d",
+                ack_memory, channel_id, source,
+            )
+        return success
+
+    async def remove_memory_entry(
+        self, box: BoxConfig, channel_id: int, source: int, counter: int
+    ) -> bool:
+        """Remove one entry from the box internal RF memory.
+
+        Reads the current counter from the live memory table, then sends a
+        ``memory: REMOVE`` transfer.  The counter must match the value currently
+        stored in the box — without it the request is rejected.
+
+        Returns True on ACK (response memory==4), False otherwise.
+        """
+        uid = int(uuid.uuid4().int & 0xFFFF_FFFF)
+        body: dict[str, Any] = {
+            "wait": True,
+            "channel": {
+                "id": channel_id,
+                "source": source,
+                "counter": counter,
+            },
+            "thingnotes": {
+                "uid": uid,
+                "state": {"memory": "REMOVE", "counter": counter},
+                "notes": [],
+            },
+        }
+        async with self._transfer_lock:
+            resp = await self._request("POST", "/airsend/transfer", box=box, json_body=body)
+
+        ack_memory = resp.get("channel", {}).get("memory")
+        success = ack_memory == _MEMORY_ACK_REMOVE
+        if success:
+            _LOGGER.info(
+                "Memory entry removed: box=%s channel_id=%d source=%d",
+                box.slug, channel_id, source,
+            )
+        else:
+            _LOGGER.warning(
+                "Memory remove returned unexpected ack memory=%r for channel_id=%d source=%d",
                 ack_memory, channel_id, source,
             )
         return success

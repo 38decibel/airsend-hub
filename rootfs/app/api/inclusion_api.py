@@ -586,12 +586,67 @@ class InclusionApi:
             {"key": updated.key, "friendly_name": updated.friendly_name, "options": updated.options}
         )
 
+    async def _remove_memory_if_needed(self, device: "Device") -> None:
+        """Remove the device entry from the box internal memory if the protocol
+        is send-only (getDecoder==0, i.e. rolling-code).
+
+        Must read the live memory table first to get the current counter value,
+        which the box requires in the REMOVE request.
+
+        Failures are logged as warnings and never propagated — a failed memory
+        removal must not prevent the device from being deleted from devices.json.
+        """
+        entry = self._catalog.entry_for(device.box, device.channel_id)
+        if entry is None or entry.get("getDecoder") != 0:
+            return
+
+        box = self._boxes.get(device.box)
+        if box is None:
+            _LOGGER.warning("_remove_memory_if_needed: unknown box '%s'", device.box)
+            return
+
+        try:
+            memory = await self._client.read_memory(box)
+        except AirSendError as exc:
+            _LOGGER.warning(
+                "Could not read box memory before removing channel_id=%d source=%d: %s",
+                device.channel_id, device.channel_source, exc,
+            )
+            return
+
+        mem_entry = next(
+            (e for e in memory if e["id"] == device.channel_id and e["source"] == device.channel_source),
+            None,
+        )
+        if mem_entry is None:
+            _LOGGER.info(
+                "Device %s not found in box memory (already removed or never written), skipping REMOVE",
+                device.key,
+            )
+            return
+
+        try:
+            success = await self._client.remove_memory_entry(
+                box, device.channel_id, device.channel_source, mem_entry["counter"]
+            )
+            if not success:
+                _LOGGER.warning(
+                    "Box memory REMOVE not acknowledged for channel_id=%d source=%d",
+                    device.channel_id, device.channel_source,
+                )
+        except AirSendError as exc:
+            _LOGGER.warning(
+                "Could not remove box memory entry for channel_id=%d source=%d: %s",
+                device.channel_id, device.channel_source, exc,
+            )
+
     async def _handle_delete_device(self, request: web.Request) -> web.Response:
         key = request.match_info["key"]
         device = self._registry.get(key)
         if device is None:
             raise web.HTTPNotFound(text="unknown device")
 
+        await self._remove_memory_if_needed(device)
         self._mqtt_bridge.remove_discovery(device)
         self._registry.remove(key)
         _LOGGER.info("Device %s removed via ingress UI", key)
