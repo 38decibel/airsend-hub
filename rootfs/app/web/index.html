@@ -15,9 +15,12 @@
 
 <div class="top-bar">
   <h1>AirSend</h1>
-  <div class="lang-switch" id="lang-switch" role="group" aria-label="Language / Langue">
-    <button type="button" id="lang-btn-fr" data-lang="fr">FR</button>
-    <button type="button" id="lang-btn-en" data-lang="en">EN</button>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button type="button" id="btn-theme-toggle" class="theme-toggle-btn" aria-label="Toggle theme">🌙</button>
+    <div class="lang-switch" id="lang-switch" role="group" aria-label="Language / Langue">
+      <button type="button" id="lang-btn-fr" data-lang="fr">FR</button>
+      <button type="button" id="lang-btn-en" data-lang="en">EN</button>
+    </div>
   </div>
 </div>
 
@@ -334,6 +337,14 @@
       <label for="inbox-capture-unknown-checkbox" data-i18n="inbox.captureUnknownLabel">Capturer aussi les protocoles non reconnus (mode promiscuous)</label>
     </div>
     <div class="banner warn" data-i18n="inbox.captureUnknownWarning">⚠️ Peut capter des signaux qui ne sont pas les vôtres (voisins, véhicules qui passent…) et remplir la liste rapidement. Utilisez "Oublier" pour masquer durablement une source indésirable.</div>
+
+    <div style="margin-top:14px;">
+      <label class="field-label" for="inbox-channel-select" data-i18n="inbox.bindChannelLabel">Protocole d'écoute permanente</label>
+      <select id="inbox-channel-select">
+        <option value="" data-i18n="inbox.bindChannelAll">Tous (défaut)</option>
+      </select>
+      <p class="muted" style="margin-top:4px;" data-i18n="inbox.bindChannelHelp">Le changement relance immédiatement l'écoute sur ce protocole.</p>
+    </div>
   </div>
 
   <div id="inbox-empty" class="muted" style="margin-top:14px;" data-i18n="inbox.empty">Aucun signal en attente pour le moment.</div>
@@ -377,6 +388,38 @@
   document.querySelectorAll(".lang-switch button").forEach(function (btn) {
     btn.addEventListener("click", function () { setLang(btn.dataset.lang); });
   });
+
+  // -----------------------------------------------------------------------
+  // Theme toggle (dark / light / auto)
+  // Cycle: auto → dark → light → auto
+  // Stored in localStorage as "dark", "light", or absent (auto).
+  // -----------------------------------------------------------------------
+  var THEME_KEY = "airsend_theme";
+  var THEME_ICONS = { dark: "🌙", light: "☀️", auto: "🌗" };
+
+  function applyTheme(theme) {
+    if (theme === "dark" || theme === "light") {
+      document.documentElement.dataset.theme = theme;
+    } else {
+      delete document.documentElement.dataset.theme;
+    }
+    var btn = $("btn-theme-toggle");
+    if (btn) { btn.textContent = THEME_ICONS[theme] || THEME_ICONS.auto; }
+  }
+
+  function cycleTheme() {
+    var current = localStorage.getItem(THEME_KEY) || "auto";
+    var next = current === "auto" ? "dark" : current === "dark" ? "light" : "auto";
+    if (next === "auto") {
+      localStorage.removeItem(THEME_KEY);
+    } else {
+      localStorage.setItem(THEME_KEY, next);
+    }
+    applyTheme(next);
+  }
+
+  applyTheme(localStorage.getItem(THEME_KEY) || "auto");
+  $("btn-theme-toggle").addEventListener("click", cycleTheme);
 
     function refreshDynamicUi() {
     loadDevices();
