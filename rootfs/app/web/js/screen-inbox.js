@@ -51,23 +51,20 @@
     // Keep the first default option only
     while (sel.options.length > 1) { sel.remove(1); }
 
-    var band433 = channels.filter(function (c) { return c.band === 1 && c.getDecoder !== 0; });
-    var band868 = channels.filter(function (c) { return c.band === 2 && c.getDecoder !== 0; });
-
-    var BAND_LABELS = { 1: "433 MHz", 2: "868 MHz" };
-    [[1, band433], [2, band868]].forEach(function (pair) {
-      var band = pair[0];
-      var list = pair[1];
-      if (!list.length) { return; }
-      var grp = document.createElement("optgroup");
-      grp.label = BAND_LABELS[band];
-      list.forEach(function (c) {
-        var opt = document.createElement("option");
-        opt.value = String(c.id);
-        opt.textContent = c.name;
-        grp.appendChild(opt);
+    var BAND_LABELS = { 1: "433", 2: "868" };
+    // Sort by band then name; skip send-only protocols (getDecoder === 0)
+    var sorted = channels
+      .filter(function (c) { return c.getDecoder !== 0; })
+      .sort(function (a, b) {
+        if (a.band !== b.band) { return a.band - b.band; }
+        return a.name < b.name ? -1 : a.name > b.name ? 1 : 0;
       });
-      sel.appendChild(grp);
+
+    sorted.forEach(function (c) {
+      var opt = document.createElement("option");
+      opt.value = String(c.id);
+      opt.textContent = "[" + (BAND_LABELS[c.band] || c.band) + "] " + c.name;
+      sel.appendChild(opt);
     });
 
     syncChannelSelect(currentChannelId);

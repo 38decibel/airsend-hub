@@ -45,6 +45,9 @@ _CAPTURE_UNKNOWN_DISCOVERY_TOPIC = "homeassistant/switch/capture_unknown_events_
 _CAPTURE_UNKNOWN_PAYLOAD_ON = "ON"
 _CAPTURE_UNKNOWN_PAYLOAD_OFF = "OFF"
 
+_RF_INBOX_STATE_TOPIC = "airsend/rf_inbox/state"
+_RF_INBOX_DISCOVERY_TOPIC = "homeassistant/event/rf_inbox_airsend/config"
+
 _LEGACY_INCLUSION_DISCOVERY_TOPICS = (
     "homeassistant/switch/inclusion_mode_airsend/config",
     "homeassistant/switch/airsend_inclusion_mode/config",
@@ -158,6 +161,7 @@ class MqttBridge:
         self._publish_bind_duration_state()
         self._publish_capture_unknown_discovery()
         self._publish_capture_unknown_state()
+        self._publish_rf_inbox_discovery()
         for box in self._boxes_by_slug.values():
             self.publish_box_diagnostics(box)
 
@@ -283,6 +287,57 @@ class MqttBridge:
         self._settings.capture_unknown_events = enabled
         self._publish_capture_unknown_state()
         _LOGGER.info("capture_unknown_events updated to %s", enabled)
+
+    def _publish_rf_inbox_discovery(self) -> None:
+        """Publish MQTT discovery for the RF inbox event entity.
+
+        The entity is attached to the primary box device and fires on every
+        valid RF frame received, whether or not it matches a configured device.
+        """
+        box_slug = self._primary_box_slug()
+        device_info = (
+            self._device_info_for_box(box_slug)
+            if box_slug
+            else build_device_info("airsend_addon", "AirSend")
+        )
+        config = {
+            "name": "Dernière trame RF",
+            "default_entity_id": "event.rf_inbox",
+            "has_entity_name": True,
+            "unique_id": "rf_inbox_airsend",
+            "state_topic": _RF_INBOX_STATE_TOPIC,
+            "event_types": ["rf_action"],
+            "availability_topic": AVAILABILITY_TOPIC,
+            "payload_available": AVAILABILITY_ONLINE,
+            "payload_not_available": AVAILABILITY_OFFLINE,
+            "device": device_info,
+        }
+        self._mqtt.publish(_RF_INBOX_DISCOVERY_TOPIC, json.dumps(config), retain=True)
+
+    def publish_rf_inbox_event(
+        self,
+        box_slug: str,
+        channel_id: int,
+        channel_source: int,
+        protocol_name: str | None,
+        action: str | None,
+        reliability: int | None,
+    ) -> None:
+        """Publish a single RF frame as an HA MQTT event on the inbox topic.
+
+        Called for every valid RF frame (known or unknown device) by
+        CallbackServer before device matching.
+        """
+        payload = json.dumps({
+            "event_type": "rf_action",
+            "box": box_slug,
+            "channel_id": channel_id,
+            "channel_source": channel_source,
+            "protocol_name": protocol_name,
+            "action": action,
+            "reliability": reliability,
+        })
+        self._mqtt.publish(_RF_INBOX_STATE_TOPIC, payload, retain=False)
 
 
     def _diagnostic_sensor_topics_and_config(

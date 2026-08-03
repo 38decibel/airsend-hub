@@ -162,6 +162,7 @@ async def async_main() -> None:
         catalog=catalog,
         settings=settings,
         on_state=mqtt_bridge.publish_state,
+        on_rf_inbox=mqtt_bridge.publish_rf_inbox_event,
         port=CALLBACK_PORT,
     )
     await callback_server.start()

@@ -20,6 +20,7 @@ from core.thing_notes import convert_notes_to_states
 _LOGGER = logging.getLogger("airsend.callback_server")
 
 StateSink = Callable[[str, str, object, dict], None]
+RfInboxSink = Callable[[str, int, int, str | None, str | None, int | None], None]
 
 # ThingEvent.type values (see AirSendWebService.yaml). GOT is a fully decoded
 # frame (channel + thingnotes usable). UNKNOWN/UNSUPPORTED/INCOMPLETE are
@@ -40,6 +41,7 @@ class CallbackServer:
         catalog: ProtocolCatalog,
         settings: RuntimeSettings,
         on_state: StateSink,
+        on_rf_inbox: RfInboxSink,
         host: str = "127.0.0.1",
         port: int = 8126,
     ) -> None:
@@ -48,6 +50,7 @@ class CallbackServer:
         self._catalog = catalog
         self._settings = settings
         self._on_state = on_state
+        self._on_rf_inbox = on_rf_inbox
         self._host = host
         self._port = port
         self._app = web.Application()
@@ -169,6 +172,22 @@ class CallbackServer:
                     box_slug, channel_id, channel_source,
                 )
                 return
+
+        # Publish RF inbox MQTT event for every valid decoded frame,
+        # regardless of whether it matches a configured device.
+        if decoded:
+            catalog_entry = self._catalog.entry_for(box_slug, channel_id)
+            protocol_name = catalog_entry.get("name") if catalog_entry else None
+            action: str | None = None
+            reliability_val: int | None = event.get("reliability")
+            for stype, svalue in convert_notes_to_states(notes):
+                if stype == "STATE":
+                    action = str(svalue)
+                    break
+            self._on_rf_inbox(
+                box_slug, channel_id, channel_source,
+                protocol_name, action, reliability_val,
+            )
 
         device = self._registry.match(box_slug, channel_id, channel_source)
         if device is not None:

@@ -1,7 +1,43 @@
+  /* ── Dark theme (default) ── */
   :root {
     --bg: #111318; --card: #1b1e26; --border: #2a2e38; --text: #e8eaed;
     --muted: #9aa0ac; --accent: #4d8aff; --accent-hover: #6b9dff;
     --danger: #e05555; --ok: #3fbf6f;
+    --btn-secondary-bg: #2a2e38; --btn-secondary-hover: #343946;
+    --choice-box-bg: #23262f; --choice-selected-bg: #1e2a44;
+    --input-bg: #14161c; --lang-btn-bg: #1b1e26;
+    --suggestion-hover: #23262f;
+  }
+  /* ── Light theme (system preference) ── */
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f0f2f5; --card: #ffffff; --border: #d0d4dc; --text: #1a1c22;
+      --muted: #6b7280; --accent: #2563eb; --accent-hover: #1d4ed8;
+      --danger: #dc2626; --ok: #16a34a;
+      --btn-secondary-bg: #e5e7eb; --btn-secondary-hover: #d1d5db;
+      --choice-box-bg: #f8f9fb; --choice-selected-bg: #dbeafe;
+      --input-bg: #ffffff; --lang-btn-bg: #ffffff;
+      --suggestion-hover: #f3f4f6;
+    }
+  }
+  /* ── Manual overrides via data-theme on <html> ── */
+  html[data-theme="dark"] {
+    --bg: #111318; --card: #1b1e26; --border: #2a2e38; --text: #e8eaed;
+    --muted: #9aa0ac; --accent: #4d8aff; --accent-hover: #6b9dff;
+    --danger: #e05555; --ok: #3fbf6f;
+    --btn-secondary-bg: #2a2e38; --btn-secondary-hover: #343946;
+    --choice-box-bg: #23262f; --choice-selected-bg: #1e2a44;
+    --input-bg: #14161c; --lang-btn-bg: #1b1e26;
+    --suggestion-hover: #23262f;
+  }
+  html[data-theme="light"] {
+    --bg: #f0f2f5; --card: #ffffff; --border: #d0d4dc; --text: #1a1c22;
+    --muted: #6b7280; --accent: #2563eb; --accent-hover: #1d4ed8;
+    --danger: #dc2626; --ok: #16a34a;
+    --btn-secondary-bg: #e5e7eb; --btn-secondary-hover: #d1d5db;
+    --choice-box-bg: #f8f9fb; --choice-selected-bg: #dbeafe;
+    --input-bg: #ffffff; --lang-btn-bg: #ffffff;
+    --suggestion-hover: #f3f4f6;
   }
   * { box-sizing: border-box; }
   body {
@@ -16,7 +52,7 @@
     margin-bottom: 16px; flex-shrink: 0;
   }
   .lang-switch button {
-    background: #1b1e26; color: var(--muted); border: none; padding: 6px 12px;
+    background: var(--lang-btn-bg); color: var(--muted); border: none; padding: 6px 12px;
     font-size: 0.8rem; cursor: pointer;
   }
   .lang-switch button.active { background: var(--accent); color: #fff; }
@@ -30,19 +66,19 @@
     margin: 4px 6px 4px 0; text-align: center;
   }
   .btn:hover { background: var(--accent-hover); }
-  .btn.secondary { background: #2a2e38; color: var(--text); }
-  .btn.secondary:hover { background: #343946; }
+  .btn.secondary { background: var(--btn-secondary-bg); color: var(--text); }
+  .btn.secondary:hover { background: var(--btn-secondary-hover); }
   .btn:disabled { opacity: 0.5; cursor: default; }
   .btn-grid { display: flex; flex-wrap: wrap; gap: 8px; }
   .choice-box {
-    flex: 1 1 140px; background: #23262f; border: 1px solid var(--border); border-radius: 8px;
+    flex: 1 1 140px; background: var(--choice-box-bg); border: 1px solid var(--border); border-radius: 8px;
     padding: 14px; text-align: center; cursor: pointer; min-width: 120px;
   }
   .choice-box:hover { border-color: var(--accent); }
-  .choice-box.selected { border-color: var(--accent); background: #1e2a44; }
+  .choice-box.selected { border-color: var(--accent); background: var(--choice-selected-bg); }
   input[type=text], input[type=number], textarea, select {
     width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);
-    background: #14161c; color: var(--text); font-size: 0.95rem; margin-bottom: 8px;
+    background: var(--input-bg); color: var(--text); font-size: 0.95rem; margin-bottom: 8px;
     font-family: inherit;
   }
   textarea { font-family: ui-monospace, monospace; font-size: 0.82rem; }
@@ -56,11 +92,11 @@
     cursor: pointer; transition: border-color 0.15s;
   }
   .btn-branch-toggle:hover { border-color: var(--accent); }
-  .btn-branch-toggle.active { border-color: var(--accent); background: #1e2a44; }
+  .btn-branch-toggle.active { border-color: var(--accent); background: var(--choice-selected-bg); }
   .branch-content { margin-top: 10px; padding: 14px; border-radius: 8px; border: 1px solid var(--border); }
   .suggestion-item { padding: 9px 12px; cursor: pointer; border-bottom: 1px solid var(--border); }
   .suggestion-item:last-child { border-bottom: none; }
-  .suggestion-item:hover { background: #23262f; }
+  .suggestion-item:hover { background: var(--suggestion-hover); }
   .muted { color: var(--muted); font-size: 0.88rem; }
   .banner { padding: 10px 12px; border-radius: 8px; margin: 8px 0; font-size: 0.88rem; }
   .banner.warn { background: #3a2f14; border: 1px solid #6b5420; color: #e8c977; }
@@ -152,5 +188,12 @@
     .import-field label { display: none; }
     .import-note { grid-column: 1 / -1; margin-top: 6px; }
   }
+  .theme-toggle-btn {
+    background: none; border: 1px solid var(--border); border-radius: 8px;
+    padding: 5px 9px; font-size: 1rem; cursor: pointer; line-height: 1;
+    color: var(--text); transition: border-color 0.15s;
+  }
+  .theme-toggle-btn:hover { border-color: var(--accent); }
+
   .tag-linked { color: #4caf50; font-size: 0.85em; font-weight: 600; }
   .tag-orphan { color: #ff9800; font-size: 0.85em; font-weight: 600; }
