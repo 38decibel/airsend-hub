@@ -1,5 +1,12 @@
 ---
 
+## 1.24.0 - 2026-08-03
+
+### 🚀 Added
+- **inbox:** show expandable detail (channel id, source, last action, notes) on each candidate row
+
+---
+
 ## 1.23.0 - 2026-08-03
 
 ### 🐛 Fixed
