@@ -121,7 +121,13 @@ class CallbackServer:
         )
 
     def _record_candidate(
-        self, box_slug: str, channel_id: int, channel_source: int, decoded: bool,
+        self,
+        box_slug: str,
+        channel_id: int,
+        channel_source: int,
+        decoded: bool,
+        last_action: str | None = None,
+        last_notes: list | None = None,
     ) -> None:
         protocol_name = self._catalog.protocol_name_for(box_slug, channel_id)
         self._inclusion.upsert_candidate(
@@ -130,6 +136,8 @@ class CallbackServer:
             channel_source=channel_source,
             protocol_name=protocol_name,
             decoded=decoded,
+            last_action=last_action,
+            last_notes=last_notes,
         )
 
     async def _handle_event(self, box_slug: str, event: dict) -> None:
@@ -194,4 +202,5 @@ class CallbackServer:
 
         # Unmatched frame: always recorded as an inclusion inbox candidate,
         # whether or not the wizard UI currently has a session open.
-        self._record_candidate(box_slug, channel_id, channel_source, decoded)
+        action = action_label_from_notes(notes) if decoded else None
+        self._record_candidate(box_slug, channel_id, channel_source, decoded, action, notes if decoded else None)

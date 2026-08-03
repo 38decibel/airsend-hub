@@ -231,6 +231,8 @@ class InclusionApi:
             "seen_count": c.seen_count,
             "first_seen": c.first_seen,
             "last_seen": c.last_seen,
+            "last_action": c.last_action,
+            "last_notes": c.last_notes,
         }
 
     async def _handle_list_inbox(self, request: web.Request) -> web.Response:

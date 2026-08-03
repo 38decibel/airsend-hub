@@ -27,6 +27,8 @@ class Candidate:
     seen_count: int = 1
     first_seen: float = field(default_factory=time.time)
     last_seen: float = field(default_factory=time.time)
+    last_action: str | None = None
+    last_notes: list = field(default_factory=list)
 
     @property
     def match_key(self) -> tuple[str, int, int]:
@@ -50,6 +52,8 @@ class InclusionState:
         channel_source: int,
         protocol_name: str | None,
         decoded: bool = True,
+        last_action: str | None = None,
+        last_notes: list | None = None,
     ) -> Candidate | None:
         key = (box, channel_id, channel_source)
         if key in self._ignored:
@@ -60,6 +64,10 @@ class InclusionState:
             existing.last_seen = time.time()
             existing.seen_count += 1
             existing.decoded = existing.decoded or decoded
+            if last_action is not None:
+                existing.last_action = last_action
+            if last_notes is not None:
+                existing.last_notes = last_notes
             return existing
 
         candidate = Candidate(
@@ -68,6 +76,8 @@ class InclusionState:
             channel_source=channel_source,
             protocol_name=protocol_name,
             decoded=decoded,
+            last_action=last_action,
+            last_notes=last_notes if last_notes is not None else [],
         )
         self._candidates[key] = candidate
         _LOGGER.info(

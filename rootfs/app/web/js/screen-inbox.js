@@ -112,20 +112,52 @@
     }).then(function () { loadInboxCandidates(); });
   }
 
+  function formatNotes(notes) {
+    if (!Array.isArray(notes) || !notes.length) { return "—"; }
+    var TYPE_LABELS = { 0: "STATE", 1: "DATA", 2: "TEMP", 3: "LUX", 4: "HUM", 9: "LEVEL" };
+    var METHOD_LABELS = { 0: "QUERY", 1: "PUT", 2: "INFO" };
+    return notes.map(function (n) {
+      var m = METHOD_LABELS[n.method] || n.method;
+      var ty = TYPE_LABELS[n.type] || n.type;
+      return m + " " + ty + (n.value !== undefined ? "=" + n.value : "");
+    }).join(" · ");
+  }
+
   function buildInboxRow(c) {
     var row = document.createElement("div");
     row.className = "candidate";
 
-    var info = document.createElement("span");
     var protocolLabel = c.protocol_name || (c.decoded
       ? t("wizard.listen.channelFallback", { id: c.channel_id })
       : t("inbox.undecoded"));
-    info.innerHTML =
+
+    // ── Summary line (always visible) ──
+    var summary = document.createElement("div");
+    summary.className = "candidate-summary";
+    summary.innerHTML =
       "<strong>" + protocolLabel + "</strong> · " + inboxBandLabel(c.band) +
       "<br><span class='muted'>" +
         t("inbox.seenCount", { n: c.seen_count }) + " · " +
         t("inbox.lastSeen", { when: formatCandidateTime(c.last_seen) }) +
+        (c.last_action ? " · <strong>" + c.last_action + "</strong>" : "") +
       "</span>";
+
+    // ── Detail block (collapsed by default) ──
+    var detail = document.createElement("div");
+    detail.className = "candidate-detail hidden";
+    detail.innerHTML =
+      "<span class='muted'>" + t("inbox.detailChannelId") + "</span> " + c.channel_id +
+      "<br><span class='muted'>" + t("inbox.detailSource") + "</span> " + c.channel_source +
+      "<br><span class='muted'>" + t("inbox.detailFirstSeen") + "</span> " + formatCandidateTime(c.first_seen) +
+      "<br><span class='muted'>" + t("inbox.detailLastNotes") + "</span> " + formatNotes(c.last_notes);
+
+    // Toggle detail on summary click
+    summary.style.cursor = "pointer";
+    var expanded = false;
+    summary.addEventListener("click", function () {
+      expanded = !expanded;
+      if (expanded) { detail.classList.remove("hidden"); } else { detail.classList.add("hidden"); }
+    });
 
     var actions = document.createElement("span");
     actions.className = "device-actions";
@@ -142,6 +174,11 @@
 
     actions.appendChild(includeBtn);
     actions.appendChild(forgetBtn);
+
+    var info = document.createElement("span");
+    info.appendChild(summary);
+    info.appendChild(detail);
+
     row.appendChild(info);
     row.appendChild(actions);
     return row;

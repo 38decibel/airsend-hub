@@ -195,5 +195,13 @@
   }
   .theme-toggle-btn:hover { border-color: var(--accent); }
 
+  .candidate-summary { user-select: none; }
+  .candidate-summary:hover { opacity: 0.85; }
+  .candidate-detail {
+    margin-top: 6px; padding: 8px 10px;
+    background: var(--input-bg); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 0.82em; line-height: 1.7;
+  }
+
   .tag-linked { color: #4caf50; font-size: 0.85em; font-weight: 600; }
   .tag-orphan { color: #ff9800; font-size: 0.85em; font-weight: 600; }

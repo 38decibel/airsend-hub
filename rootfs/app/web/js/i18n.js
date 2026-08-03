@@ -177,6 +177,10 @@ const I18N = {
       "memory.creationError": "Erreur lors de la création de l'appareil.",
       "memory.usage": "Mémoire utilisée : {n} / {max} appareils",
 
+      "inbox.detailChannelId":  "Channel ID :",
+      "inbox.detailSource":     "Source :",
+      "inbox.detailFirstSeen":  "1re détection :",
+      "inbox.detailLastNotes":  "Dernières notes :",
       "inbox.bindChannelLabel": "Protocole d'écoute permanente",
       "inbox.bindChannelAll": "Tous les protocoles (défaut)",
       "inbox.bindChannelHelp": "Le changement relance immédiatement l'écoute sur ce protocole.",
@@ -421,6 +425,10 @@ const I18N = {
       "memory.creationError": "Error while creating device.",
       "memory.usage": "Memory used: {n} / {max} devices",
 
+      "inbox.detailChannelId":  "Channel ID:",
+      "inbox.detailSource":     "Source:",
+      "inbox.detailFirstSeen":  "First seen:",
+      "inbox.detailLastNotes":  "Last notes:",
       "inbox.bindChannelLabel": "Permanent listen protocol",
       "inbox.bindChannelAll": "All protocols (default)",
       "inbox.bindChannelHelp": "Changing this immediately restarts the listen session on the selected protocol.",
