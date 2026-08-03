@@ -322,6 +322,7 @@ class MqttBridge:
         protocol_name: str | None,
         action: str | None,
         reliability: int | None,
+        notes: list | None = None,
     ) -> None:
         """Publish a single RF frame as an HA MQTT event on the inbox topic.
 
@@ -336,6 +337,7 @@ class MqttBridge:
             "protocol_name": protocol_name,
             "action": action,
             "reliability": reliability,
+            "notes": notes or [],
         })
         self._mqtt.publish(_RF_INBOX_STATE_TOPIC, payload, retain=False)
 

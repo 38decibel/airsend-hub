@@ -106,6 +106,25 @@ _NOTE_DECODERS = {
 }
 
 
+_STATE_INT_TO_LABEL: dict[int, str] = {v: k for k, v in _STATE_ENUM_TO_INT.items()}
+
+
+def action_label_from_notes(notes: list[dict]) -> str | None:
+    """Return a human-readable action label from the first STATE note (type 0).
+
+    Maps integer values to their canonical names (e.g. 19 -> "OFF", 35 -> "UP").
+    Returns None when no STATE note is present or the value is unrecognised.
+    """
+    for note in notes:
+        if note.get("type") != 0:
+            continue
+        raw = note.get("value")
+        ivalue = _as_int_state_value(raw)
+        if ivalue is not None:
+            return _STATE_INT_TO_LABEL.get(ivalue, str(ivalue))
+    return None
+
+
 def convert_notes_to_states(notes: list[dict]) -> list[tuple[str, object]]:
     """
     Returns a list of (stype, svalue) pairs that can be used by the domains/* modules.

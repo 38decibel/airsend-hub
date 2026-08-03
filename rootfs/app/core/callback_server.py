@@ -15,12 +15,12 @@ from registry.device_registry import DeviceRegistry
 from inclusion import InclusionState
 from catalog.protocol_catalog import ProtocolCatalog
 from runtime_settings import RuntimeSettings
-from core.thing_notes import convert_notes_to_states
+from core.thing_notes import convert_notes_to_states, action_label_from_notes
 
 _LOGGER = logging.getLogger("airsend.callback_server")
 
 StateSink = Callable[[str, str, object, dict], None]
-RfInboxSink = Callable[[str, int, int, str | None, str | None, int | None], None]
+RfInboxSink = Callable[[str, int, int, str | None, str | None, int | None, list], None]
 
 # ThingEvent.type values (see AirSendWebService.yaml). GOT is a fully decoded
 # frame (channel + thingnotes usable). UNKNOWN/UNSUPPORTED/INCOMPLETE are
@@ -178,15 +178,11 @@ class CallbackServer:
         if decoded:
             catalog_entry = self._catalog.entry_for(box_slug, channel_id)
             protocol_name = catalog_entry.get("name") if catalog_entry else None
-            action: str | None = None
             reliability_val: int | None = event.get("reliability")
-            for stype, svalue in convert_notes_to_states(notes):
-                if stype == "STATE":
-                    action = str(svalue)
-                    break
+            action = action_label_from_notes(notes)
             self._on_rf_inbox(
                 box_slug, channel_id, channel_source,
-                protocol_name, action, reliability_val,
+                protocol_name, action, reliability_val, notes,
             )
 
         device = self._registry.match(box_slug, channel_id, channel_source)
