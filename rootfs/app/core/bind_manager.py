@@ -37,11 +37,13 @@ class BoxBindHandle:
 
     async def stop(self) -> None:
         self._stopped.set()
-    
+
         try:
             if self._task is not None:
                 self._task.cancel()
                 await self._task
+        except asyncio.CancelledError:
+            pass
         finally:
             self._task = None
             try:
@@ -52,6 +54,21 @@ class BoxBindHandle:
                     self.box.name,
                     exc,
                 )
+
+    async def restart(self) -> None:
+        """Stop the current bind loop and immediately start a new one.
+
+        Used when settings that affect the bind parameters (e.g. bind_channel_id)
+        change at runtime, so the new channel takes effect without waiting for
+        the next scheduled renewal.
+        """
+        _LOGGER.info(
+            "Restarting bind for box '%s' (bind_channel_id=%s)",
+            self.box.name,
+            self._settings.bind_channel_id,
+        )
+        await self.stop()
+        self.start()
 
     async def start_targeted_listen(self, channel_id: int | None, duration: float) -> None:
 
@@ -71,6 +88,8 @@ class BoxBindHandle:
                 channel={"id": channel_id} if channel_id is not None else None,
             )
             await asyncio.sleep(duration)
+        except asyncio.CancelledError:
+            raise
         finally:
             self.start()
 
@@ -78,17 +97,21 @@ class BoxBindHandle:
         backoff = 5.0
         while not self._stopped.is_set():
             duration = self._settings.bind_duration_s
+            channel_id = self._settings.bind_channel_id
+            channel = {"id": channel_id} if channel_id is not None else None
             try:
                 _LOGGER.info(
-                    "Binding box '%s' (callback=%s, duration=%ss)",
+                    "Binding box '%s' (callback=%s, duration=%ss, channel=%s)",
                     self.box.name,
                     self._callback_url,
                     duration,
+                    channel_id if channel_id is not None else "all",
                 )
                 await self._client.bind(
                     self.box,
                     callback_url=self._callback_url,
                     duration=duration,
+                    channel=channel,
                 )
                 backoff = 5.0
                 sleep_for = max(duration - _RENEW_MARGIN_S, 5.0)
@@ -122,6 +145,13 @@ class BindManager:
 
     def get_handle(self, box_slug: str) -> BoxBindHandle | None:
         return self._handles.get(box_slug)
+
+    async def restart_all(self) -> None:
+        """Restart the bind loop on every box (e.g. after a channel change)."""
+        await asyncio.gather(
+            *(h.restart() for h in self._handles.values()),
+            return_exceptions=True,
+        )
 
     async def stop_all(self) -> None:
         await asyncio.gather(*(h.stop() for h in self._handles.values()), return_exceptions=True)
