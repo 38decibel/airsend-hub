@@ -177,6 +177,9 @@ const I18N = {
       "memory.creationError": "Erreur lors de la création de l'appareil.",
       "memory.usage": "Mémoire utilisée : {n} / {max} appareils",
 
+      "inbox.bindChannelLabel": "Protocole d'écoute permanente",
+      "inbox.bindChannelAll": "Tous les protocoles (défaut)",
+      "inbox.bindChannelHelp": "Le changement relance immédiatement l'écoute sur ce protocole.",
       "inbox.title": "Signaux captés",
       "inbox.instructions": "Toute trame RF reçue par le boîtier et ne correspondant à aucun appareil déjà ajouté apparaît ici, que le protocole soit reconnu ou non — que l'assistant d'ajout soit ouvert ou non.",
       "inbox.captureUnknownLabel": "Capturer aussi les protocoles non reconnus (mode promiscuous)",
@@ -418,6 +421,9 @@ const I18N = {
       "memory.creationError": "Error while creating device.",
       "memory.usage": "Memory used: {n} / {max} devices",
 
+      "inbox.bindChannelLabel": "Permanent listen protocol",
+      "inbox.bindChannelAll": "All protocols (default)",
+      "inbox.bindChannelHelp": "Changing this immediately restarts the listen session on the selected protocol.",
       "inbox.title": "Captured signals",
       "inbox.instructions": "Every RF frame received by the box that doesn't match an already-added device shows up here, whether the protocol is recognized or not — whether the add-device wizard is open or not.",
       "inbox.captureUnknownLabel": "Also capture unrecognized protocols (promiscuous mode)",

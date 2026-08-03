@@ -41,9 +41,50 @@
     $("inbox-capture-unknown-checkbox").checked = !!enabled;
   }
 
+  function syncChannelSelect(channelId) {
+    var sel = $("inbox-channel-select");
+    sel.value = (channelId === null || channelId === undefined) ? "" : String(channelId);
+  }
+
+  function populateChannelSelect(channels, currentChannelId) {
+    var sel = $("inbox-channel-select");
+    // Keep the first default option only
+    while (sel.options.length > 1) { sel.remove(1); }
+
+    var band433 = channels.filter(function (c) { return c.band === 1 && c.getDecoder !== 0; });
+    var band868 = channels.filter(function (c) { return c.band === 2 && c.getDecoder !== 0; });
+
+    var BAND_LABELS = { 1: "433 MHz", 2: "868 MHz" };
+    [[1, band433], [2, band868]].forEach(function (pair) {
+      var band = pair[0];
+      var list = pair[1];
+      if (!list.length) { return; }
+      var grp = document.createElement("optgroup");
+      grp.label = BAND_LABELS[band];
+      list.forEach(function (c) {
+        var opt = document.createElement("option");
+        opt.value = String(c.id);
+        opt.textContent = c.name;
+        grp.appendChild(opt);
+      });
+      sel.appendChild(grp);
+    });
+
+    syncChannelSelect(currentChannelId);
+  }
+
   function loadInboxSettings() {
     api("api/settings").then(function (res) {
-      if (res.ok) { syncCaptureUnknownCheckbox(res.body.capture_unknown_events); }
+      if (!res.ok) { return; }
+      syncCaptureUnknownCheckbox(res.body.capture_unknown_events);
+      var currentChannelId = res.body.bind_channel_id;
+      api("api/channels").then(function (chRes) {
+        if (chRes.ok && Array.isArray(chRes.body)) {
+          populateChannelSelect(chRes.body, currentChannelId);
+        } else {
+          syncChannelSelect(currentChannelId);
+        }
+      });
     });
   }
 
@@ -195,6 +236,22 @@
       inboxState.selected = null;
       hide("inbox-confirm-form");
       loadInboxCandidates();
+    });
+  });
+
+  $("inbox-channel-select").addEventListener("change", function () {
+    var sel = $("inbox-channel-select");
+    var raw = sel.value;
+    var channelId = raw === "" ? null : Number.parseInt(raw, 10);
+    api("api/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bind_channel_id: channelId }),
+    }).then(function (res) {
+      if (!res.ok) {
+        window.alert(t("inbox.settingsError"));
+        syncChannelSelect(res.body && res.body.bind_channel_id);
+      }
     });
   });
 
