@@ -1,5 +1,12 @@
 ---
 
+## 1.23.0 - 2026-08-03
+
+### 🐛 Fixed
+- **mqtt:** add action label and raw notes to rf_inbox event payload
+
+---
+
 ## 1.22.0 - 2026-08-03
 
 ### ♻️ Changed
