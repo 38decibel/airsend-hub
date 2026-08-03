@@ -148,6 +148,7 @@ class InclusionApi:
         self.app.router.add_post("/api/inbox/confirm", self._handle_inbox_confirm)
         self.app.router.add_get("/api/settings", self._handle_get_settings)
         self.app.router.add_patch("/api/settings", self._handle_patch_settings)
+        self.app.router.add_get("/api/channels", self._handle_list_channels)
         self.app.router.add_get("/api/memory", self._handle_memory)
         self.app.router.add_get("/{tail:.*}", self._handle_static)
 
@@ -290,17 +291,53 @@ class InclusionApi:
         return web.json_response({"key": device.key})
 
     async def _handle_get_settings(self, request: web.Request) -> web.Response:
-        return web.json_response({"capture_unknown_events": self._settings.capture_unknown_events})
+        return web.json_response({
+            "capture_unknown_events": self._settings.capture_unknown_events,
+            "bind_channel_id": self._settings.bind_channel_id,
+        })
 
     async def _handle_patch_settings(self, request: web.Request) -> web.Response:
         body = await request.json()
-        if "capture_unknown_events" not in body:
-            raise web.HTTPBadRequest(text="missing 'capture_unknown_events'")
-        value = body["capture_unknown_events"]
-        if not isinstance(value, bool):
-            raise web.HTTPBadRequest(text="'capture_unknown_events' must be a boolean")
-        self._mqtt_bridge.set_capture_unknown_events(value)
-        return web.json_response({"capture_unknown_events": self._settings.capture_unknown_events})
+        changed_channel = False
+
+        if "capture_unknown_events" in body:
+            value = body["capture_unknown_events"]
+            if not isinstance(value, bool):
+                raise web.HTTPBadRequest(text="'capture_unknown_events' must be a boolean")
+            self._mqtt_bridge.set_capture_unknown_events(value)
+
+        if "bind_channel_id" in body:
+            raw = body["bind_channel_id"]
+            if raw is not None and not isinstance(raw, int):
+                raise web.HTTPBadRequest(text="'bind_channel_id' must be an integer or null")
+            self._settings.bind_channel_id = raw
+            changed_channel = True
+
+        if not body.keys() & {"capture_unknown_events", "bind_channel_id"}:
+            raise web.HTTPBadRequest(text="no recognised field in request body")
+
+        if changed_channel:
+            asyncio.ensure_future(self._bind_manager.restart_all())
+
+        return web.json_response({
+            "capture_unknown_events": self._settings.capture_unknown_events,
+            "bind_channel_id": self._settings.bind_channel_id,
+        })
+
+    async def _handle_list_channels(self, request: web.Request) -> web.Response:
+        """Proxy /channels from AirSendWebService for the first configured box.
+
+        Returns the raw channel list as-is, or 503 when no box is configured.
+        """
+        box_slug = next(iter(self._boxes), None)
+        if box_slug is None:
+            return web.json_response({"error": "no box configured"}, status=503)
+        box = self._boxes[box_slug]
+        try:
+            channels = await self._client.list_channels(box)
+        except Exception as exc:  # noqa: BLE001
+            return web.json_response({"error": str(exc)}, status=502)
+        return web.json_response(channels)
 
     async def _handle_memory(self, request: web.Request) -> web.Response:
         """Return the box internal RF memory table, enriched with device info.
