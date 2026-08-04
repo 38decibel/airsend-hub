@@ -1,5 +1,12 @@
 ---
 
+## 1.26.1 - 2026-08-04
+
+### 🐛 Fixed
+- **ui:** remove dead btn-open-* listeners that crashed screen module init
+
+---
+
 ## 1.26.0 - 2026-08-04
 
 ### 🐛 Fixed
