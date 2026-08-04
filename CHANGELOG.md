@@ -1,5 +1,12 @@
 ---
 
+## 1.24.2 - 2026-08-04
+
+### 🐛 Fixed
+- **index:** deleted btn-add-device (and other btn-open-*)
+
+---
+
 ## 1.24.1 - 2026-08-04
 
 ### 🚀 Added
