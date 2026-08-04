@@ -1,5 +1,12 @@
 ---
 
+## 1.26.0 - 2026-08-04
+
+### 🐛 Fixed
+- **inclusion:** update inclusion_api.py
+
+---
+
 ## 1.25.0 - 2026-08-04
 
 ### 🐛 Fixed
