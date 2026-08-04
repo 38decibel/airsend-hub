@@ -158,11 +158,6 @@
     });
   });
 
-  $("btn-open-memory").addEventListener("click", function () {
-    closeAddForm();
-    loadMemory();
-  });
-
   window.AirSend.openMemory = function () {
     closeAddForm();
     loadMemory();

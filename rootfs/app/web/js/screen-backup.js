@@ -102,10 +102,6 @@
   // -----------------------------------------------------------------------
   // Event listeners
   // -----------------------------------------------------------------------
-  $("btn-open-backup").addEventListener("click", function () {
-    resetBackupScreen();
-  });
-
   window.AirSend.openBackup = function () {
     resetBackupScreen();
   };

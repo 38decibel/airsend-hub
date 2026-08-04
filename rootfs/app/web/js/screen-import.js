@@ -137,11 +137,6 @@
   // -----------------------------------------------------------------------
   // Event listeners
   // -----------------------------------------------------------------------
-  $("btn-open-import").addEventListener("click", function () {
-    resetImportScreen();
-    detectImportFile();
-  });
-
   window.AirSend.openImport = function () {
     resetImportScreen();
     detectImportFile();
