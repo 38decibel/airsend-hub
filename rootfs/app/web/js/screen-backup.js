@@ -106,6 +106,10 @@
     resetBackupScreen();
   });
 
+  window.AirSend.openBackup = function () {
+    resetBackupScreen();
+  };
+
   $("backup-file-input").addEventListener("change", function () {
     var file = this.files[0];
     pendingBackupPayload           = null;

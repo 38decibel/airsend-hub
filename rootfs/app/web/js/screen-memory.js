@@ -163,4 +163,9 @@
     loadMemory();
   });
 
+  window.AirSend.openMemory = function () {
+    closeAddForm();
+    loadMemory();
+  };
+
 })();

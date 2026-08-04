@@ -742,27 +742,20 @@
     switchScreen("screen-wizard", "nav-add", function () { showOnly(["step-branch"]); });
   });
 
-  // nav-inbox/import/backup/memory: delegates to the hidden trigger buttons
-  // that each screen module has already wired up (they handle their own init).
   $("nav-inbox").addEventListener("click", function () {
-    switchScreen("screen-inbox", "nav-inbox", function () { $("btn-open-inbox").click(); });
+    switchScreen("screen-inbox", "nav-inbox", function () { window.AirSend.openInbox(); });
   });
 
   $("nav-import").addEventListener("click", function () {
-    switchScreen("screen-import", "nav-import", function () { $("btn-open-import").click(); });
+    switchScreen("screen-import", "nav-import", function () { window.AirSend.openImport(); });
   });
 
   $("nav-backup").addEventListener("click", function () {
-    switchScreen("screen-backup", "nav-backup", function () { $("btn-open-backup").click(); });
+    switchScreen("screen-backup", "nav-backup", function () { window.AirSend.openBackup(); });
   });
 
   $("nav-memory").addEventListener("click", function () {
-    switchScreen("screen-memory", "nav-memory", function () { $("btn-open-memory").click(); });
-  });
-
-  $("btn-add-device").addEventListener("click", function () {
-    resetWizard();
-    switchScreen("screen-wizard", "nav-add", function () { showOnly(["step-branch"]); });
+    switchScreen("screen-memory", "nav-memory", function () { window.AirSend.openMemory(); });
   });
 
   $("btn-cancel").addEventListener("click", backToHome);
@@ -2240,6 +2233,11 @@
     renderImportTable:   function () {},
     getBackupRows:       function () { return []; },
     renderBackupTable:   function () {},
+    // Open-screen hooks — filled in by each screen module:
+    openInbox:           function () {},
+    openImport:          function () {},
+    openBackup:          function () {},
+    openMemory:          function () {},
   };
 
   loadBoxes().then(loadDevices);

@@ -296,4 +296,11 @@
     loadInboxCandidates();
   });
 
+  window.AirSend.openInbox = function () {
+    inboxState.selected = null;
+    hide("inbox-confirm-form");
+    loadInboxSettings();
+    loadInboxCandidates();
+  };
+
 })();

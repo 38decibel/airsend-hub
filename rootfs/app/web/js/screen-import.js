@@ -142,6 +142,11 @@
     detectImportFile();
   });
 
+  window.AirSend.openImport = function () {
+    resetImportScreen();
+    detectImportFile();
+  };
+
   $("import-detect-use-btn").addEventListener("click", function () {
     if (detectedYamlText === null) return;
     $("import-yaml-textarea").value = detectedYamlText;
