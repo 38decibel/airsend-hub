@@ -160,11 +160,7 @@
 
   $("btn-open-memory").addEventListener("click", function () {
     closeAddForm();
-    hide("screen-home");
-    show("screen-memory");
     loadMemory();
   });
-
-  $("btn-memory-cancel").addEventListener("click", backToHome);
 
 })();

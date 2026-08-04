@@ -14,7 +14,10 @@
 <body>
 
 <div class="top-bar">
-  <h1>AirSend</h1>
+  <div class="top-bar-left">
+    <button type="button" id="btn-sidebar-toggle" class="sidebar-toggle" aria-label="Toggle sidebar">☰</button>
+    <h1>AirSend</h1>
+  </div>
   <div style="display:flex;align-items:center;gap:8px;">
     <button type="button" id="btn-theme-toggle" class="theme-toggle-btn" aria-label="Toggle theme">🌙</button>
     <div class="lang-switch" id="lang-switch" role="group" aria-label="Language / Langue">
@@ -24,16 +27,42 @@
   </div>
 </div>
 
+<div class="app-shell">
+<aside class="sidebar" id="sidebar" aria-label="Navigation">
+  <nav>
+    <button type="button" class="sidebar-item active" id="nav-home" title="Appareils">
+      <span class="nav-icon">📋</span>
+      <span class="nav-label" data-i18n="nav.home">Appareils</span>
+    </button>
+    <button type="button" class="sidebar-item" id="nav-add" title="Ajouter un appareil">
+      <span class="nav-icon">➕</span>
+      <span class="nav-label" data-i18n="nav.add">Ajouter</span>
+    </button>
+    <button type="button" class="sidebar-item" id="nav-inbox" title="Signaux captés">
+      <span class="nav-icon">📡</span>
+      <span class="nav-label" data-i18n="nav.inbox">Signaux captés</span>
+    </button>
+    <button type="button" class="sidebar-item" id="nav-import" title="Importer depuis YAML">
+      <span class="nav-icon">📥</span>
+      <span class="nav-label" data-i18n="nav.import">Importer YAML</span>
+    </button>
+    <button type="button" class="sidebar-item" id="nav-backup" title="Sauvegarde / restauration">
+      <span class="nav-icon">💾</span>
+      <span class="nav-label" data-i18n="nav.backup">Sauvegarde</span>
+    </button>
+    <button type="button" class="sidebar-item" id="nav-memory" title="Mémoire boîtier">
+      <span class="nav-icon">🧠</span>
+      <span class="nav-label" data-i18n="nav.memory">Mémoire boîtier</span>
+    </button>
+  </nav>
+</aside>
+
+<div class="main-content">
+
 <div id="screen-home" class="card">
   <h2 data-i18n="home.devices">Appareils</h2>
   <div id="device-list" class="muted" data-i18n="home.loading">Chargement…</div>
-  <div style="margin-top:14px;">
-    <button class="btn" id="btn-add-device" data-i18n="home.addDevice">+ Ajouter un appareil</button>
-    <button class="btn secondary" id="btn-open-inbox" data-i18n="home.inbox">📡 Signaux captés</button>
-    <button class="btn secondary" id="btn-open-import" data-i18n="home.importYaml">Importer depuis YAML</button>
-    <button class="btn secondary" id="btn-open-backup" data-i18n="home.backup">Sauvegarde / restauration</button>
-    <button class="btn secondary" id="btn-open-memory" data-i18n="home.memory">🧠 Mémoire boîtier</button>
-  </div>
+  <!-- Navigation moved to sidebar -->
 </div>
 
 <div id="device-edit" class="card hidden">
@@ -228,9 +257,7 @@
 </div>
 
 <div id="screen-import" class="card hidden">
-  <button class="btn secondary" id="btn-import-cancel" data-i18n="common.backCancel">&larr; Annuler</button>
-
-  <div id="import-step-input" style="margin-top:14px;">
+  <div id="import-step-input">
     <h2 data-i18n="import.title">Importer depuis le YAML de l'ancienne intégration</h2>
     <p class="muted" data-i18n="import.instructions">Colle le contenu de ton fichier (ex. <code>airsend.yaml</code>), ou choisis un fichier. Rien n'est modifié tant que tu n'as pas confirmé à l'étape suivante.</p>
     <div id="import-detect-banner" class="banner hidden" style="margin-bottom:10px;">
@@ -264,9 +291,7 @@
 </div>
 
 <div id="screen-backup" class="card hidden">
-  <button class="btn secondary" id="btn-backup-cancel" data-i18n="common.backCancel">&larr; Annuler</button>
-
-  <div style="margin-top:14px;">
+  <div>
     <h2 data-i18n="backup.exportTitle">Exporter</h2>
     <p class="muted" data-i18n="backup.exportInstructions">Télécharge la configuration actuelle des appareils. Conserve ce fichier avant une désinstallation : le réimporter ensuite réattache les mêmes appareils dans Home Assistant, sans doublons.</p>
     <a class="btn" id="btn-backup-export" href="api/backup/export" download data-i18n="backup.exportButton">⬇ Télécharger la sauvegarde</a>
@@ -292,9 +317,7 @@
 </div>
 
 <div id="screen-memory" class="card hidden">
-  <button class="btn secondary" id="btn-memory-cancel" data-i18n="common.backCancel">&larr; Annuler</button>
-
-  <div style="margin-top:14px;">
+  <div>
     <h2 data-i18n="memory.title">Mémoire boîtier</h2>
     <p class="muted" data-i18n="memory.instructions">Liste des appareils enregistrés dans la mémoire interne du boîtier AirSend. Les appareils liés sont déjà gérés par l'addon. Les orphelins sont présents en mémoire mais absents de la configuration.</p>
     <div id="memory-usage-badge" class="hidden" style="margin-top:8px;font-size:0.92em;font-weight:600;"></div>
@@ -325,10 +348,7 @@
 </div>
 
 <div id="screen-inbox" class="card hidden">
-
-  <button class="btn secondary" id="btn-inbox-cancel" data-i18n="common.backCancel">&larr; Annuler</button>
-
-  <div style="margin-top:14px;">
+  <div>
     <h2 data-i18n="inbox.title">Signaux captés</h2>
     <p class="muted" data-i18n="inbox.instructions">Toute trame RF reçue par le boîtier et ne correspondant à aucun appareil déjà ajouté apparaît ici, que le protocole soit reconnu ou non — que l'assistant d'ajout soit ouvert ou non.</p>
 
@@ -369,6 +389,9 @@
     </div>
   </div>
 </div>
+
+</div><!-- /.main-content -->
+</div><!-- /.app-shell -->
 
 <script>
 (function () {
@@ -420,6 +443,39 @@
 
   applyTheme(localStorage.getItem(THEME_KEY) || "auto");
   $("btn-theme-toggle").addEventListener("click", cycleTheme);
+
+  // -----------------------------------------------------------------------
+  // Sidebar collapse / expand
+  // -----------------------------------------------------------------------
+  var SIDEBAR_KEY = "airsend_sidebar_collapsed";
+  var sidebar = $("sidebar");
+
+  function applySidebarState(collapsed) {
+    if (collapsed) {
+      sidebar.classList.add("collapsed");
+    } else {
+      sidebar.classList.remove("collapsed");
+    }
+  }
+
+  applySidebarState(localStorage.getItem(SIDEBAR_KEY) === "1");
+
+  $("btn-sidebar-toggle").addEventListener("click", function () {
+    var nowCollapsed = !sidebar.classList.contains("collapsed");
+    applySidebarState(nowCollapsed);
+    localStorage.setItem(SIDEBAR_KEY, nowCollapsed ? "1" : "0");
+  });
+
+  // -----------------------------------------------------------------------
+  // Sidebar active item tracking
+  // -----------------------------------------------------------------------
+  var NAV_ITEMS = ["nav-home", "nav-add", "nav-inbox", "nav-import", "nav-backup", "nav-memory"];
+
+  function setActiveNav(id) {
+    NAV_ITEMS.forEach(function (navId) {
+      $(navId).classList.toggle("active", navId === id);
+    });
+  }
 
     function refreshDynamicUi() {
     loadDevices();
@@ -656,27 +712,61 @@
     $("btn-listen-play").textContent = t("wizard.listen.play");
   }
 
+  // -----------------------------------------------------------------------
+  // Screen switching helpers (defined before first use)
+  // -----------------------------------------------------------------------
+
+  var ALL_SCREENS = ["screen-home", "screen-wizard", "screen-import",
+                     "screen-backup", "screen-inbox", "screen-memory"];
+
+  function switchScreen(screenId, navId, initFn) {
+    if (state.listenPoll) { clearInterval(state.listenPoll); state.listenPoll = null; }
+    ALL_SCREENS.forEach(hide);
+    show(screenId);
+    setActiveNav(navId);
+    if (initFn) { initFn(); }
+  }
+
+  function backToHome() {
+    switchScreen("screen-home", "nav-home", loadDevices);
+  }
+
+  // -----------------------------------------------------------------------
+  // Sidebar navigation wiring
+  // -----------------------------------------------------------------------
+
+  $("nav-home").addEventListener("click", backToHome);
+
+  $("nav-add").addEventListener("click", function () {
+    resetWizard();
+    switchScreen("screen-wizard", "nav-add", function () { showOnly(["step-branch"]); });
+  });
+
+  // nav-inbox/import/backup/memory: delegates to the hidden trigger buttons
+  // that each screen module has already wired up (they handle their own init).
+  $("nav-inbox").addEventListener("click", function () {
+    switchScreen("screen-inbox", "nav-inbox", function () { $("btn-open-inbox").click(); });
+  });
+
+  $("nav-import").addEventListener("click", function () {
+    switchScreen("screen-import", "nav-import", function () { $("btn-open-import").click(); });
+  });
+
+  $("nav-backup").addEventListener("click", function () {
+    switchScreen("screen-backup", "nav-backup", function () { $("btn-open-backup").click(); });
+  });
+
+  $("nav-memory").addEventListener("click", function () {
+    switchScreen("screen-memory", "nav-memory", function () { $("btn-open-memory").click(); });
+  });
+
   $("btn-add-device").addEventListener("click", function () {
     resetWizard();
-    show("screen-wizard");
-    hide("screen-home");
-    showOnly(["step-branch"]);
+    switchScreen("screen-wizard", "nav-add", function () { showOnly(["step-branch"]); });
   });
 
   $("btn-cancel").addEventListener("click", backToHome);
   $("btn-done-back").addEventListener("click", backToHome);
-  $("btn-inbox-cancel").addEventListener("click", backToHome);
-
-  function backToHome() {
-    if (state.listenPoll) { clearInterval(state.listenPoll); state.listenPoll = null; }
-    hide("screen-wizard");
-    hide("screen-import");
-    hide("screen-backup");
-    hide("screen-inbox");
-    hide("screen-memory");
-    show("screen-home");
-    loadDevices();
-  }
 
 
   // -----------------------------------------------------------------------

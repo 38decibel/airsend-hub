@@ -139,12 +139,8 @@
   // -----------------------------------------------------------------------
   $("btn-open-import").addEventListener("click", function () {
     resetImportScreen();
-    hide("screen-home");
-    show("screen-import");
     detectImportFile();
   });
-
-  $("btn-import-cancel").addEventListener("click", backToHome);
 
   $("import-detect-use-btn").addEventListener("click", function () {
     if (detectedYamlText === null) return;

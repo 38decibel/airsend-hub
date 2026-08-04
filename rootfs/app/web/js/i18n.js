@@ -13,6 +13,12 @@
 const I18N = {
     fr: {
       "page.title": "AirSend - Ajouter un appareil",
+      "nav.home": "Appareils",
+      "nav.add": "Ajouter",
+      "nav.inbox": "Signaux captés",
+      "nav.import": "Importer YAML",
+      "nav.backup": "Sauvegarde",
+      "nav.memory": "Mémoire boîtier",
       "home.devices": "Appareils",
       "home.loading": "Chargement…",
       "home.addDevice": "+ Ajouter un appareil",
@@ -261,6 +267,12 @@ const I18N = {
     },
     en: {
       "page.title": "AirSend - Add a device",
+      "nav.home": "Devices",
+      "nav.add": "Add",
+      "nav.inbox": "Captured signals",
+      "nav.import": "Import YAML",
+      "nav.backup": "Backup",
+      "nav.memory": "Box memory",
       "home.devices": "Devices",
       "home.loading": "Loading…",
       "home.addDevice": "+ Add a device",

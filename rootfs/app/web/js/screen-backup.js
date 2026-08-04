@@ -104,11 +104,7 @@
   // -----------------------------------------------------------------------
   $("btn-open-backup").addEventListener("click", function () {
     resetBackupScreen();
-    hide("screen-home");
-    show("screen-backup");
   });
-
-  $("btn-backup-cancel").addEventListener("click", backToHome);
 
   $("backup-file-input").addEventListener("change", function () {
     var file = this.files[0];

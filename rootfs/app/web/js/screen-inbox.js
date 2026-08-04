@@ -292,12 +292,8 @@
   $("btn-open-inbox").addEventListener("click", function () {
     inboxState.selected = null;
     hide("inbox-confirm-form");
-    hide("screen-home");
-    show("screen-inbox");
     loadInboxSettings();
     loadInboxCandidates();
   });
-
-  $("btn-inbox-cancel").addEventListener("click", backToHome);
 
 })();
