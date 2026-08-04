@@ -1,5 +1,12 @@
 ---
 
+## 1.24.1 - 2026-08-04
+
+### 🚀 Added
+- **ui:** replace home action buttons with collapsible sidebar navigation
+
+---
+
 ## 1.24.0 - 2026-08-03
 
 ### 🚀 Added
