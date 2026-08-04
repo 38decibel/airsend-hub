@@ -39,7 +39,7 @@ _SESSION_TTL_S = 600.0
 
 _FRIENDLY_NAME_EMPTY = "empty friendly_name"
 
-_HA_CONFIG_DIR = Path("/config")
+_HA_CONFIG_DIR = Path("/homeassistant")
 _AIRSEND_YAML_FILENAME = "airsend.yaml"
 
 KIND_TO_DOMAIN: dict[str, str] = {
