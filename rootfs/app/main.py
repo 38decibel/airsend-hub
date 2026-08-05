@@ -99,8 +99,8 @@ def _load_boxes() -> list[BoxConfig]:
                     gw=bool(entry.get("gw", False)),
                 )
             )
-        except KeyError as exc:
-            _LOGGER.exception("Skipping malformed box entry %r (missing %s)", entry, exc)
+        except KeyError:
+            _LOGGER.exception("Skipping malformed box entry %r (missing key)", entry)
     return boxes
 
 
