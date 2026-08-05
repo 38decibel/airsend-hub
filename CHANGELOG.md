@@ -1,5 +1,12 @@
 ---
 
+## 1.26.2 - 2026-08-05
+
+### 🐛 Fixed
+- **ui:** scope device-edit panel to home screen only
+
+---
+
 ## 1.26.1 - 2026-08-04
 
 ### 🐛 Fixed
