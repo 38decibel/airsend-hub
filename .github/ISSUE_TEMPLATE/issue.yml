@@ -1,0 +1,31 @@
+name: Issue
+description: Only use this if you are sure this issue is related to the app AirSend-hub.
+body:
+  - type: textarea
+    id: issue
+    attributes:
+      label: Description of the issue
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: Detail from Settings > Applications > AirSend-hub
+      placeholder: 'v1.22.1'
+    validations:
+      required: true
+  - type: textarea
+    id: platform
+    attributes:
+      label: Platform
+      description: Details from Settings > About
+      placeholder: "Core 2025.4.3\nSupervisor 2025.05.1\nOperating System 15.2"
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Logs of the issue (if applicable)
+    validations:
+      required: false
