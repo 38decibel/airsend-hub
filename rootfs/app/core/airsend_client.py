@@ -9,10 +9,9 @@ import logging
 import struct
 import uuid
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Self
 
 import aiohttp
-from typing_extensions import Self
 
 _LOGGER = logging.getLogger("airsend.client")
 
