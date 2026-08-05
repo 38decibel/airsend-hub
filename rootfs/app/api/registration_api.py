@@ -19,6 +19,7 @@ Command mapping (mirrors the cloud app's /device/{id}/command/{n} numbering):
 
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any
 
@@ -102,7 +103,7 @@ class RegistrationApi:
 
         try:
             body: dict[str, Any] = await request.json()
-        except Exception:
+        except (json.JSONDecodeError, ValueError):
             raise web.HTTPBadRequest(text="invalid JSON body")
 
         # --- command (required) ---
