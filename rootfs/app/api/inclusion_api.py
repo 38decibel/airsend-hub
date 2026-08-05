@@ -165,7 +165,7 @@ class InclusionApi:
         try:
             candidate.relative_to(_WEB_DIR.resolve())
         except ValueError:
-            raise web.HTTPForbidden()
+            raise web.HTTPForbidden() from None
         if not candidate.is_file():
             candidate = _WEB_DIR / "index.html"
         mime, _ = mimetypes.guess_type(candidate.name)
@@ -209,7 +209,7 @@ class InclusionApi:
         try:
             channel_id = int(request.match_info["channel_id"])
         except ValueError:
-            raise web.HTTPBadRequest(text="invalid channel_id")
+            raise web.HTTPBadRequest(text="invalid channel_id") from None
 
         entry = self._catalog.entry_for(box_slug, channel_id) if box_slug else None
         if entry is None:
@@ -254,7 +254,7 @@ class InclusionApi:
             channel_id = int(body["channel_id"])
             channel_source = int(body["channel_source"])
         except (KeyError, ValueError, TypeError):
-            raise web.HTTPBadRequest(text="missing or invalid box/channel_id/channel_source")
+            raise web.HTTPBadRequest(text="missing or invalid box/channel_id/channel_source") from None
         return box_slug, channel_id, channel_source
 
     async def _handle_inbox_forget(self, request: web.Request) -> web.Response:
@@ -271,7 +271,7 @@ class InclusionApi:
             kind = str(body["kind"])
             friendly_name = str(body["friendly_name"]).strip()
         except (KeyError, TypeError):
-            raise web.HTTPBadRequest(text="missing or invalid fields")
+            raise web.HTTPBadRequest(text="missing or invalid fields") from None
         if not friendly_name:
             raise web.HTTPBadRequest(text=_FRIENDLY_NAME_EMPTY)
 
@@ -325,7 +325,9 @@ class InclusionApi:
             raise web.HTTPBadRequest(text="no recognised field in request body")
 
         if changed_channel:
-            asyncio.ensure_future(self._bind_manager.restart_all())
+            _restart_task = asyncio.ensure_future(self._bind_manager.restart_all())
+            self._background_tasks.add(_restart_task)
+            _restart_task.add_done_callback(self._background_tasks.discard)
 
         return web.json_response({
             "capture_unknown_events": self._settings.capture_unknown_events,
@@ -587,7 +589,7 @@ class InclusionApi:
             kind = str(body["kind"])
             friendly_name = str(body["friendly_name"]).strip()
         except (KeyError, ValueError, TypeError):
-            raise web.HTTPBadRequest(text="missing or invalid fields")
+            raise web.HTTPBadRequest(text="missing or invalid fields") from None
 
         if not friendly_name:
             raise web.HTTPBadRequest(text=_FRIENDLY_NAME_EMPTY)
@@ -628,7 +630,7 @@ class InclusionApi:
             kind = str(body["kind"])
             friendly_name = str(body["friendly_name"]).strip()
         except (KeyError, ValueError, TypeError):
-            raise web.HTTPBadRequest(text="missing or invalid fields")
+            raise web.HTTPBadRequest(text="missing or invalid fields") from None
 
         if box_slug not in self._boxes:
             raise web.HTTPBadRequest(text="unknown box")
@@ -772,7 +774,7 @@ class InclusionApi:
         try:
             yaml_devices = load_yaml_devices(yaml_text)
         except ValueError as exc:
-            raise web.HTTPBadRequest(text=str(exc))
+            raise web.HTTPBadRequest(text=str(exc)) from exc
 
         existing_devices = {
             d.key: {
@@ -909,7 +911,7 @@ class InclusionApi:
         try:
             backup_devices = parse_backup(raw)
         except ValueError as exc:
-            raise web.HTTPBadRequest(text=str(exc))
+            raise web.HTTPBadRequest(text=str(exc)) from exc
 
         existing_devices = {
             d.key: {
