@@ -63,29 +63,29 @@
   <h2 data-i18n="home.devices">Appareils</h2>
   <div id="device-list" class="muted" data-i18n="home.loading">Chargement…</div>
   <!-- Navigation moved to sidebar -->
-</div>
 
-<div id="device-edit" class="card hidden">
-  <h2 data-i18n="edit.title">Modifier l'appareil</h2>
-  <label class="field-label" for="edit-name-input" data-i18n="edit.name">Nom</label>
-  <input type="text" id="edit-name-input" data-i18n-placeholder="common.namePlaceholder" placeholder="ex: Volet salon terrasse">
+  <div id="device-edit" class="card hidden">
+    <h2 data-i18n="edit.title">Modifier l'appareil</h2>
+    <label class="field-label" for="edit-name-input" data-i18n="edit.name">Nom</label>
+    <input type="text" id="edit-name-input" data-i18n-placeholder="common.namePlaceholder" placeholder="ex: Volet salon terrasse">
 
-  <div id="edit-invert-row" class="checkbox-row hidden">
-    <input type="checkbox" id="edit-invert-checkbox">
-    <label for="edit-invert-checkbox" data-i18n="common.invert">Inverser le sens (câblage à l'envers)</label>
-  </div>
+    <div id="edit-invert-row" class="checkbox-row hidden">
+      <input type="checkbox" id="edit-invert-checkbox">
+      <label for="edit-invert-checkbox" data-i18n="common.invert">Inverser le sens (câblage à l'envers)</label>
+    </div>
 
-  <div id="edit-travel-time-row" class="hidden">
-    <label class="field-label" for="edit-travel-time-input" data-i18n="common.travelTime">Durée de course estimée (secondes)</label>
-    <input type="number" id="edit-travel-time-input" min="1" max="180" step="1">
-    <div class="muted" data-i18n="edit.travelTimeHelp">Temps approximatif pour aller complètement ouvert ↔ fermé. Utilisé pour estimer quand le volet a fini sa course (pas de retour de position réel).</div>
-  </div>
+    <div id="edit-travel-time-row" class="hidden">
+      <label class="field-label" for="edit-travel-time-input" data-i18n="common.travelTime">Durée de course estimée (secondes)</label>
+      <input type="number" id="edit-travel-time-input" min="1" max="180" step="1">
+      <div class="muted" data-i18n="edit.travelTimeHelp">Temps approximatif pour aller complètement ouvert ↔ fermé. Utilisé pour estimer quand le volet a fini sa course (pas de retour de position réel).</div>
+    </div>
 
-  <div id="edit-banner" class="banner hidden"></div>
+    <div id="edit-banner" class="banner hidden"></div>
 
-  <div style="margin-top:10px;">
-    <button class="btn" id="btn-edit-save" data-i18n="common.save">Enregistrer</button>
-    <button class="btn secondary" id="btn-edit-cancel" data-i18n="common.cancel">Annuler</button>
+    <div style="margin-top:10px;">
+      <button class="btn" id="btn-edit-save" data-i18n="common.save">Enregistrer</button>
+      <button class="btn secondary" id="btn-edit-cancel" data-i18n="common.cancel">Annuler</button>
+    </div>
   </div>
 </div>
 
@@ -721,6 +721,10 @@
 
   function switchScreen(screenId, navId, initFn) {
     if (state.listenPoll) { clearInterval(state.listenPoll); state.listenPoll = null; }
+    if (screenId !== "screen-home") {
+      state.editingDevice = null;
+      hide("device-edit");
+    }
     ALL_SCREENS.forEach(hide);
     show(screenId);
     setActiveNav(navId);
