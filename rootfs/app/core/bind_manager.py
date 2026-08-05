@@ -89,8 +89,6 @@ class BoxBindHandle:
                 channel={"id": channel_id} if channel_id is not None else None,
             )
             await asyncio.sleep(duration)
-        except asyncio.CancelledError:
-            raise
         finally:
             self.start()
 

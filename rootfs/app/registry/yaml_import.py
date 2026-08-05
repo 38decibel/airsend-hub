@@ -38,7 +38,7 @@ def load_yaml_devices(yaml_text):
 
     devices = parsed["devices"]
     if not isinstance(devices, dict):
-        raise ValueError("'devices:' must be a mapping of name -> config")
+        raise TypeError("'devices:' must be a mapping of name -> config")
 
     return devices
 
