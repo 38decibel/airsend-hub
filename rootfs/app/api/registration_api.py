@@ -30,7 +30,7 @@ from registry.device_registry import DeviceRegistry
 _LOGGER = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# Command number → STATE integer value
+# Command number -> STATE integer value
 # ---------------------------------------------------------------------------
 _CMD_TO_STATE: dict[int, int] = {
     0: 19,   # OFF
@@ -53,6 +53,52 @@ _MAX_DURATION_MS: int = 30_000
 _MAX_SEED: int = 0xFFFF_FFFF
 
 
+def _parse_duration(raw: Any) -> int:
+    """Parse and validate the optional hold-duration field from a request body.
+
+    Args:
+        raw: Raw value from the JSON body.
+
+    Returns:
+        Duration in milliseconds.
+
+    Raises:
+        web.HTTPBadRequest: When the value is not a valid integer or out of range.
+    """
+    try:
+        duration_ms = int(raw)
+    except (ValueError, TypeError):
+        raise web.HTTPBadRequest(text="invalid 'duration': must be an integer") from None
+    if not (0 < duration_ms <= _MAX_DURATION_MS):
+        raise web.HTTPBadRequest(
+            text=f"'duration' out of range (1-{_MAX_DURATION_MS} ms)"
+        )
+    return duration_ms
+
+
+def _parse_seed(raw: Any) -> int:
+    """Parse and validate the optional seed field (used for FLOR install_code).
+
+    Args:
+        raw: Raw value from the JSON body.
+
+    Returns:
+        Seed integer value.
+
+    Raises:
+        web.HTTPBadRequest: When the value is not a valid integer or out of range.
+    """
+    try:
+        seed = int(raw)
+    except (ValueError, TypeError):
+        raise web.HTTPBadRequest(text="invalid 'seed': must be an integer") from None
+    if not (0 <= seed <= _MAX_SEED):
+        raise web.HTTPBadRequest(
+            text=f"'seed' out of range (0-{_MAX_SEED})"
+        )
+    return seed
+
+
 class RegistrationApi:
     """Thin wrapper that exposes the RF command endpoint for device registration."""
 
@@ -67,7 +113,7 @@ class RegistrationApi:
         self._registry = registry
 
         self.router = web.RouteTableDef()
-        # Registered manually – see attach_to().
+        # Registered manually - see attach_to().
         self._routes: list[tuple[str, str, Any]] = [
             ("POST", "/api/registration/{key}/command", self._handle_command),
         ]
@@ -82,13 +128,13 @@ class RegistrationApi:
     # ------------------------------------------------------------------
 
     async def _handle_command(self, request: web.Request) -> web.Response:
-        """
-        POST /api/registration/{key}/command
+        """Handle POST /api/registration/{key}/command.
+
         Body (JSON):
           {
-            "command": <int>,          # required – one of _VALID_COMMANDS
-            "duration": <int|null>,    # optional – hold duration in ms
-            "seed": <int|null>         # optional – for FLOR install_code
+            "command": <int>,          # required - one of _VALID_COMMANDS
+            "duration": <int|null>,    # optional - hold duration in ms
+            "seed": <int|null>         # optional - for FLOR install_code
           }
         Returns 200 {"ok": true} on success, 4xx/5xx on error.
         """
@@ -104,13 +150,13 @@ class RegistrationApi:
         try:
             body: dict[str, Any] = await request.json()
         except (json.JSONDecodeError, ValueError):
-            raise web.HTTPBadRequest(text="invalid JSON body")
+            raise web.HTTPBadRequest(text="invalid JSON body") from None
 
         # --- command (required) ---
         try:
             cmd = int(body["command"])
         except (KeyError, ValueError, TypeError):
-            raise web.HTTPBadRequest(text="missing or invalid 'command'")
+            raise web.HTTPBadRequest(text="missing or invalid 'command'") from None
 
         if cmd not in _VALID_COMMANDS:
             raise web.HTTPBadRequest(
@@ -119,31 +165,12 @@ class RegistrationApi:
 
         state_value = _CMD_TO_STATE[cmd]
 
-        # --- duration (optional) ---
-        duration_ms: int | None = None
+        # --- optional fields ---
         raw_duration = body.get("duration")
-        if raw_duration is not None:
-            try:
-                duration_ms = int(raw_duration)
-            except (ValueError, TypeError):
-                raise web.HTTPBadRequest(text="invalid 'duration': must be an integer")
-            if not (0 < duration_ms <= _MAX_DURATION_MS):
-                raise web.HTTPBadRequest(
-                    text=f"'duration' out of range (1–{_MAX_DURATION_MS} ms)"
-                )
+        duration_ms: int | None = _parse_duration(raw_duration) if raw_duration is not None else None
 
-        # --- seed (optional, FLOR install_code) ---
-        seed: int | None = None
         raw_seed = body.get("seed")
-        if raw_seed is not None:
-            try:
-                seed = int(raw_seed)
-            except (ValueError, TypeError):
-                raise web.HTTPBadRequest(text="invalid 'seed': must be an integer")
-            if not (0 <= seed <= _MAX_SEED):
-                raise web.HTTPBadRequest(
-                    text=f"'seed' out of range (0–{_MAX_SEED})"
-                )
+        seed: int | None = _parse_seed(raw_seed) if raw_seed is not None else None
 
         # --- build AirSendWebService payload ---
         note: dict[str, Any] = {
