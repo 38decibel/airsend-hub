@@ -114,8 +114,7 @@ async def async_main() -> None:
     boxes = _load_boxes()
     if not boxes:
         _LOGGER.error("No AirSend box configured, nothing to do. Check addon configuration.")
-        while True:
-            await asyncio.sleep(3600)
+        await asyncio.Event().wait()
 
     client = AirSendClient()
     client.start()
