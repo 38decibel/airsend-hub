@@ -8,6 +8,7 @@ Main flow: RF listening (bind_manager) -> callback (callback_server, reliability
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
 import os
@@ -201,10 +202,8 @@ async def async_main() -> None:
 
 
 def main() -> None:
-    try:
+    with contextlib.suppress(KeyboardInterrupt):
         asyncio.run(async_main())
-    except KeyboardInterrupt:
-        pass
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-""" `binary_sensor` domain – minimal skeleton """
+""" `binary_sensor` domain - minimal skeleton """
 
 from __future__ import annotations
 

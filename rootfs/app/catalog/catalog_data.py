@@ -16,9 +16,9 @@ is unavailable for that specific case.
 from __future__ import annotations
 
 import json
-import os
+from pathlib import Path
 
-_CATALOG_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "catalog.json")
+_CATALOG_PATH = Path(__file__).parent / ".." / "data" / "catalog.json"
 
 _catalog: dict[str, list[dict]] | None = None
 
@@ -27,7 +27,7 @@ def _load() -> dict[str, list[dict]]:
     global _catalog
     if _catalog is None:
         try:
-            with open(_CATALOG_PATH, "r", encoding="utf-8") as fh:
+            with _CATALOG_PATH.open(encoding="utf-8") as fh:
                 _catalog = json.load(fh)
         except (OSError, json.JSONDecodeError):
             _catalog = {}

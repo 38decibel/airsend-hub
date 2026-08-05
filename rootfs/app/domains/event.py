@@ -1,5 +1,5 @@
 """
-`event` domain – a fallback for rolling-code remote controls that lack 
+`event` domain - a fallback for rolling-code remote controls that lack
 reliable position feedback (e.g., a detected button press on a third-party
 physical Profalux remote linked to a shutter already managed as a `cover`),
 or for any device where the user has explicitly chosen not to control it

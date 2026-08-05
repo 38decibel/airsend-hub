@@ -345,7 +345,7 @@ class InclusionApi:
         box = self._boxes[box_slug]
         try:
             channels = await self._client.list_channels(box)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             return web.json_response({"error": str(exc)}, status=502)
         return web.json_response(channels)
 

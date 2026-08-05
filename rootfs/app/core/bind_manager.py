@@ -5,6 +5,7 @@ RF "bind" lifecycle per box.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 
 from runtime_settings import RuntimeSettings
@@ -18,7 +19,9 @@ _RENEW_MARGIN_S = 60.0
 
 class BoxBindHandle:
 
-    def __init__(self, client: AirSendClient, box: BoxConfig, callback_base_url: str, settings: RuntimeSettings) -> None:
+    def __init__(
+        self, client: AirSendClient, box: BoxConfig, callback_base_url: str, settings: RuntimeSettings
+    ) -> None:
         self._client = client
         self.box = box
         self._callback_url = f"{callback_base_url.rstrip('/')}/cb/{box.slug}"
@@ -39,22 +42,19 @@ class BoxBindHandle:
     async def stop(self) -> None:
         self._stopped.set()
 
-        try:
-            if self._task is not None:
-                self._task.cancel()
+        if self._task is not None:
+            self._task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._task
-        except asyncio.CancelledError:
-            pass
-        finally:
-            self._task = None
-            try:
-                await self._client.unbind(self.box)
-            except AirSendError as exc:
-                _LOGGER.debug(
-                    "unbind failed for box %s (probably already unbound): %s",
-                    self.box.name,
-                    exc,
-                )
+        self._task = None
+        try:
+            await self._client.unbind(self.box)
+        except AirSendError as exc:
+            _LOGGER.debug(
+                "unbind failed for box %s (probably already unbound): %s",
+                self.box.name,
+                exc,
+            )
 
     async def restart(self) -> None:
         """Stop the current bind loop and immediately start a new one.
@@ -75,10 +75,8 @@ class BoxBindHandle:
 
         if self._task is not None:
             self._task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._task
-            except asyncio.CancelledError:
-                pass
             self._task = None
 
         try:

@@ -16,6 +16,7 @@ import logging
 import os
 import tempfile
 from dataclasses import asdict, dataclass, field
+from pathlib import Path
 from typing import Any
 
 _LOGGER = logging.getLogger("airsend.registry")
@@ -49,11 +50,11 @@ class DeviceRegistry:
 
 
     def load(self) -> None:
-        if not os.path.exists(self._path):
+        if not Path(self._path).exists():
             _LOGGER.info("No existing device registry at %s, starting empty", self._path)
             return
         try:
-            with open(self._path, "r", encoding="utf-8") as fh:
+            with Path(self._path).open(encoding="utf-8") as fh:
                 raw = json.load(fh)
         except (OSError, json.JSONDecodeError):
             _LOGGER.exception("Failed to load %s, starting empty to avoid crash-loop", self._path)
@@ -78,15 +79,15 @@ class DeviceRegistry:
             data.pop("key")
             payload[key] = data
 
-        dir_name = os.path.dirname(self._path) or "."
+        dir_name = Path(self._path).parent
         fd, tmp_path = tempfile.mkstemp(dir=dir_name, prefix=".devices_", suffix=".json.tmp")
         try:
             with os.fdopen(fd, "w", encoding="utf-8") as fh:
                 json.dump(payload, fh, indent=2, ensure_ascii=False)
-            os.replace(tmp_path, self._path)
+            Path(tmp_path).replace(self._path)
         except Exception:
-            if os.path.exists(tmp_path):
-                os.remove(tmp_path)
+            if Path(tmp_path).exists():
+                Path(tmp_path).unlink()
             raise
 
 

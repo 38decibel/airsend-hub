@@ -1,5 +1,5 @@
 """
-`sensor` domain – native sensors of the AirSend hub (read-only, no control).
+`sensor` domain - native sensors of the AirSend hub (read-only, no control).
 Expected `device.kind`: "temperature" | "illuminance" | "r_humidity"; determined
 automatically based on the first type of message received, rather than being
 manually selected during inclusion

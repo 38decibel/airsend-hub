@@ -159,7 +159,10 @@ class CallbackServer:
             )
             return
 
-        _LOGGER.info("raw_event_body box=%s channel=%s/%s body=%s", box_slug, channel_id, channel_source, json.dumps(event))
+        _LOGGER.info(
+            "raw_event_body box=%s channel=%s/%s body=%s",
+            box_slug, channel_id, channel_source, json.dumps(event),
+        )
 
         decoded = self._resolve_decoded_flag(event_type)
         if decoded is None:
