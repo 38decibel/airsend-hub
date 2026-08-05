@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import aiohttp
+from typing_extensions import Self
 
 _LOGGER = logging.getLogger("airsend.client")
 
@@ -65,11 +66,11 @@ class AirSendClient:
             await self._session.close()
             self._session = None
 
-    async def __aenter__(self) -> "AirSendClient":
+    async def __aenter__(self) -> Self:
         self.start()
         return self
 
-    async def __aexit__(self, *_exc: Any) -> None:
+    async def __aexit__(self, *_exc: object) -> None:
         await self.close()
 
 

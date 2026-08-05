@@ -15,7 +15,6 @@ import yaml
 class _IgnoreSecretLoader(yaml.SafeLoader):
     """Tolerates HA's `!secret xxx` tag (returns a placeholder). We never
     need the actual secret value for import purposes, only the structure."""
-    pass
 
 
 def _construct_secret(loader, node):
