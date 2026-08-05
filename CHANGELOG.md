@@ -1,5 +1,12 @@
 ---
 
+## 1.29.0 - 2026-08-05
+
+### ♻️ Changed
+- Merge pull request #86 from 38decibel/38decibel-patch-6
+
+---
+
 ## 1.28.0 - 2026-08-05
 
 ### 🐛 Fixed
