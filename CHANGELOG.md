@@ -1,5 +1,12 @@
 ---
 
+## 1.28.0 - 2026-08-05
+
+### 🐛 Fixed
+- **core:** replace typing_extensions with stdlib typing for Self import
+
+---
+
 ## 1.27.0 - 2026-08-05
 
 ### ♻️ Changed
