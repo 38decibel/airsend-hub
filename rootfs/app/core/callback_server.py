@@ -73,7 +73,7 @@ class CallbackServer:
         box_slug = request.match_info["box_slug"]
         try:
             payload = await request.json()
-        except Exception as exc:
+        except (json.JSONDecodeError, ValueError) as exc:
             _LOGGER.warning("Malformed callback payload from box %s: %s", box_slug, exc)
             return web.Response(status=200)
 
