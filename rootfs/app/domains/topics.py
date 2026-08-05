@@ -23,7 +23,7 @@ class DeviceTopics:
     discovery: str
 
     @staticmethod
-    def for_device(component: str, device_key: str) -> "DeviceTopics":
+    def for_device(component: str, device_key: str) -> DeviceTopics:
         base = f"airsend/{device_key}"
         return DeviceTopics(
             state=f"{base}/state",

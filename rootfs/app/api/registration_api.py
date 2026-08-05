@@ -23,7 +23,6 @@ import logging
 from typing import Any
 
 from aiohttp import web
-
 from core.airsend_client import AirSendClient, AirSendError, BoxConfig
 from registry.device_registry import DeviceRegistry
 

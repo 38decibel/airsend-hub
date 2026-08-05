@@ -13,16 +13,15 @@ import logging
 import os
 
 from aiohttp import web
-
+from api.inclusion_api import create_ingress_app
+from catalog.protocol_catalog import ProtocolCatalog
 from core.airsend_client import AirSendClient, BoxConfig
 from core.bind_manager import BindManager
 from core.callback_server import CallbackServer
-from registry.device_registry import DeviceRegistry
-from inclusion import InclusionState
-from api.inclusion_api import create_ingress_app
-from mqtt_bridge import MqttBridge
 from core.net_utils import mac_from_link_local
-from catalog.protocol_catalog import ProtocolCatalog
+from inclusion import InclusionState
+from mqtt_bridge import MqttBridge
+from registry.device_registry import DeviceRegistry
 from runtime_settings import RuntimeSettings
 
 _LOGGER = logging.getLogger("airsend.main")

@@ -15,19 +15,19 @@ from pathlib import Path
 from typing import Any
 
 from aiohttp import web
-
-from core.airsend_client import AirSendClient, AirSendError, BoxConfig
-from registry.backup_export import build_backup, diff_backup_devices, parse_backup
-from core.bind_manager import BindManager
 from catalog.catalog_data import search_brands
 from catalog.channel_aliases import expected_receive_channels
-from registry.device_registry import Device, DeviceRegistry
+from catalog.protocol_catalog import BAND_868_MHZ, ProtocolCatalog
+from core.airsend_client import AirSendClient, AirSendError, BoxConfig
+from core.bind_manager import BindManager
 from inclusion import Candidate, InclusionState
 from mqtt_bridge import MqttBridge
-from catalog.protocol_catalog import BAND_868_MHZ, ProtocolCatalog
-from api.registration_api import RegistrationApi
-from runtime_settings import RuntimeSettings
+from registry.backup_export import build_backup, diff_backup_devices, parse_backup
+from registry.device_registry import Device, DeviceRegistry
 from registry.yaml_import import load_yaml_devices, parse_airsend_yaml
+from runtime_settings import RuntimeSettings
+
+from api.registration_api import RegistrationApi
 
 _LOGGER = logging.getLogger("airsend.inclusion_api")
 
@@ -79,8 +79,14 @@ def _slugify(text: str) -> str:
 class ListenSession:
 
     __slots__ = (
-        "id", "box_slug", "channel_id", "expected_channels",
-        "started_at", "duration", "done", "error",
+        "box_slug",
+        "channel_id",
+        "done",
+        "duration",
+        "error",
+        "expected_channels",
+        "id",
+        "started_at",
     )
 
     def __init__(self, box_slug: str, channel_id: int | None, duration: float) -> None:
@@ -393,7 +399,7 @@ class InclusionApi:
         entry = self._catalog.entry_for(box_slug, channel_id)
         return entry is None or entry.get("band") != BAND_868_MHZ
 
-    def _session_accepts_channel(self, session: "ListenSession", channel_id: int) -> bool:
+    def _session_accepts_channel(self, session: ListenSession, channel_id: int) -> bool:
         if session.channel_id is None:
             return self._is_433(session.box_slug, channel_id)
         return channel_id in session.expected_channels
@@ -670,7 +676,7 @@ class InclusionApi:
             {"key": updated.key, "friendly_name": updated.friendly_name, "options": updated.options}
         )
 
-    async def _remove_memory_if_needed(self, device: "Device") -> None:
+    async def _remove_memory_if_needed(self, device: Device) -> None:
         """Remove the device entry from the box internal memory if the protocol
         is send-only (getDecoder==0, i.e. rolling-code).
 

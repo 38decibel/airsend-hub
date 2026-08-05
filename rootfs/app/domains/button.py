@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from domains.topics import AVAILABILITY_OFFLINE, AVAILABILITY_ONLINE, AVAILABILITY_TOPIC, DeviceTopics
+from domains.topics import (
+    AVAILABILITY_OFFLINE,
+    AVAILABILITY_ONLINE,
+    AVAILABILITY_TOPIC,
+    DeviceTopics,
+)
 
 COMPONENT = "button"
 

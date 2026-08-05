@@ -41,17 +41,17 @@ def build_backup(devices: list[Any]) -> dict[str, Any]:
 
 def parse_backup(raw: Any) -> dict[str, dict]:
     if not isinstance(raw, dict):
-        raise ValueError("backup must be a JSON object")
+        raise TypeError("backup must be a JSON object")
     if raw.get("schema_version") != BACKUP_SCHEMA_VERSION:
         raise ValueError(f"unsupported schema_version: {raw.get('schema_version')!r}")
 
     devices = raw.get("devices")
     if not isinstance(devices, dict):
-        raise ValueError("expected a 'devices' object")
+        raise TypeError("expected a 'devices' object")
 
     for key, fields in devices.items():
         if not isinstance(fields, dict):
-            raise ValueError(f"{key}: device entry must be an object")
+            raise TypeError(f"{key}: device entry must be an object")
         missing = [f for f in _DEVICE_FIELDS if f not in fields]
         if missing:
             raise ValueError(f"{key}: missing field(s) {', '.join(missing)}")

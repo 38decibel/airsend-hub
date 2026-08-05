@@ -4,7 +4,7 @@ Decoding `thingnotes.notes[]` from a ThingEvent into (derived_type, value).
 note.type (integer; see AirSendWebService.yaml ThingNotes.notes[].type):
 0 = STATE, 1 = DATA, 2 = TEMPERATURE, 3 = ILLUMINANCE, 4 = R_HUMIDITY, 9 = LEVEL
 
-note.value when type == STATE; integer values ​​encountered in practice:
+note.value when type == STATE; integer values \u200b\u200bencountered in practice:
 17=STOP 18=TOGGLE 19=OFF 20=ON 21=CLOSE 22=OPEN 33=MIDDLE 34=DOWN 35=UP
 36=LEFT 37=RIGHT 38=USERPOSITION
 """

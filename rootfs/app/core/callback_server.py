@@ -7,15 +7,15 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Callable
+from collections.abc import Callable
 
 from aiohttp import web
-
-from registry.device_registry import DeviceRegistry
-from inclusion import InclusionState
 from catalog.protocol_catalog import ProtocolCatalog
+from inclusion import InclusionState
+from registry.device_registry import DeviceRegistry
 from runtime_settings import RuntimeSettings
-from core.thing_notes import convert_notes_to_states, action_label_from_notes
+
+from core.thing_notes import action_label_from_notes, convert_notes_to_states
 
 _LOGGER = logging.getLogger("airsend.callback_server")
 
