@@ -1,5 +1,12 @@
 ---
 
+## 1.32.0 - 2026-08-05
+
+### 🐛 Fixed
+- **lint:** apply remaining static analysis fixes (SIM105, PTH, E501, RUF002, RUF100)
+
+---
+
 ## 1.31.0 - 2026-08-05
 
 ### ♻️ Changed
