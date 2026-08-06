@@ -29,7 +29,7 @@ def discovery_config(device, topics: DeviceTopics, device_info: dict) -> dict:
     }
 
 
-def encode_state(device, stype: str, svalue) -> list[tuple[str, str]]:
+def encode_state(_device, _stype: str, _svalue) -> list[tuple[str, str]]:
     return []
 
 

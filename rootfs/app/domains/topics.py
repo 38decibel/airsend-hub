@@ -1,11 +1,11 @@
 """
-MQTT topic convention, common to all domains/*.py and mqtt_bridge.py. 
+MQTT topic convention, common to all domains/*.py and mqtt_bridge.py.
 
-    homeassistant/<component>/airsend_<device.key>/config (discovery, retained) 
-    airsend/<device.key>/state (current state, retained) 
-    airsend/<device.key>/set (simple command: OPEN/CLOSE/STOP/ON/OFF/PRESS) 
-    airsend/<device.key>/set_position (cover "level" only: 0-100) 
-    airsend/<device.key>/position (cover "level" only: current position 0-100) 
+    homeassistant/<component>/airsend_<device.key>/config (discovery, retained)
+    airsend/<device.key>/state (current state, retained)
+    airsend/<device.key>/set (simple command: OPEN/CLOSE/STOP/ON/OFF/PRESS)
+    airsend/<device.key>/set_position (cover "level" only: 0-100)
+    airsend/<device.key>/position (cover "level" only: current position 0-100)
     airsend/bridge/status (availability, "online"/"offline", LWT)
 """
 

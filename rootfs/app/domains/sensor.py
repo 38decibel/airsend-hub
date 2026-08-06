@@ -36,5 +36,5 @@ def encode_state(device, stype: str, svalue) -> list[tuple[str, str]]:
     return [(topics.state, str(svalue))]
 
 
-def decode_command(device, topic: str, payload: str) -> dict | None:
+def decode_command(_device, _topic: str, _payload: str) -> dict | None:
     return None

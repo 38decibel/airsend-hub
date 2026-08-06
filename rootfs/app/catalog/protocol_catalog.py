@@ -2,7 +2,7 @@
 Local cache of the RF protocol catalog (GET /channels, cf. airsend_client),
 per hub. Used to:
 - retrieve a human-readable protocol name (e.g., "PFX") from a channel.id during
-inclusion, for display/suggestion to the user. 
+inclusion, for display/suggestion to the user.
 - determine as accurately as possible whether the hub is a single-band AirSend or an AirSend Duo.
 """
 

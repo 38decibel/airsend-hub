@@ -28,6 +28,6 @@ RECEIVE_ALIASES: dict[int, set[int]] = {
 
 def expected_receive_channels(declared_channel_id: int) -> set[int]:
     """Channels on which support can actually be received for a given
-    'declared' (catalog) channel. This always includes the declared 
+    'declared' (catalog) channel. This always includes the declared
     channel itself, even when an entry exists in RECEIVE_ALIASES."""
     return RECEIVE_ALIASES.get(declared_channel_id, {declared_channel_id})

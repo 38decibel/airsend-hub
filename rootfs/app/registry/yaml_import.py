@@ -17,7 +17,7 @@ class _IgnoreSecretLoader(yaml.SafeLoader):
     need the actual secret value for import purposes, only the structure."""
 
 
-def _construct_secret(loader, node):
+def _construct_secret(_loader, _node):
     return "__secret_ignored__"
 
 
