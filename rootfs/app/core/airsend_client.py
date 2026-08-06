@@ -27,7 +27,7 @@ _MEMORY_ACK_REMOVE = 4
 
 class AirSendError(Exception):
     pass
-    
+
 class AirSendAuthError(AirSendError):
     pass
 
