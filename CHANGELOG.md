@@ -1,5 +1,12 @@
 ---
 
+## 1.33.1 - 2026-08-06
+
+### ♻️ Changed
+- Merge pull request #90 from 38decibel/fix/security
+
+---
+
 ## 1.33.0 - 2026-08-06
 
 ### ♻️ Changed
