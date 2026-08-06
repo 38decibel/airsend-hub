@@ -179,12 +179,12 @@ class InclusionApi:
         return web.FileResponse(candidate)
 
 
-    async def _handle_boxes(self, request: web.Request) -> web.Response:
+    async def _handle_boxes(self, _request: web.Request) -> web.Response:
         return web.json_response(
             [{"slug": slug, "name": box.name} for slug, box in self._boxes.items()]
         )
 
-    async def _handle_list_devices(self, request: web.Request) -> web.Response:
+    async def _handle_list_devices(self, _request: web.Request) -> web.Response:
         return web.json_response(
             [
                 {
@@ -241,7 +241,7 @@ class InclusionApi:
             "last_notes": c.last_notes,
         }
 
-    async def _handle_list_inbox(self, request: web.Request) -> web.Response:
+    async def _handle_list_inbox(self, _request: web.Request) -> web.Response:
         rows = [self._candidate_row(c) for c in self._inclusion.list_candidates()]
         rows.sort(key=lambda r: r["last_seen"], reverse=True)
         return web.json_response(
@@ -298,7 +298,7 @@ class InclusionApi:
         self._inclusion.pop_candidate(box_slug, channel_id, channel_source)
         return web.json_response({"key": device.key})
 
-    async def _handle_get_settings(self, request: web.Request) -> web.Response:
+    async def _handle_get_settings(self, _request: web.Request) -> web.Response:
         return web.json_response({
             "capture_unknown_events": self._settings.capture_unknown_events,
             "bind_channel_id": self._settings.bind_channel_id,
@@ -334,7 +334,7 @@ class InclusionApi:
             "bind_channel_id": self._settings.bind_channel_id,
         })
 
-    async def _handle_list_channels(self, request: web.Request) -> web.Response:
+    async def _handle_list_channels(self, _request: web.Request) -> web.Response:
         """Proxy /channels from AirSendWebService for the first configured box.
 
         Returns the raw channel list as-is, or 503 when no box is configured.
@@ -745,7 +745,7 @@ class InclusionApi:
         return web.json_response({"key": key, "deleted": True})
 
 
-    async def _handle_import_detect(self, request: web.Request) -> web.Response:
+    async def _handle_import_detect(self, _request: web.Request) -> web.Response:
         candidate = _HA_CONFIG_DIR / _AIRSEND_YAML_FILENAME
         try:
             yaml_text = await asyncio.to_thread(candidate.read_text, encoding="utf-8")
@@ -893,7 +893,7 @@ class InclusionApi:
             {"added": added, "overwritten": overwritten, "skipped": skipped, "errors": errors}
         )
 
-    async def _handle_backup_export(self, request: web.Request) -> web.Response:
+    async def _handle_backup_export(self, _request: web.Request) -> web.Response:
         backup = build_backup(self._registry.all())
         filename = f"airsend-hub-backup-{backup['exported_at']}.json"
         return web.Response(
