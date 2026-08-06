@@ -1,14 +1,14 @@
 """
-Static brand-to-protocol/channel catalog, extracted from the official 
-airsend.cloud web bundle and cross-referenced with `channels.json` during 
+Static brand-to-protocol/channel catalog, extracted from the official
+airsend.cloud web bundle and cross-referenced with `channels.json` during
 extraction (only channels actually supported locally are retained; see `data/catalog.json`).
 
-It is used ONLY for autocompletion in the inclusion form 
-(ingress UI; see `inclusion_api.py`), never to infer a device type or 
+It is used ONLY for autocompletion in the inclusion form
+(ingress UI; see `inclusion_api.py`), never to infer a device type or
 automatically create a device.
 
 This catalog may be incomplete or slightly outdated (as it is a snapshot
-of the official site); a brand or model missing from the list does not 
+of the official site); a brand or model missing from the list does not
 prevent manual addition, but simply means autocompletion
 is unavailable for that specific case.
 """
