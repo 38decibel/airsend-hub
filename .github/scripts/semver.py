@@ -12,4 +12,4 @@ def bump(version, level):
         return f"{major}.{minor+1}.0"
 
     return f"{major}.{minor}.{patch+1}"
-  
+
