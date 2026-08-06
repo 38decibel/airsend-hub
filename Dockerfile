@@ -14,7 +14,7 @@ RUN apk add --no-cache python3 py3-pip wget tar jq \
     wget http://devmel.com/dl/AirSendWebService.tgz && \
     tar -zxvf AirSendWebService.tgz && \
     rm AirSendWebService.tgz && \
-    chmod -R 777 bin
+    chmod -R 755 bin
 
 # Dependances Python.
 # aiohttp n'a plus de wheel precompile pour i386 (32 bits) depuis des annees
