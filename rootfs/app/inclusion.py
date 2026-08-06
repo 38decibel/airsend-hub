@@ -1,5 +1,5 @@
 """
-Inclusion mode: when active, any valid RF frame where the tuple 
+Inclusion mode: when active, any valid RF frame where the tuple
 (box, channel.id, channel.source) is not already in the `device_registry`
 becomes a "candidate" awaiting user confirmation (name + kind + options),
 rather than being silently auto-created.

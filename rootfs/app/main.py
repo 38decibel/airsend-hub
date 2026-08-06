@@ -1,7 +1,7 @@
 """
 App entry point.
 
-Main flow: RF listening (bind_manager) -> callback (callback_server, reliability filter) 
+Main flow: RF listening (bind_manager) -> callback (callback_server, reliability filter)
 -> decoding (thing_notes) -> state/discovery/commands (mqtt_bridge) -> Home Assistant via MQTT discovery.
 """
 

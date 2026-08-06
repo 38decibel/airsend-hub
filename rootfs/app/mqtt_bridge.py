@@ -1,6 +1,6 @@
 """
-MQTT Bridge: publishes HA discovery data for each known device, 
-republishes decoded states (received from `callback_server` via `on_state`), 
+MQTT Bridge: publishes HA discovery data for each known device,
+republishes decoded states (received from `callback_server` via `on_state`),
 and routes incoming MQTT commands to `AirSendClient.transfer()`.
 
 Uses `paho-mqtt` (standard callback API, not the `asyncio` variant—wrapped
@@ -132,7 +132,7 @@ class MqttBridge:
         self._mqtt.loop_stop()
         self._mqtt.disconnect()
 
-    def _on_connect(self, client, userdata, flags, reason_code, properties=None) -> None:
+    def _on_connect(self, client, _userdata, _flags, reason_code, _properties=None) -> None:
         # reason_code is a ReasonCode object in paho v2; value 0 means success.
         rc_value = reason_code.value if hasattr(reason_code, "value") else int(reason_code)
         if rc_value != 0:
@@ -164,7 +164,7 @@ class MqttBridge:
         for box in self._boxes_by_slug.values():
             self.publish_box_diagnostics(box)
 
-    def _on_connect_fail(self, client, userdata) -> None:
+    def _on_connect_fail(self, _client, _userdata) -> None:
         _LOGGER.warning("MQTT connection attempt failed (network unreachable?), paho will retry")
 
     def _cleanup_legacy_discovery_topics(self) -> None:
@@ -421,7 +421,7 @@ class MqttBridge:
         self._mqtt.publish(topics.discovery, "", retain=True)
 
 
-    def publish_state(self, device_key: str, stype: str, svalue: object, channel: dict) -> None:
+    def publish_state(self, device_key: str, stype: str, svalue: object, _channel: dict) -> None:
         device = self._registry.get(device_key)
         if device is None:
             _LOGGER.warning("publish_state called for unknown device_key=%s", device_key)
@@ -436,7 +436,7 @@ class MqttBridge:
             _LOGGER.debug("Published state %s = %s", topic, payload)
 
 
-    def _on_message(self, client, userdata, msg) -> None:
+    def _on_message(self, _client, _userdata, msg) -> None:
         asyncio.run_coroutine_threadsafe(self._handle_command(msg.topic, msg.payload.decode()), self._loop)
 
     def _handle_bind_duration_command(self, payload: str) -> None:
