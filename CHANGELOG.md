@@ -1,5 +1,12 @@
 ---
 
+## 1.33.2 - 2026-08-06
+
+### 🐛 Fixed
+- **ui:** replace String#replace with replaceAll in escapeAttr helper
+
+---
+
 ## 1.33.1 - 2026-08-06
 
 ### ♻️ Changed
