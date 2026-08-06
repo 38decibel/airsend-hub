@@ -118,10 +118,10 @@ class DeviceRegistry:
         friendly_name: str | None = None,
         options: dict[str, Any] | None = None,
     ) -> Device | None:
-        """Limited to friendly_name/options (see Ingress UI): never affects 
-        channel_id/channel_source/kind/domain, which remain managed via deletion 
-        and re-inclusion to avoid any risk of desynchronization between the 
-        registry and the already published MQTT discovery topics (where the 
+        """Limited to friendly_name/options (see Ingress UI): never affects
+        channel_id/channel_source/kind/domain, which remain managed via deletion
+        and re-inclusion to avoid any risk of desynchronization between the
+        registry and the already published MQTT discovery topics (where the
         component depends on the domain)."""
         device = self._devices.get(key)
         if device is None:
