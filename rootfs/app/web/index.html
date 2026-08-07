@@ -819,6 +819,20 @@
       }
     }
 
+    function renderSuggestions(results) {
+      var box = $(suggestionsId);
+      box.innerHTML = "";
+      if (!results.length) { hide(suggestionsId); return; }
+      results.forEach(function (entry) {
+        var item = document.createElement("div");
+        item.className = "suggestion-item";
+        item.textContent = entry.brand;
+        item.addEventListener("click", function () { onSuggestionClick(entry); });
+        box.appendChild(item);
+      });
+      show(suggestionsId);
+    }
+
     $(inputId).addEventListener("input", function () {
       var q = this.value;
       clearTimeout(debounce);
@@ -826,17 +840,7 @@
       if (q.trim().length < 2) { return; }
       debounce = setTimeout(function () {
         api("api/brands?q=" + encodeURIComponent(q)).then(function (res) {
-          var box = $(suggestionsId);
-          box.innerHTML = "";
-          if (!res.body.length) { hide(suggestionsId); return; }
-          res.body.forEach(function (entry) {
-            var item = document.createElement("div");
-            item.className = "suggestion-item";
-            item.textContent = entry.brand;
-            item.addEventListener("click", function () { onSuggestionClick(entry); });
-            box.appendChild(item);
-          });
-          show(suggestionsId);
+          renderSuggestions(res.body);
         });
       }, 200);
     });

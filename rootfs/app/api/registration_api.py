@@ -149,7 +149,7 @@ class RegistrationApi:
 
         try:
             body: dict[str, Any] = await request.json()
-        except (json.JSONDecodeError, ValueError):
+        except json.JSONDecodeError:
             raise web.HTTPBadRequest(text="invalid JSON body") from None
 
         # --- command (required) ---
