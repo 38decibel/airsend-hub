@@ -14,6 +14,7 @@ from typing import Any, Self
 import aiohttp
 
 _LOGGER = logging.getLogger("airsend.client")
+_TRANSFER_PATH = "/airsend/transfer"
 
 # Special channel id used by AirSendWebService to read the box memory table.
 _MEMORY_CHANNEL_ID = 1
@@ -149,7 +150,7 @@ class AirSendClient:
         if callback_url is not None:
             body["callback"] = callback_url
         async with self._transfer_lock:
-            return await self._request("POST", "/airsend/transfer", box=box, json_body=body)
+            return await self._request("POST", _TRANSFER_PATH, box=box, json_body=body)
 
     async def read_memory(self, box: BoxConfig) -> list[dict]:
         """Read the box internal RF memory table.
@@ -171,7 +172,7 @@ class AirSendClient:
             },
         }
         async with self._transfer_lock:
-            resp = await self._request("POST", "/airsend/transfer", box=box, json_body=body)
+            resp = await self._request("POST", _TRANSFER_PATH, box=box, json_body=body)
 
         notes = resp.get("thingnotes", {}).get("notes", [])
         for note in notes:
@@ -217,7 +218,7 @@ class AirSendClient:
             },
         }
         async with self._transfer_lock:
-            resp = await self._request("POST", "/airsend/transfer", box=box, json_body=body)
+            resp = await self._request("POST", _TRANSFER_PATH, box=box, json_body=body)
 
         ack_memory = resp.get("channel", {}).get("memory")
         success = ack_memory == _MEMORY_ACK_PUT
@@ -259,7 +260,7 @@ class AirSendClient:
             },
         }
         async with self._transfer_lock:
-            resp = await self._request("POST", "/airsend/transfer", box=box, json_body=body)
+            resp = await self._request("POST", _TRANSFER_PATH, box=box, json_body=body)
 
         ack_memory = resp.get("channel", {}).get("memory")
         success = ack_memory == _MEMORY_ACK_REMOVE

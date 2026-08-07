@@ -9,7 +9,6 @@
   var $                    = ns.$;
   var show                 = ns.show;
   var hide                 = ns.hide;
-  var backToHome           = ns.backToHome;
   var state                = ns.state;         // used for currentLang proxy
   var populateCategorySelect = ns.populateCategorySelect;
 
@@ -127,9 +126,14 @@
     var row = document.createElement("div");
     row.className = "candidate";
 
-    var protocolLabel = c.protocol_name || (c.decoded
-      ? t("wizard.listen.channelFallback", { id: c.channel_id })
-      : t("inbox.undecoded"));
+    var protocolLabel;
+    if (c.protocol_name) {
+      protocolLabel = c.protocol_name;
+    } else if (c.decoded) {
+      protocolLabel = t("wizard.listen.channelFallback", { id: c.channel_id });
+    } else {
+      protocolLabel = t("inbox.undecoded");
+    }
 
     // ── Summary line (always visible) ──
     var summary = document.createElement("div");
@@ -207,8 +211,8 @@
   // -----------------------------------------------------------------------
   // Event listeners
   // -----------------------------------------------------------------------
-  $("inbox-capture-unknown-checkbox").addEventListener("change", function () {
-    var checkbox = this;
+  $("inbox-capture-unknown-checkbox").addEventListener("change", function (e) {
+    var checkbox = e.currentTarget;
     var desired  = checkbox.checked;
     api("api/settings", {
       method: "PATCH",
@@ -284,7 +288,7 @@
     }).then(function (res) {
       if (!res.ok) {
         window.alert(t("inbox.settingsError"));
-        syncChannelSelect(res.body && res.body.bind_channel_id);
+        syncChannelSelect(res.body?.bind_channel_id);
       }
     });
   });

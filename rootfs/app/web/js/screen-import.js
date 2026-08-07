@@ -10,7 +10,6 @@
   var show         = ns.show;
   var hide         = ns.hide;
   var escapeAttr   = ns.escapeAttr;
-  var backToHome   = ns.backToHome;
   var state        = ns.state;
   var KIND_LABEL_KEYS  = ns.KIND_LABEL_KEYS;
   var DOMAIN_TO_KINDS  = ns.DOMAIN_TO_KINDS;
@@ -213,7 +212,7 @@
       if (checked) {
         action = row.status === "conflict" ? (row.conflict_action || "keep_existing") : "import";
       }
-      var copy = Object.assign({}, row);
+      var copy = { ...row };
       copy.action = action;
       return copy;
     });

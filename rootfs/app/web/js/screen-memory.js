@@ -9,7 +9,6 @@
   var $                    = ns.$;
   var show                 = ns.show;
   var hide                 = ns.hide;
-  var backToHome           = ns.backToHome;
   var populateCategorySelect = ns.populateCategorySelect;
 
   // -----------------------------------------------------------------------
@@ -148,7 +147,7 @@
     }).then(function (res) {
       if (!res.ok) {
         banner.className   = "banner error";
-        banner.textContent = (res.body && res.body.message) || t("memory.creationError");
+        banner.textContent = res.body?.message || t("memory.creationError");
         show(banner.id);
         $("btn-memory-add-confirm").disabled = false;
         return;

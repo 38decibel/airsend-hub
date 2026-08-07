@@ -521,7 +521,7 @@ const I18N = {
     },
   };
 
-const SUPPORTED_LANGS = ["fr", "en"];
+const SUPPORTED_LANGS = new Set(["fr", "en"]);
 const LANG_STORAGE_KEY = "airsend_lang";
 
 function detectDefaultLang() {
@@ -533,7 +533,7 @@ function loadStoredLang() {
   try {
     const stored = window.localStorage.getItem(LANG_STORAGE_KEY);
     return SUPPORTED_LANGS.includes(stored) ? stored : null;
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -543,7 +543,7 @@ let _onRefresh = null;
 
 function t(key, vars) {
   const dict = I18N[_currentLang] || I18N.fr;
-  let text = Object.prototype.hasOwnProperty.call(dict, key)
+  let text = Object.hasOwn(dict, key)
     ? dict[key]
     : (I18N.fr[key] || key);
   if (vars) {

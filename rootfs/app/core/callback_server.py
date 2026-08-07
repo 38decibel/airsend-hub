@@ -140,6 +140,49 @@ class CallbackServer:
             last_notes=last_notes,
         )
 
+    def _is_command_ack(self, thingnotes: dict) -> bool:
+        """Return True when the event is a command acknowledgement (sent by us)."""
+        return "uid" in thingnotes and thingnotes.get("uid") is not None
+
+    def _check_reliability(self, box_slug: str, channel_id: int, channel_source: int, event: dict) -> bool:
+        """Log a reliability sample and return False when the event must be dropped."""
+        self._log_reliability_sample(box_slug, channel_id, channel_source, event)
+        if not self._is_valid_reliability(event):
+            _LOGGER.debug(
+                "Event dropped (reliability=%s out of range [%s, %s]) on box=%s channel=%s/%s",
+                event.get("reliability"),
+                RuntimeSettings.RELIABILITY_MIN,
+                RuntimeSettings.RELIABILITY_MAX,
+                box_slug, channel_id, channel_source,
+            )
+            return False
+        return True
+
+    def _dispatch_decoded_event(
+        self,
+        box_slug: str,
+        channel_id: int,
+        channel_source: int,
+        notes: list,
+        event: dict,
+        channel: dict,
+    ) -> None:
+        """Publish inbox and route decoded event to the matching device (if any)."""
+        catalog_entry = self._catalog.entry_for(box_slug, channel_id)
+        protocol_name = catalog_entry.get("name") if catalog_entry else None
+        reliability_val: int | None = event.get("reliability")
+        action = action_label_from_notes(notes)
+        self._on_rf_inbox(
+            box_slug, channel_id, channel_source,
+            protocol_name, action, reliability_val, notes,
+        )
+        device = self._registry.match(box_slug, channel_id, channel_source)
+        if device is not None:
+            for stype, svalue in convert_notes_to_states(notes):
+                self._on_state(device.key, stype, svalue, channel)
+            return
+        self._record_candidate(box_slug, channel_id, channel_source, True, action, notes)
+
     async def _handle_event(self, box_slug: str, event: dict) -> None:
         channel = event.get("channel") or {}
         thingnotes = event.get("thingnotes") or {}
@@ -152,7 +195,7 @@ class CallbackServer:
             _LOGGER.debug("Event without channel id/source, ignored: %r", event)
             return
 
-        if "uid" in thingnotes and thingnotes.get("uid") is not None:
+        if self._is_command_ack(thingnotes):
             _LOGGER.debug(
                 "Command ack event (uid=%s) type=%s on box=%s channel=%s/%s",
                 thingnotes.get("uid"), event_type, box_slug, channel_id, channel_source,
@@ -173,37 +216,10 @@ class CallbackServer:
             return
 
         if decoded:
-            self._log_reliability_sample(box_slug, channel_id, channel_source, event)
-            if not self._is_valid_reliability(event):
-                _LOGGER.debug(
-                    "Event dropped (reliability=%s out of range [%s, %s]) on box=%s channel=%s/%s",
-                    event.get("reliability"),
-                    RuntimeSettings.RELIABILITY_MIN,
-                    RuntimeSettings.RELIABILITY_MAX,
-                    box_slug, channel_id, channel_source,
-                )
+            if not self._check_reliability(box_slug, channel_id, channel_source, event):
                 return
-
-        # Publish RF inbox MQTT event for every valid decoded frame,
-        # regardless of whether it matches a configured device.
-        if decoded:
-            catalog_entry = self._catalog.entry_for(box_slug, channel_id)
-            protocol_name = catalog_entry.get("name") if catalog_entry else None
-            reliability_val: int | None = event.get("reliability")
-            action = action_label_from_notes(notes)
-            self._on_rf_inbox(
-                box_slug, channel_id, channel_source,
-                protocol_name, action, reliability_val, notes,
-            )
-
-        device = self._registry.match(box_slug, channel_id, channel_source)
-        if device is not None:
-            if decoded:
-                for stype, svalue in convert_notes_to_states(notes):
-                    self._on_state(device.key, stype, svalue, channel)
+            self._dispatch_decoded_event(box_slug, channel_id, channel_source, notes, event, channel)
             return
 
-        # Unmatched frame: always recorded as an inclusion inbox candidate,
-        # whether or not the wizard UI currently has a session open.
-        action = action_label_from_notes(notes) if decoded else None
-        self._record_candidate(box_slug, channel_id, channel_source, decoded, action, notes if decoded else None)
+        # Unmatched undecoded frame: record as inbox candidate.
+        self._record_candidate(box_slug, channel_id, channel_source, False, None, None)

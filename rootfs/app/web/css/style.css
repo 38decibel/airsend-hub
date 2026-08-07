@@ -1,5 +1,6 @@
-  /* ── Dark theme (default) ── */
+  /* ── Dark theme (default) + layout variables ── */
   :root {
+    --sidebar-w: 200px; --sidebar-collapsed-w: 52px;
     --bg: #111318; --card: #1b1e26; --border: #2a2e38; --text: #e8eaed;
     --muted: #9aa0ac; --accent: #4d8aff; --accent-hover: #6b9dff;
     --danger: #e05555; --ok: #3fbf6f;
@@ -61,7 +62,6 @@
   .app-shell { display: flex; flex: 1; min-height: 0; }
 
   /* ── Sidebar ── */
-  :root { --sidebar-w: 200px; --sidebar-collapsed-w: 52px; }
   .sidebar {
     width: var(--sidebar-w); flex-shrink: 0;
     background: var(--card); border-right: 1px solid var(--border);

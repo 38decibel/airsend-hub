@@ -100,6 +100,7 @@ class MqttBridge:
         self._settings = settings
         self._loop = asyncio.get_event_loop()
         self._health_task: asyncio.Task | None = None
+        self._background_tasks: set[asyncio.Task] = set()
         self._cover_tasks: dict[str, _CoverMotion] = {}
         # Last known position (0-100) for volet_roulant covers with travel_time.
         self._cover_positions: dict[str, float] = {}
@@ -599,8 +600,40 @@ class MqttBridge:
             target_position=target_position,
         )
 
-    def _handle_cover_stop(self, device: Device) -> None:
+    def _publish_cover_stop_position(
+        self, device: Device, motion: _CoverMotion, elapsed: float, topics: DeviceTopics
+    ) -> None:
+        """Publish estimated position after a mid-travel STOP in position-tracking mode."""
+        direction = 1.0 if motion.motion_state == "opening" else -1.0
+        progress = min(elapsed / motion.travel_time_s, 1.0) * 100.0
+        estimated = motion.start_position + direction * progress  # type: ignore[operator]
+        position = round(max(0.0, min(100.0, estimated)))
+        self._cover_positions[device.key] = float(position)
+        self._mqtt.publish(topics.position, str(position), retain=True)
+        final_state = "open" if position > 0 else "closed"
+        self._mqtt.publish(topics.state, final_state, retain=True)
+        _LOGGER.debug(
+            "Cover %s stopped after %.1fs/%.1fs (%s) -> position %d%% (%s)",
+            device.key, elapsed, motion.travel_time_s, motion.motion_state, position, final_state,
+        )
 
+    def _publish_cover_stop_optimistic(
+        self, device: Device, motion: _CoverMotion, elapsed: float, topics: DeviceTopics
+    ) -> None:
+        """Publish assumed final state after a STOP in legacy optimistic mode."""
+        ratio = elapsed / motion.travel_time_s if motion.travel_time_s > 0 else 1.0
+        reached_destination = ratio >= _COVER_STOP_REACHED_RATIO
+        if motion.motion_state == "opening":
+            final_state = "open" if reached_destination else "closed"
+        else:
+            final_state = "closed" if reached_destination else "open"
+        self._mqtt.publish(topics.state, final_state, retain=True)
+        _LOGGER.debug(
+            "Cover %s stopped after %.1fs/%.1fs (%s) -> assumed %s",
+            device.key, elapsed, motion.travel_time_s, motion.motion_state, final_state,
+        )
+
+    def _handle_cover_stop(self, device: Device) -> None:
         motion = self._cover_tasks.pop(device.key, None)
         if motion is None:
             return
@@ -612,40 +645,47 @@ class MqttBridge:
 
         if motion.start_position is not None and motion.travel_time_s > 0:
             # Position-tracking mode: compute estimated position from elapsed time.
-            direction = 1.0 if motion.motion_state == "opening" else -1.0
-            progress = min(elapsed / motion.travel_time_s, 1.0) * 100.0
-            estimated = motion.start_position + direction * progress
-            position = round(max(0.0, min(100.0, estimated)))
-            self._cover_positions[device.key] = float(position)
-            self._mqtt.publish(topics.position, str(position), retain=True)
-            final_state = "open" if position > 0 else "closed"
-            self._mqtt.publish(topics.state, final_state, retain=True)
-            _LOGGER.debug(
-                "Cover %s stopped after %.1fs/%.1fs (%s) -> position %d%% (%s)",
-                device.key,
-                elapsed,
-                motion.travel_time_s,
-                motion.motion_state,
-                position,
-                final_state,
-            )
+            self._publish_cover_stop_position(device, motion, elapsed, topics)
         else:
             # Legacy optimistic mode (no travel_time set).
-            ratio = elapsed / motion.travel_time_s if motion.travel_time_s > 0 else 1.0
-            reached_destination = ratio >= _COVER_STOP_REACHED_RATIO
-            if motion.motion_state == "opening":
-                final_state = "open" if reached_destination else "closed"
+            self._publish_cover_stop_optimistic(device, motion, elapsed, topics)
+
+    def _send_cover_auto_stop(self, device: Device, position: int) -> None:
+        """Fire-and-forget RF STOP so the motor halts at the target position."""
+        box = self._boxes_by_slug.get(device.box)
+        if box is None:
+            return
+        channel = {"id": device.channel_id, "source": device.channel_source}
+        stop_notes = {"notes": [{"method": 1, "type": 0, "value": 17}]}
+        stop_task = asyncio.create_task(
+            self._client.transfer(box, channel=channel, thingnotes=stop_notes, wait=False)
+        )
+        self._background_tasks.add(stop_task)
+
+        def _on_stop_done(t: asyncio.Task) -> None:
+            self._background_tasks.discard(t)
+            if t.exception():
+                _LOGGER.warning("Cover %s auto-STOP failed: %s", device.key, t.exception())
             else:
-                final_state = "closed" if reached_destination else "open"
-            self._mqtt.publish(topics.state, final_state, retain=True)
-            _LOGGER.debug(
-                "Cover %s stopped after %.1fs/%.1fs (%s) -> assumed %s",
-                device.key,
-                elapsed,
-                motion.travel_time_s,
-                motion.motion_state,
-                final_state,
-            )
+                _LOGGER.debug("Cover %s auto-STOP sent (target %d%%)", device.key, position)
+
+        stop_task.add_done_callback(_on_stop_done)
+
+    def _publish_cover_timer_position(
+        self, device: Device, motion: _CoverMotion, motion_state: str
+    ) -> str:
+        """Publish final position after the travel timer elapses; return final state string."""
+        if motion.target_position is not None:
+            position = round(motion.target_position)
+        else:
+            position = 100 if motion_state == "opening" else 0
+        self._cover_positions[device.key] = float(position)
+        self._mqtt.publish(
+            DeviceTopics.for_device("cover", device.key).position, str(position), retain=True
+        )
+        if motion.target_position is not None:
+            self._send_cover_auto_stop(device, position)
+        return "open" if position > 0 else "closed"
 
     async def _cover_motion_timer(
         self,
@@ -661,7 +701,6 @@ class MqttBridge:
         ``travel_time_s`` for full-travel commands and is shorter when a
         specific target position was requested.
         """
-        topics = DeviceTopics.for_device("cover", device.key)
         motion = self._cover_tasks.get(device.key)
         try:
             await asyncio.sleep(timer_duration)
@@ -673,47 +712,15 @@ class MqttBridge:
 
         if motion is not None and motion.start_position is not None and travel_time_s > 0:
             # Position-tracking mode.
-            if motion.target_position is not None:
-                # Partial travel: we reached the requested target exactly.
-                position = round(motion.target_position)
-            else:
-                # Full travel: cover reached the physical end stop.
-                position = 100 if motion_state == "opening" else 0
-            self._cover_positions[device.key] = float(position)
-            self._mqtt.publish(topics.position, str(position), retain=True)
-            final_state = "open" if position > 0 else "closed"
-
-            # For partial travel (set_position), send STOP to the box so the
-            # motor halts at the estimated position.
-            if motion.target_position is not None:
-                box = self._boxes_by_slug.get(device.box)
-                if box is not None:
-                    channel = {"id": device.channel_id, "source": device.channel_source}
-                    stop_notes = {"notes": [{"method": 1, "type": 0, "value": 17}]}
-                    stop_task = asyncio.create_task(
-                        self._client.transfer(box, channel=channel, thingnotes=stop_notes, wait=False)
-                    )
-                    # Hold a strong reference until the task completes.
-                    stop_task.add_done_callback(
-                        lambda t: _LOGGER.debug(
-                            "Cover %s auto-STOP sent (target %d%%)", device.key, position
-                        )
-                        if not t.exception()
-                        else _LOGGER.warning(
-                            "Cover %s auto-STOP failed: %s", device.key, t.exception()
-                        )
-                    )
+            final_state = self._publish_cover_timer_position(device, motion, motion_state)
         else:
             # Legacy optimistic mode.
             final_state = "open" if motion_state == "opening" else "closed"
 
-        self._mqtt.publish(topics.state, final_state, retain=True)
+        self._mqtt.publish(DeviceTopics.for_device("cover", device.key).state, final_state, retain=True)
         _LOGGER.debug(
             "Cover %s timer elapsed (%.1fs/%s) -> %s",
-            device.key,
-            timer_duration,
-            f"{travel_time_s:.1f}s",
-            final_state,
+            device.key, timer_duration, f"{travel_time_s:.1f}s", final_state,
         )
 
     async def _handle_command(self, topic: str, payload: str) -> None:
