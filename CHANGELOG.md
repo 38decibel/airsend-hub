@@ -1,5 +1,12 @@
 ---
 
+## 1.34.0 - 2026-08-07
+
+### ♻️ Changed
+- Merge pull request #92 from 38decibel/fix/lint-1
+
+---
+
 ## 1.33.3 - 2026-08-07
 
 ### ♻️ Changed
