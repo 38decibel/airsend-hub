@@ -9,7 +9,6 @@
   var $                    = ns.$;
   var show                 = ns.show;
   var hide                 = ns.hide;
-  var state                = ns.state;         // used for currentLang proxy
   var populateCategorySelect = ns.populateCategorySelect;
 
   // -----------------------------------------------------------------------
@@ -56,7 +55,9 @@
       .filter(function (c) { return c.getDecoder !== 0; })
       .sort(function (a, b) {
         if (a.band !== b.band) { return a.band - b.band; }
-        return a.name < b.name ? -1 : a.name > b.name ? 1 : 0;
+        if (a.name < b.name) { return -1; }
+        if (a.name > b.name) { return 1; }
+        return 0;
       });
 
     sorted.forEach(function (c) {
