@@ -1,5 +1,12 @@
 ---
 
+## 1.33.3 - 2026-08-07
+
+### ♻️ Changed
+- Merge pull request #91 from 38decibel/fix/ui_lint
+
+---
+
 ## 1.33.2 - 2026-08-06
 
 ### 🐛 Fixed
