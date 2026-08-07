@@ -38,6 +38,7 @@ _MAX_LISTEN_DURATION_S = 60.0
 _SESSION_TTL_S = 600.0
 
 _FRIENDLY_NAME_EMPTY = "empty friendly_name"
+_MISSING_OR_INVALID_FIELDS = "missing or invalid fields"
 
 _HA_CONFIG_DIR = Path("/config")
 _AIRSEND_YAML_FILENAME = "airsend.yaml"
@@ -271,7 +272,7 @@ class InclusionApi:
             kind = str(body["kind"])
             friendly_name = str(body["friendly_name"]).strip()
         except (KeyError, TypeError):
-            raise web.HTTPBadRequest(text="missing or invalid fields") from None
+            raise web.HTTPBadRequest(text=_MISSING_OR_INVALID_FIELDS) from None
         if not friendly_name:
             raise web.HTTPBadRequest(text=_FRIENDLY_NAME_EMPTY)
 
@@ -589,7 +590,7 @@ class InclusionApi:
             kind = str(body["kind"])
             friendly_name = str(body["friendly_name"]).strip()
         except (KeyError, ValueError, TypeError):
-            raise web.HTTPBadRequest(text="missing or invalid fields") from None
+            raise web.HTTPBadRequest(text=_MISSING_OR_INVALID_FIELDS) from None
 
         if not friendly_name:
             raise web.HTTPBadRequest(text=_FRIENDLY_NAME_EMPTY)
@@ -630,7 +631,7 @@ class InclusionApi:
             kind = str(body["kind"])
             friendly_name = str(body["friendly_name"]).strip()
         except (KeyError, ValueError, TypeError):
-            raise web.HTTPBadRequest(text="missing or invalid fields") from None
+            raise web.HTTPBadRequest(text=_MISSING_OR_INVALID_FIELDS) from None
 
         if box_slug not in self._boxes:
             raise web.HTTPBadRequest(text="unknown box")

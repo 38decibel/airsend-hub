@@ -10,7 +10,6 @@
   var show       = ns.show;
   var hide       = ns.hide;
   var escapeAttr = ns.escapeAttr;
-  var backToHome = ns.backToHome;
   var boxesCache = ns.boxesCache;   // live reference — array is mutated in place by loadBoxes()
 
   // -----------------------------------------------------------------------
@@ -116,7 +115,7 @@
       try {
         pendingBackupPayload             = JSON.parse(text);
         $("backup-preview-btn").disabled = false;
-      } catch (e) {
+      } catch {
         var err = $("backup-error");
         err.textContent = t("backup.parseError");
         show(err.id);
@@ -156,7 +155,7 @@
   });
 
   $("backup-commit-btn").addEventListener("click", function () {
-    var rowsToCommit = currentBackupRows.map(function (row) { return Object.assign({}, row); });
+    var rowsToCommit = currentBackupRows.map(function (row) { return { ...row }; });
     $("backup-commit-btn").disabled = true;
     api("api/backup/import/commit", {
       method: "POST",

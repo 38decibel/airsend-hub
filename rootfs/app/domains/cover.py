@@ -46,17 +46,8 @@ def discovery_config(device, topics: DeviceTopics, device_info: dict) -> dict:
         }
     )
 
-    if device.kind == "niveau":
-        payload.update(
-            {
-                "position_topic": topics.position,
-                "set_position_topic": topics.set_position,
-                "position_open": _POSITION_OPEN,
-                "position_closed": _POSITION_CLOSED,
-            }
-        )
-    elif device.kind == "volet_roulant" and _has_travel_time(device):
-        # Timer-based position tracking: position is estimated on the addon side.
+    if device.kind == "niveau" or (device.kind == "volet_roulant" and _has_travel_time(device)):
+        # niveau: native position feedback; volet_roulant+travel_time: timer-based position tracking.
         payload.update(
             {
                 "position_topic": topics.position,
@@ -85,11 +76,8 @@ def encode_state(device, stype: str, svalue) -> list[tuple[str, str]]:
         out.append((topics.state, "open" if position > 0 else "closed"))
         return out
 
-    if device.kind == "volet_roulant":
-        if stype == "level":
-            out.append((topics.state, "closed" if svalue == 0 else "open"))
-        elif stype == "state" and svalue == "stop":
-            pass
+    if device.kind == "volet_roulant" and stype == "level":
+        out.append((topics.state, "closed" if svalue == 0 else "open"))
 
     return out
 

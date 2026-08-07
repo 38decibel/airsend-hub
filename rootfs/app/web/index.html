@@ -432,7 +432,8 @@
 
   function cycleTheme() {
     var current = localStorage.getItem(THEME_KEY) || "auto";
-    var next = current === "auto" ? "dark" : current === "dark" ? "light" : "auto";
+    var THEME_CYCLE = { auto: "dark", dark: "light", light: "auto" };
+    var next = THEME_CYCLE[current] || "auto";
     if (next === "auto") {
       localStorage.removeItem(THEME_KEY);
     } else {
@@ -788,6 +789,36 @@
 
   function makeBrandSearchHandler(inputId, suggestionsId, pickerId, choicesId, rollingBannerId, onProtocolSelected) {
     var debounce = null;
+
+    function buildProtocolPicker(choices, protocols) {
+      show(pickerId);
+      protocols.forEach(function (p) {
+        var pb = document.createElement("div");
+        pb.className = "choice-box";
+        pb.innerHTML = "<strong>" + p.protocol + "</strong>";
+        pb.addEventListener("click", function () {
+          choices.querySelectorAll(".choice-box").forEach(clearChoiceBoxSelection);
+          pb.classList.add("selected");
+          onProtocolSelected(p);
+        });
+        choices.appendChild(pb);
+      });
+    }
+
+    function onSuggestionClick(entry) {
+      $(inputId).value = entry.brand;
+      hide(suggestionsId);
+      var choices = $(choicesId);
+      choices.innerHTML = "";
+      hide(pickerId);
+      hide(rollingBannerId);
+      if (entry.protocols.length <= 1) {
+        onProtocolSelected(entry.protocols[0]);
+      } else {
+        buildProtocolPicker(choices, entry.protocols);
+      }
+    }
+
     $(inputId).addEventListener("input", function () {
       var q = this.value;
       clearTimeout(debounce);
@@ -802,30 +833,7 @@
             var item = document.createElement("div");
             item.className = "suggestion-item";
             item.textContent = entry.brand;
-            item.addEventListener("click", function () {
-              $(inputId).value = entry.brand;
-              hide(suggestionsId);
-              var choices = $(choicesId);
-              choices.innerHTML = "";
-              hide(pickerId);
-              hide(rollingBannerId);
-              if (entry.protocols.length <= 1) {
-                onProtocolSelected(entry.protocols[0]);
-              } else {
-                show(pickerId);
-                entry.protocols.forEach(function (p) {
-                  var pb = document.createElement("div");
-                  pb.className = "choice-box";
-                  pb.innerHTML = "<strong>" + p.protocol + "</strong>";
-                  pb.addEventListener("click", function () {
-                    choices.querySelectorAll(".choice-box").forEach(clearChoiceBoxSelection);
-                    pb.classList.add("selected");
-                    onProtocolSelected(p);
-                  });
-                  choices.appendChild(pb);
-                });
-              }
-            });
+            item.addEventListener("click", function () { onSuggestionClick(entry); });
             box.appendChild(item);
           });
           show(suggestionsId);
@@ -987,9 +995,15 @@
       api("api/listen/" + state.sessionId).then(function (res) {
         if (!res.ok) { clearInterval(state.listenPoll); return; }
         var body = res.body;
-        $("listen-status").innerHTML = body.status === "listening"
-          ? "<span class='spinner'></span>" + t("wizard.listen.inProgress", { s: body.remaining_s })
-          : (body.error ? t("wizard.listen.error", { detail: body.error }) : t("wizard.listen.done"));
+        var listenStatusHtml;
+        if (body.status === "listening") {
+          listenStatusHtml = "<span class='spinner'></span>" + t("wizard.listen.inProgress", { s: body.remaining_s });
+        } else if (body.error) {
+          listenStatusHtml = t("wizard.listen.error", { detail: body.error });
+        } else {
+          listenStatusHtml = t("wizard.listen.done");
+        }
+        $("listen-status").innerHTML = listenStatusHtml;
 
         renderCandidates(body.candidates || []);
 
@@ -2017,6 +2031,32 @@
       var label = btnDef.labelKey ? t(btnDef.labelKey) : rs(btnDef.labelRs[0], btnDef.labelRs[1]);
       btn.textContent = label;
 
+      function onRegPostCommandDone(ok2) {
+        if (!ok2) {
+          setActionButtonsDisabled(wrap, false);
+          showRegError(t("wizard.registration.error"));
+          return;
+        }
+        finishRegSuccess(btnDef);
+      }
+
+      function onRegCommandDone(ok) {
+        hideRegWait();
+        if (!ok) {
+          setActionButtonsDisabled(wrap, false);
+          showRegError(t("wizard.registration.error"));
+          return;
+        }
+        // Post-steps (PFX step 2, FLOR post-command)
+        if (btnDef.postSteps) {
+          renderStepList(btnDef.postSteps);
+        }
+        if (btnDef.postCommands) {
+          return sendRegSequence(deviceKey, btnDef.postCommands, florCode).then(onRegPostCommandDone);
+        }
+        finishRegSuccess(btnDef);
+      }
+
       btn.addEventListener("click", function () {
         // FLOR Code: read seed input
         if (flowDef.showCodeInput) {
@@ -2030,29 +2070,7 @@
         hideRegError();
         showRegWait(t("wizard.registration.sending"));
 
-        sendRegSequence(deviceKey, btnDef.commands, florCode).then(function (ok) {
-          hideRegWait();
-          if (!ok) {
-            setActionButtonsDisabled(wrap, false);
-            showRegError(t("wizard.registration.error"));
-            return;
-          }
-          // Post-steps (PFX step 2, FLOR post-command)
-          if (btnDef.postSteps) {
-            renderStepList(btnDef.postSteps);
-          }
-          if (btnDef.postCommands) {
-            return sendRegSequence(deviceKey, btnDef.postCommands, florCode).then(function (ok2) {
-              if (!ok2) {
-                setActionButtonsDisabled(wrap, false);
-                showRegError(t("wizard.registration.error"));
-                return;
-              }
-              finishRegSuccess(btnDef);
-            });
-          }
-          finishRegSuccess(btnDef);
-        });
+        sendRegSequence(deviceKey, btnDef.commands, florCode).then(onRegCommandDone);
       });
       wrap.appendChild(btn);
     });
