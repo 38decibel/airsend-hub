@@ -3,13 +3,12 @@
 (function () {
   "use strict";
 
-  var ns                   = window.AirSend;
-  var t                    = ns.t;
-  var api                  = ns.api;
-  var $                    = ns.$;
-  var show                 = ns.show;
-  var hide                 = ns.hide;
-  var populateCategorySelect = ns.populateCategorySelect;
+  var ns   = window.AirSend;
+  var t    = ns.t;
+  var api  = ns.api;
+  var $    = ns.$;
+  var show = ns.show;
+  var hide = ns.hide;
 
   // -----------------------------------------------------------------------
   // State
@@ -29,7 +28,6 @@
     memoryState.selected = entry;
     memoryState.kind     = null;
     $("memory-name-input").value = "";
-    populateCategorySelect($("memory-category-select"));
     document.querySelectorAll("#memory-kind-choices .choice-box").forEach(function (b) {
       b.classList.remove("selected");
     });
@@ -126,8 +124,6 @@
     if (!entry) return;
 
     var options = {};
-    var chosenCategory = $("memory-category-select").value;
-    if (chosenCategory) { options.display_category = chosenCategory; }
 
     var banner = $("memory-add-banner");
     hide(banner.id);
