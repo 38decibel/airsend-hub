@@ -112,7 +112,7 @@ class CallbackServer:
 
     def _log_reliability_sample(self, box_slug: str, channel_id: int, channel_source: int, event: dict) -> None:
         catalog_entry = self._catalog.entry_for(box_slug, channel_id)
-        _LOGGER.info(
+        _LOGGER.debug(
             "reliability_sample value=%s protocol=%s band=%s box=%s channel=%s/%s",
             event.get("reliability"),
             catalog_entry.get("name") if catalog_entry else None,
