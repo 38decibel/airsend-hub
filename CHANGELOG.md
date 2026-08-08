@@ -1,5 +1,12 @@
 ---
 
+## 1.36.0 - 2026-08-08
+
+### ♻️ Changed
+- **catalog:** remove noisy stale cache log message
+
+---
+
 ## 1.35.1 - 2026-08-08
 
 ### 🐛 Fixed
