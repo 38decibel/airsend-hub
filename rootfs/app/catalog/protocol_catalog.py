@@ -40,8 +40,6 @@ class ProtocolCatalog:
         entry = self._cache.get(box_slug)
         if entry is None:
             return []
-        if time.time() - entry["fetched_at"] > _CACHE_TTL_S:
-            _LOGGER.debug("Protocol cache for box '%s' is stale, refresh recommended", box_slug)
         return entry["channels"]
 
     def protocol_name_for(self, box_slug: str, channel_id: int) -> str | None:
