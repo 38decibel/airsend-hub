@@ -197,9 +197,6 @@
     <label class="field-label" for="name-input" data-i18n="wizard.kind.nameLabel">Nom de l'appareil</label>
     <input type="text" id="name-input" data-i18n-placeholder="common.namePlaceholder" placeholder="ex: Volet salon terrasse">
 
-    <label class="field-label" for="category-select" data-i18n="wizard.kind.categoryLabel">Catégorie (icône, facultatif)</label>
-    <select id="category-select"></select>
-
     <div id="confirm-banner" class="banner hidden"></div>
 
     <div style="margin-top:14px;">
@@ -337,8 +334,6 @@
     </div>
     <label class="field-label" for="memory-name-input" data-i18n="wizard.kind.nameLabel">Nom de l'appareil</label>
     <input type="text" id="memory-name-input" data-i18n-placeholder="common.namePlaceholder" placeholder="ex: Volet salon terrasse">
-    <label class="field-label" for="memory-category-select" data-i18n="wizard.kind.categoryLabel">Catégorie (icône, facultatif)</label>
-    <select id="memory-category-select"></select>
     <div id="memory-add-banner" class="banner hidden" style="margin-top:10px;"></div>
     <div style="margin-top:14px;">
       <button class="btn" id="btn-memory-add-confirm" disabled data-i18n="wizard.kind.confirm">Ajouter l'appareil</button>
@@ -380,8 +375,6 @@
     </div>
     <label class="field-label" for="inbox-name-input" data-i18n="wizard.kind.nameLabel">Nom de l'appareil</label>
     <input type="text" id="inbox-name-input" data-i18n-placeholder="common.namePlaceholder" placeholder="ex: Volet salon terrasse">
-    <label class="field-label" for="inbox-category-select" data-i18n="wizard.kind.categoryLabel">Catégorie (icône, facultatif)</label>
-    <select id="inbox-category-select"></select>
     <div id="inbox-confirm-banner" class="banner hidden" style="margin-top:10px;"></div>
     <div style="margin-top:14px;">
       <button class="btn" id="btn-inbox-confirm" disabled data-i18n="wizard.kind.confirm">Ajouter l'appareil</button>
@@ -533,8 +526,7 @@
 
     var info = document.createElement("span");
     info.className = "device-info";
-    var icon = (d.options && d.options.display_category) ? categoryIcon(d.options.display_category) + " " : "";
-    info.innerHTML = "<span>" + icon + d.friendly_name + "</span><span class='muted'> · " +
+    info.innerHTML = "<span>" + d.friendly_name + "</span><span class='muted'> · " +
       d.kind + " · " + (d.protocol_name || "?") + "</span>";
 
     var actions = document.createElement("span");
@@ -704,7 +696,6 @@
     hide("invert-row");
     $("travel-time-input").value = "20";
     hide("travel-time-row");
-    populateCategorySelect($("category-select"));
     hide("confirm-banner");
     $("btn-confirm").disabled = true;
     document.querySelectorAll(".choice-box").forEach(function (b) { b.classList.remove("selected"); });
@@ -1109,10 +1100,6 @@
     if (state.kind === "volet_roulant") {
       var rawTravelTime = Number.parseFloat($("travel-time-input").value);
       options.travel_time = Number.isNaN(rawTravelTime) ? DEFAULT_TRAVEL_TIME_S : Math.min(180, Math.max(1, rawTravelTime));
-    }
-    var chosenCategory = $("category-select").value;
-    if (chosenCategory) {
-      options.display_category = chosenCategory;
     }
     var friendlyName = $("name-input").value.trim();
     var banner = $("confirm-banner");
@@ -1873,10 +1860,14 @@
   };
 
   // Protocols documented in the cloud app but not yet fully detailed here.
+  // Protocols documented in the cloud app but not yet fully detailed here.
+  // Note: protocols already implemented in REGISTRATION_FLOWS above must NOT
+  // appear in this set — they would shadow the real flow and show a generic
+  // "pending documentation" message instead.
   var REG_PENDING_PROTOCOLS = new Set([
     "ALT","AMC","AOK","APL","ARB","ARW","ATR","AVD868","AWR",
     "B12","B12868","B14","B18","B20","B24","B24868","B26","B28","B32",
-    "BFT","BHS","BID868","BLY","BLYP0","BNAA","CBF","CBK","CBN868","CBN",
+    "BHS","BID868","BLY","BLYP0","BNAA","CBF","CBK","CBN868",
     "CCS","CDV","CFN","CHM","CHP","CLS","CMO","CRD868","CRDS","CRS","CRSBV",
     "DC","DD","DFN","DGL868","DIO","DIO1","DIO2","DKT","DKT868","DPT",
     "DTS","DYA","EBR","ERC","ERCA","ERP1","EVF","EWFS","EWV","EXM",
@@ -1886,10 +1877,10 @@
     "IFT","INL868","IOBL","IOU868","JLY","KGF","KGS","KGT","KLQ","KLQ868","KLQ_MC",
     "LEB","LFD","LTP","LVO","MBL","MCZ","MTC","MTH","MVO",
     "NHS","NSL868","NXS","OS1","OS2","OS3","OTI","OZR",
-    "PLN","PLN2","PRM","PRT","PTC","RF1","RFY","RTR","RTW",
+    "PLN","PRM","PRT","RF1","RTR","RTW",
     "SEA","SKM","SLH","SLH868","SMO","STL","STN","TCO","TGO","TIC",
-    "TLC","TLC868","TMC","TMC868","TX43","V2","V2868","V2E","WDB","WDI",
-    "WMB_S","WSR","WST","WVN","X10","X10S","X2D868","X3D","XCF","ZFR",
+    "TLC","TLC868","TMC868","TX43","V2","V2868","WDB","WDI",
+    "WMB_S","WST","WVN","X10","X10S","X3D","XCF","ZFR",
   ]);
 
   // Resolve a step key like "PFX.pressUp_html" into rendered HTML.
@@ -2196,43 +2187,6 @@
   };
   var DOMAIN_TO_KINDS = { button: ["1_bouton"], switch: ["on_off"], cover: ["volet_roulant", "niveau"] };
 
-  // Purely cosmetic grouping (icon shown in the device/inbox lists). Kept in
-  // sync by hand with inclusion_api.py's DISPLAY_CATEGORIES - never used to
-  // pick a domain/kind, only an icon + label.
-  var DISPLAY_CATEGORIES = [
-    { key: "other", icon: "🔹" },
-    { key: "temp_humidity", icon: "🌡️" },
-    { key: "weather_station", icon: "⛅" },
-    { key: "tpms", icon: "🛞" },
-    { key: "energy_water_meter", icon: "💧" },
-    { key: "smoke_security_alarm", icon: "🚨" },
-    { key: "gate_garage_remote", icon: "🚪" },
-    { key: "automotive_keyfob", icon: "🚗" },
-    { key: "remote_keyfob", icon: "🔑" },
-    { key: "home_automation_blinds", icon: "🪟" },
-    { key: "ceiling_fan", icon: "🌀" },
-    { key: "kitchen_thermometer", icon: "🍖" },
-    { key: "doorbell", icon: "🔔" },
-    { key: "rolling_code", icon: "🔄" },
-    { key: "restaurant_pager", icon: "📟" },
-  ];
-
-  function populateCategorySelect(selectEl) {
-    var previous = selectEl.value;
-    selectEl.innerHTML = "";
-    var noneOpt = document.createElement("option");
-    noneOpt.value = "";
-    noneOpt.textContent = t("category.none");
-    selectEl.appendChild(noneOpt);
-    DISPLAY_CATEGORIES.forEach(function (cat) {
-      var opt = document.createElement("option");
-      opt.value = cat.key;
-      opt.textContent = cat.icon + " " + t("category." + cat.key);
-      selectEl.appendChild(opt);
-    });
-    selectEl.value = previous || "";
-  }
-
   // Shared helper: escape special characters for safe use in HTML attribute values.
   // Used by screen-import.js and screen-backup.js via window.AirSend.escapeAttr.
   function escapeAttr(text) {
@@ -2241,19 +2195,15 @@
 
     // Expose shared API for the deferred screen modules
   window.AirSend = {
-    t:                   t,
-    api:                 api,
-    $:                   $,
-    show:                show,
-    hide:                hide,
-    escapeAttr:          escapeAttr,
-    backToHome:          backToHome,
-    state:               state,
-    boxesCache:          boxesCache,
-    KIND_LABEL_KEYS:     KIND_LABEL_KEYS,
-    DOMAIN_TO_KINDS:     DOMAIN_TO_KINDS,
-    DISPLAY_CATEGORIES:  DISPLAY_CATEGORIES,
-    populateCategorySelect: populateCategorySelect,
+    t:               t,
+    api:             api,
+    show:            show,
+    hide:            hide,
+    escapeAttr:      escapeAttr,
+    state:           state,
+    boxesCache:      boxesCache,
+    KIND_LABEL_KEYS: KIND_LABEL_KEYS,
+    DOMAIN_TO_KINDS: DOMAIN_TO_KINDS,
     // Filled in by the screen modules once they run:
     getImportRows:       function () { return []; },
     renderImportTable:   function () {},

@@ -50,28 +50,6 @@ KIND_TO_DOMAIN: dict[str, str] = {
     "niveau": "cover",
 }
 
-# Purely cosmetic, user-facing grouping (icon/label in the UI). Stored in
-# device.options["display_category"] and never consulted for domain/kind
-# logic: several categories legitimately map to the same technical kind
-# (e.g. automotive_keyfob and doorbell are both "1_bouton"/"event").
-DISPLAY_CATEGORIES: frozenset[str] = frozenset({
-    "other",
-    "temp_humidity",
-    "weather_station",
-    "tpms",
-    "energy_water_meter",
-    "smoke_security_alarm",
-    "gate_garage_remote",
-    "automotive_keyfob",
-    "remote_keyfob",
-    "home_automation_blinds",
-    "ceiling_fan",
-    "kitchen_thermometer",
-    "doorbell",
-    "rolling_code",
-    "restaurant_pager",
-})
-
 def _slugify(text: str) -> str:
     slug = re.sub(r"[^a-z0-9]+", "_", text.strip().lower()).strip("_")
     return slug or "device"
@@ -346,7 +324,7 @@ class InclusionApi:
         box = self._boxes[box_slug]
         try:
             channels = await self._client.list_channels(box)
-        except Exception as exc:
+        except AirSendError as exc:
             return web.json_response({"error": str(exc)}, status=502)
         return web.json_response(channels)
 
@@ -509,10 +487,6 @@ class InclusionApi:
         domain = KIND_TO_DOMAIN.get(kind)
         if domain is None:
             raise web.HTTPBadRequest(text=f"unknown kind: {kind}")
-
-        display_category = (options or {}).get("display_category")
-        if display_category is not None and display_category not in DISPLAY_CATEGORIES:
-            raise web.HTTPBadRequest(text=f"unknown display_category: {display_category}")
 
         if key is None:
             base_key = _slugify(friendly_name)

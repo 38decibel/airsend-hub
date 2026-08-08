@@ -4,12 +4,11 @@
   "use strict";
 
   var ns = window.AirSend;
-  var t                    = ns.t;
-  var api                  = ns.api;
-  var $                    = ns.$;
-  var show                 = ns.show;
-  var hide                 = ns.hide;
-  var populateCategorySelect = ns.populateCategorySelect;
+  var t    = ns.t;
+  var api  = ns.api;
+  var $    = ns.$;
+  var show = ns.show;
+  var hide = ns.hide;
 
   // -----------------------------------------------------------------------
   // State
@@ -93,7 +92,6 @@
     inboxState.selected = c;
     inboxState.kind     = null;
     $("inbox-name-input").value = "";
-    populateCategorySelect($("inbox-category-select"));
     document.querySelectorAll("#inbox-kind-choices .choice-box").forEach(function (b) { b.classList.remove("selected"); });
     hide("inbox-confirm-banner");
     updateInboxConfirmEnabled();
@@ -247,8 +245,6 @@
     var c = inboxState.selected;
     if (!c) return;
     var options = {};
-    var chosenCategory = $("inbox-category-select").value;
-    if (chosenCategory) { options.display_category = chosenCategory; }
 
     var banner = $("inbox-confirm-banner");
     hide(banner.id);
