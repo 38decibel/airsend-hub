@@ -1,5 +1,12 @@
 ---
 
+## 1.37.0 - 2026-08-08
+
+### ♻️ Changed
+- **logging:** lower reliability_sample log to debug level
+
+---
+
 ## 1.36.0 - 2026-08-08
 
 ### ♻️ Changed
