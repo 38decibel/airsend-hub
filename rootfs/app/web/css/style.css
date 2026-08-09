@@ -58,18 +58,30 @@
   }
   .top-bar-left { display: flex; align-items: center; gap: 10px; }
 
-  /* ── App shell: sidebar + content ── */
-  .app-shell { display: flex; flex: 1; min-height: 0; }
+  /* ── App shell: sidebar overlay + content ── */
+  .app-shell { display: flex; flex: 1; min-height: 0; position: relative; }
 
-  /* ── Sidebar ── */
+  /* ── Sidebar backdrop (closes sidebar on outside click) ── */
+  .sidebar-backdrop {
+    display: none;
+    position: fixed; inset: 0; z-index: 99;
+    background: rgba(0, 0, 0, 0.35);
+  }
+  .sidebar-backdrop.visible { display: block; }
+
+  /* ── Sidebar — fixed overlay, always full-height ── */
   .sidebar {
-    width: var(--sidebar-w); flex-shrink: 0;
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+    width: var(--sidebar-w);
     background: var(--card); border-right: 1px solid var(--border);
     display: flex; flex-direction: column;
-    transition: width 0.2s ease, visibility 0.2s ease;
+    transform: translateX(0);
+    transition: transform 0.22s ease, visibility 0.22s ease;
     overflow: hidden;
+    /* push sidebar below the top-bar height */
+    padding-top: var(--topbar-h, 53px);
   }
-  .sidebar.collapsed { width: 0; visibility: hidden; }
+  .sidebar.collapsed { transform: translateX(-100%); visibility: hidden; }
   .sidebar nav { padding: 8px 0; flex: 1; }
   .sidebar-item {
     display: flex; align-items: center; gap: 10px;
@@ -92,7 +104,7 @@
   .sidebar-item .nav-label { overflow: hidden; }
   .sidebar-item[title] { position: relative; }
 
-  /* ── Main content area ── */
+  /* ── Main content area — always full width, sidebar never displaces it ── */
   .main-content { flex: 1; padding: 16px; overflow-y: auto; min-width: 0; }
 
   /* ── Hamburger button ── */
