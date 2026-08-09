@@ -66,10 +66,10 @@
     width: var(--sidebar-w); flex-shrink: 0;
     background: var(--card); border-right: 1px solid var(--border);
     display: flex; flex-direction: column;
-    transition: width 0.2s ease;
+    transition: width 0.2s ease, visibility 0.2s ease;
     overflow: hidden;
   }
-  .sidebar.collapsed { width: var(--sidebar-collapsed-w); }
+  .sidebar.collapsed { width: 0; visibility: hidden; }
   .sidebar nav { padding: 8px 0; flex: 1; }
   .sidebar-item {
     display: flex; align-items: center; gap: 10px;
@@ -84,9 +84,12 @@
     border-left-color: var(--accent);
     background: var(--choice-selected-bg); color: var(--accent);
   }
-  .sidebar-item .nav-icon { font-size: 1.1rem; flex-shrink: 0; width: 22px; text-align: center; }
+  .sidebar-item .nav-icon {
+    font-size: 20px; flex-shrink: 0; width: 24px; text-align: center;
+    font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 0, "opsz" 24;
+  }
+  .sidebar-item.active .nav-icon { font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24; }
   .sidebar-item .nav-label { overflow: hidden; }
-  .sidebar.collapsed .nav-label { display: none; }
   .sidebar-item[title] { position: relative; }
 
   /* ── Main content area ── */
@@ -121,6 +124,8 @@
   .btn:hover { background: var(--accent-hover); }
   .btn.secondary { background: var(--btn-secondary-bg); color: var(--text); }
   .btn.secondary:hover { background: var(--btn-secondary-hover); }
+  .btn.secondary.danger { color: var(--danger); }
+  .btn.secondary.danger:hover { background: var(--btn-secondary-hover); border: 1px solid var(--danger); }
   .btn:disabled { opacity: 0.5; cursor: default; }
   .btn-grid { display: flex; flex-wrap: wrap; gap: 8px; }
   .choice-box {

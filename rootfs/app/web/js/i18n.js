@@ -198,6 +198,8 @@ const I18N = {
       "inbox.includeTitle": "Ajouter cet appareil",
       "inbox.settingsError": "Erreur lors de la mise à jour du réglage.",
       "inbox.loadError": "Erreur lors du chargement des signaux.",
+      "inbox.clearAll": "Effacer tout",
+      "inbox.clearAllConfirm": "Effacer tous les signaux captés et réinitialiser la liste des signaux ignorés ? Cette action est irréversible.",
 
 
 
@@ -423,6 +425,8 @@ const I18N = {
       "inbox.includeTitle": "Add this device",
       "inbox.settingsError": "Error while updating the setting.",
       "inbox.loadError": "Error while loading captured signals.",
+      "inbox.clearAll": "Clear all",
+      "inbox.clearAllConfirm": "Clear all captured signals and reset the ignored-signal list? This action cannot be undone.",
 
 
 

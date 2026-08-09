@@ -193,6 +193,7 @@
     api("api/inbox").then(function (res) {
       if (!res.ok) {
         hide("inbox-empty");
+        hide("inbox-clear-row");
         list.textContent = t("inbox.loadError");
         return;
       }
@@ -200,9 +201,11 @@
       var candidates = res.body.candidates || [];
       if (!candidates.length) {
         show("inbox-empty");
+        hide("inbox-clear-row");
         return;
       }
       hide("inbox-empty");
+      show("inbox-clear-row");
       candidates.forEach(function (c) { list.appendChild(buildInboxRow(c)); });
     });
   }
@@ -270,6 +273,17 @@
       }
       inboxState.selected = null;
       hide("inbox-confirm-form");
+      loadInboxCandidates();
+    });
+  });
+
+  $("btn-inbox-clear-all").addEventListener("click", function () {
+    if (!window.confirm(t("inbox.clearAllConfirm"))) { return; }
+    api("api/inbox/clear", { method: "POST" }).then(function (res) {
+      if (!res.ok) {
+        window.alert(t("inbox.settingsError"));
+        return;
+      }
       loadInboxCandidates();
     });
   });

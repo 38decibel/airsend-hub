@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title data-i18n="page.title">AirSend - Ajouter un appareil</title>
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 <script src="js/i18n.js"></script>
 <script src="js/screen-import.js" defer></script>
 <script src="js/screen-backup.js" defer></script>
@@ -16,7 +17,6 @@
 <div class="top-bar">
   <div class="top-bar-left">
     <button type="button" id="btn-sidebar-toggle" class="sidebar-toggle" aria-label="Toggle sidebar">☰</button>
-    <h1>AirSend</h1>
   </div>
   <div style="display:flex;align-items:center;gap:8px;">
     <button type="button" id="btn-theme-toggle" class="theme-toggle-btn" aria-label="Toggle theme">🌙</button>
@@ -31,27 +31,27 @@
 <aside class="sidebar" id="sidebar" aria-label="Navigation">
   <nav>
     <button type="button" class="sidebar-item active" id="nav-home" title="Appareils">
-      <span class="nav-icon">📋</span>
+      <span class="nav-icon material-symbols-outlined">devices_other</span>
       <span class="nav-label" data-i18n="nav.home">Appareils</span>
     </button>
     <button type="button" class="sidebar-item" id="nav-add" title="Ajouter un appareil">
-      <span class="nav-icon">➕</span>
+      <span class="nav-icon material-symbols-outlined">add_circle</span>
       <span class="nav-label" data-i18n="nav.add">Ajouter</span>
     </button>
     <button type="button" class="sidebar-item" id="nav-inbox" title="Signaux captés">
-      <span class="nav-icon">📡</span>
+      <span class="nav-icon material-symbols-outlined">cell_tower</span>
       <span class="nav-label" data-i18n="nav.inbox">Signaux captés</span>
     </button>
     <button type="button" class="sidebar-item" id="nav-import" title="Importer depuis YAML">
-      <span class="nav-icon">📥</span>
+      <span class="nav-icon material-symbols-outlined">file_save</span>
       <span class="nav-label" data-i18n="nav.import">Importer YAML</span>
     </button>
     <button type="button" class="sidebar-item" id="nav-backup" title="Sauvegarde / restauration">
-      <span class="nav-icon">💾</span>
+      <span class="nav-icon material-symbols-outlined">upload_file</span>
       <span class="nav-label" data-i18n="nav.backup">Sauvegarde</span>
     </button>
     <button type="button" class="sidebar-item" id="nav-memory" title="Mémoire boîtier">
-      <span class="nav-icon">🧠</span>
+      <span class="nav-icon material-symbols-outlined">memory</span>
       <span class="nav-label" data-i18n="nav.memory">Mémoire boîtier</span>
     </button>
   </nav>
@@ -364,6 +364,9 @@
 
   <div id="inbox-empty" class="muted" style="margin-top:14px;" data-i18n="inbox.empty">Aucun signal en attente pour le moment.</div>
   <div id="inbox-list" style="margin-top:10px;"></div>
+  <div id="inbox-clear-row" class="hidden" style="margin-top:12px;">
+    <button type="button" class="btn secondary danger" id="btn-inbox-clear-all" data-i18n="inbox.clearAll">Effacer tout</button>
+  </div>
 
   <div id="inbox-confirm-form" class="hidden" style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border);">
     <h2 data-i18n="inbox.includeTitle">Ajouter cet appareil</h2>

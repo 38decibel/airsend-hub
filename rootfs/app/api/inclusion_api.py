@@ -130,6 +130,7 @@ class InclusionApi:
         self.app.router.add_post("/api/backup/import/commit", self._handle_backup_import_commit)
         self.app.router.add_get("/api/inbox", self._handle_list_inbox)
         self.app.router.add_post("/api/inbox/forget", self._handle_inbox_forget)
+        self.app.router.add_post("/api/inbox/clear", self._handle_inbox_clear)
         self.app.router.add_post("/api/inbox/confirm", self._handle_inbox_confirm)
         self.app.router.add_get("/api/settings", self._handle_get_settings)
         self.app.router.add_patch("/api/settings", self._handle_patch_settings)
@@ -241,6 +242,11 @@ class InclusionApi:
         box_slug, channel_id, channel_source = self._parse_candidate_ref(body)
         forgotten = self._inclusion.forget_candidate(box_slug, channel_id, channel_source)
         return web.json_response({"forgotten": forgotten})
+
+    async def _handle_inbox_clear(self, _request: web.Request) -> web.Response:
+        """Remove all pending candidates and reset the ignored list."""
+        count = self._inclusion.clear_all()
+        return web.json_response({"cleared": count})
 
     async def _handle_inbox_confirm(self, request: web.Request) -> web.Response:
         body = await request.json()
