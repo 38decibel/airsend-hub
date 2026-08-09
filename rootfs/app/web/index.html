@@ -28,6 +28,7 @@
 </div>
 
 <div class="app-shell">
+<div class="sidebar-backdrop" id="sidebar-backdrop" aria-hidden="true"></div>
 <aside class="sidebar" id="sidebar" aria-label="Navigation">
   <nav>
     <button type="button" class="sidebar-item active" id="nav-home" title="Appareils">
@@ -442,16 +443,27 @@
   $("btn-theme-toggle").addEventListener("click", cycleTheme);
 
   // -----------------------------------------------------------------------
-  // Sidebar collapse / expand
+  // Sidebar overlay — opens on top of the content, never displaces it
   // -----------------------------------------------------------------------
   var SIDEBAR_KEY = "airsend_sidebar_collapsed";
   var sidebar = $("sidebar");
+  var backdrop = $("sidebar-backdrop");
+
+  function updateTopbarHeight() {
+    var topBar = document.querySelector(".top-bar");
+    if (topBar) {
+      document.documentElement.style.setProperty("--topbar-h", topBar.offsetHeight + "px");
+    }
+  }
 
   function applySidebarState(collapsed) {
+    updateTopbarHeight();
     if (collapsed) {
       sidebar.classList.add("collapsed");
+      backdrop.classList.remove("visible");
     } else {
       sidebar.classList.remove("collapsed");
+      backdrop.classList.add("visible");
     }
   }
 
@@ -461,6 +473,11 @@
     var nowCollapsed = !sidebar.classList.contains("collapsed");
     applySidebarState(nowCollapsed);
     localStorage.setItem(SIDEBAR_KEY, nowCollapsed ? "1" : "0");
+  });
+
+  backdrop.addEventListener("click", function () {
+    applySidebarState(true);
+    localStorage.setItem(SIDEBAR_KEY, "1");
   });
 
   // -----------------------------------------------------------------------
@@ -723,6 +740,8 @@
     ALL_SCREENS.forEach(hide);
     show(screenId);
     setActiveNav(navId);
+    applySidebarState(true);
+    localStorage.setItem(SIDEBAR_KEY, "1");
     if (initFn) { initFn(); }
   }
 
