@@ -200,6 +200,7 @@ const I18N = {
       "inbox.loadError": "Erreur lors du chargement des signaux.",
       "inbox.clearAll": "Effacer tout",
       "inbox.clearAllConfirm": "Effacer tous les signaux captés et réinitialiser la liste des signaux ignorés ? Cette action est irréversible.",
+      "inbox.filterProtocolLabel": "Afficher uniquement {protocol}",
 
 
 
@@ -427,6 +428,7 @@ const I18N = {
       "inbox.loadError": "Error while loading captured signals.",
       "inbox.clearAll": "Clear all",
       "inbox.clearAllConfirm": "Clear all captured signals and reset the ignored-signal list? This action cannot be undone.",
+      "inbox.filterProtocolLabel": "Show {protocol} only",
 
 
 

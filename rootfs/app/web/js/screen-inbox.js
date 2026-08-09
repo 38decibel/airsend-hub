@@ -15,6 +15,9 @@
   // -----------------------------------------------------------------------
   var inboxState = { selected: null, kind: null };
 
+  // Protocol filter: channel_id to filter on, or null to show all.
+  var filterChannelId = null;
+
   // -----------------------------------------------------------------------
   // Helpers
   // -----------------------------------------------------------------------
@@ -41,6 +44,30 @@
   function syncChannelSelect(channelId) {
     var sel = $("inbox-channel-select");
     sel.value = (channelId === null || channelId === undefined) ? "" : String(channelId);
+    updateProtocolFilterToggle(channelId);
+  }
+
+  function updateProtocolFilterToggle(channelId) {
+    var row = $("inbox-protocol-filter-row");
+    var checkbox = $("inbox-protocol-filter-checkbox");
+    var label = $("inbox-protocol-filter-label");
+    var sel = $("inbox-channel-select");
+    if (!channelId) {
+      // No protocol selected: hide toggle and clear active filter.
+      filterChannelId = null;
+      hide(row.id);
+      return;
+    }
+    // Derive protocol name from the selected option text.
+    var selectedOption = sel.options[sel.selectedIndex];
+    var protocolName = selectedOption ? selectedOption.textContent : String(channelId);
+    label.textContent = t("inbox.filterProtocolLabel", { protocol: protocolName });
+    show(row.id);
+    // Activate filter by default when a new protocol is selected.
+    if (filterChannelId !== channelId) {
+      filterChannelId = channelId;
+      checkbox.checked = true;
+    }
   }
 
   function populateChannelSelect(channels, currentChannelId) {
@@ -199,14 +226,17 @@
       }
       syncCaptureUnknownCheckbox(res.body.capture_unknown_events);
       var candidates = res.body.candidates || [];
-      if (!candidates.length) {
+      var filtered = filterChannelId
+        ? candidates.filter(function (c) { return c.channel_id === filterChannelId; })
+        : candidates;
+      if (!filtered.length) {
         show("inbox-empty");
         hide("inbox-clear-row");
         return;
       }
       hide("inbox-empty");
       show("inbox-clear-row");
-      candidates.forEach(function (c) { list.appendChild(buildInboxRow(c)); });
+      filtered.forEach(function (c) { list.appendChild(buildInboxRow(c)); });
     });
   }
 
@@ -288,6 +318,15 @@
     });
   });
 
+  $("inbox-protocol-filter-checkbox").addEventListener("change", function (e) {
+    var sel = $("inbox-channel-select");
+    var raw = sel.value;
+    filterChannelId = (e.currentTarget.checked && raw !== "")
+      ? Number.parseInt(raw, 10)
+      : null;
+    loadInboxCandidates();
+  });
+
   $("inbox-channel-select").addEventListener("change", function () {
     var sel = $("inbox-channel-select");
     var raw = sel.value;
@@ -300,6 +339,10 @@
       if (!res.ok) {
         window.alert(t("inbox.settingsError"));
         syncChannelSelect(res.body?.bind_channel_id);
+      } else {
+        // Update filter toggle state and refresh the list with the new filter.
+        updateProtocolFilterToggle(channelId);
+        loadInboxCandidates();
       }
     });
   });
