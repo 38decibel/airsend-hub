@@ -98,3 +98,15 @@ class InclusionState:
         key = (box, channel_id, channel_source)
         self._ignored.add(key)
         return self._candidates.pop(key, None) is not None
+
+    def clear_all(self) -> int:
+        """Remove all pending candidates and reset the ignored list.
+
+        Returns:
+            The number of candidates that were cleared.
+        """
+        count = len(self._candidates)
+        self._candidates.clear()
+        self._ignored.clear()
+        _LOGGER.info("Inbox cleared: %d candidate(s) removed", count)
+        return count
