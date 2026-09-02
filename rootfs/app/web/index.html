@@ -75,6 +75,12 @@
       <label for="edit-invert-checkbox" data-i18n="common.invert">Inverser le sens (câblage à l'envers)</label>
     </div>
 
+    <div id="edit-estimated-position-row" class="checkbox-row hidden">
+      <input type="checkbox" id="edit-estimated-position-checkbox">
+      <label for="edit-estimated-position-checkbox" data-i18n="common.estimatedPosition">Activer le suivi de position estimée</label>
+    </div>
+    <div id="edit-estimated-position-help" class="muted hidden" data-i18n="common.estimatedPositionHelp">Permet de régler le niveau d'ouverture depuis Home Assistant en estimant la position par minuterie.</div>
+
     <div id="edit-travel-time-row" class="hidden">
       <label class="field-label" for="edit-travel-time-input" data-i18n="common.travelTime">Durée de course estimée (secondes)</label>
       <input type="number" id="edit-travel-time-input" min="1" max="180" step="1">
@@ -188,6 +194,12 @@
       <input type="checkbox" id="invert-checkbox">
       <label for="invert-checkbox" data-i18n="common.invert">Inverser le sens (câblage à l'envers)</label>
     </div>
+
+    <div id="estimated-position-row" class="checkbox-row hidden">
+      <input type="checkbox" id="estimated-position-checkbox">
+      <label for="estimated-position-checkbox" data-i18n="common.estimatedPosition">Activer le suivi de position estimée</label>
+    </div>
+    <div id="estimated-position-help" class="muted hidden" data-i18n="common.estimatedPositionHelp">Permet de régler le niveau d'ouverture depuis Home Assistant en estimant la position par minuterie.</div>
 
     <div id="travel-time-row" class="hidden">
       <label class="field-label" for="travel-time-input" data-i18n="common.travelTime">Durée de course estimée (secondes)</label>
@@ -597,9 +609,20 @@
       hide("edit-invert-row");
     }
     if (d.domain === "cover" && d.kind === "volet_roulant") {
-      $("edit-travel-time-input").value = (d.options && d.options.travel_time) || DEFAULT_TRAVEL_TIME_S;
-      show("edit-travel-time-row");
+      var estPos = !!(d.options && d.options.estimated_position);
+      $("edit-estimated-position-checkbox").checked = estPos;
+      show("edit-estimated-position-row");
+      if (estPos) {
+        show("edit-estimated-position-help");
+        $("edit-travel-time-input").value = (d.options && d.options.travel_time) || DEFAULT_TRAVEL_TIME_S;
+        show("edit-travel-time-row");
+      } else {
+        hide("edit-estimated-position-help");
+        hide("edit-travel-time-row");
+      }
     } else {
+      hide("edit-estimated-position-row");
+      hide("edit-estimated-position-help");
       hide("edit-travel-time-row");
     }
     hide("edit-banner");
@@ -610,6 +633,17 @@
   $("btn-edit-cancel").addEventListener("click", function () {
     state.editingDevice = null;
     hide("device-edit");
+  });
+
+  $("edit-estimated-position-checkbox").addEventListener("change", function () {
+    var checked = $("edit-estimated-position-checkbox").checked;
+    if (checked) {
+      show("edit-estimated-position-help");
+      show("edit-travel-time-row");
+    } else {
+      hide("edit-estimated-position-help");
+      hide("edit-travel-time-row");
+    }
   });
 
   $("btn-edit-save").addEventListener("click", function () {
@@ -627,9 +661,15 @@
     if (d.domain === "cover") {
       payload.options = { ...d.options, invert: $("edit-invert-checkbox").checked };
       if (d.kind === "volet_roulant") {
-        var rawTravelTime = Number.parseFloat($("edit-travel-time-input").value);
-        var travelTime = Number.isNaN(rawTravelTime) ? DEFAULT_TRAVEL_TIME_S : Math.min(180, Math.max(1, rawTravelTime));
-        payload.options.travel_time = travelTime;
+        var estPos = $("edit-estimated-position-checkbox").checked;
+        payload.options.estimated_position = estPos;
+        if (estPos) {
+          var rawTravelTime = Number.parseFloat($("edit-travel-time-input").value);
+          var travelTime = Number.isNaN(rawTravelTime) ? DEFAULT_TRAVEL_TIME_S : Math.min(180, Math.max(1, rawTravelTime));
+          payload.options.travel_time = travelTime;
+        } else {
+          delete payload.options.travel_time;
+        }
       }
     }
 
@@ -718,6 +758,9 @@
     $("btn-branch-b").classList.remove("active");
     $("invert-checkbox").checked = false;
     hide("invert-row");
+    $("estimated-position-checkbox").checked = false;
+    hide("estimated-position-row");
+    hide("estimated-position-help");
     $("travel-time-input").value = "20";
     hide("travel-time-row");
     hide("confirm-banner");
@@ -1089,6 +1132,19 @@
 
 
 
+  function updateWizardEstimatedPositionVisibility() {
+    var checked = $("estimated-position-checkbox").checked;
+    if (checked) {
+      show("estimated-position-help");
+      show("travel-time-row");
+    } else {
+      hide("estimated-position-help");
+      hide("travel-time-row");
+    }
+  }
+
+  $("estimated-position-checkbox").addEventListener("change", updateWizardEstimatedPositionVisibility);
+
   document.querySelectorAll('[data-kind]').forEach(function (box) {
     box.addEventListener("click", function () {
       document.querySelectorAll('[data-kind]').forEach(function (b) { b.classList.remove("selected"); });
@@ -1100,8 +1156,11 @@
         hide("invert-row");
       }
       if (state.kind === "volet_roulant") {
-        show("travel-time-row");
+        show("estimated-position-row");
+        updateWizardEstimatedPositionVisibility();
       } else {
+        hide("estimated-position-row");
+        hide("estimated-position-help");
         hide("travel-time-row");
       }
       updateConfirmEnabled();
@@ -1124,8 +1183,12 @@
       options.invert = $("invert-checkbox").checked;
     }
     if (state.kind === "volet_roulant") {
-      var rawTravelTime = Number.parseFloat($("travel-time-input").value);
-      options.travel_time = Number.isNaN(rawTravelTime) ? DEFAULT_TRAVEL_TIME_S : Math.min(180, Math.max(1, rawTravelTime));
+      var estPos = $("estimated-position-checkbox").checked;
+      options.estimated_position = estPos;
+      if (estPos) {
+        var rawTravelTime = Number.parseFloat($("travel-time-input").value);
+        options.travel_time = Number.isNaN(rawTravelTime) ? DEFAULT_TRAVEL_TIME_S : Math.min(180, Math.max(1, rawTravelTime));
+      }
     }
     var friendlyName = $("name-input").value.trim();
     var banner = $("confirm-banner");

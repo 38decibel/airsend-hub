@@ -61,9 +61,6 @@ _LEGACY_RELIABILITY_DISCOVERY_TOPICS = (
 _SENSOR_COMPONENT = "sensor"
 _DIAGNOSTIC_CATEGORY = "diagnostic"
 
-_COVER_STOP_REACHED_RATIO = 0.5
-
-
 @dataclass
 class _CoverMotion:
 
@@ -534,7 +531,7 @@ class MqttBridge:
         target_position: float,
     ) -> None:
         """Send a directional RF command and start a partial-travel motion timer
-        to reach ``target_position`` (0-100) on a volet_roulant with travel_time.
+        to reach ``target_position`` (0-100) on a volet_roulant with estimated_position.
         """
         current = self._cover_positions.get(device.key, 0.0)
         if abs(target_position - current) < 1.0:
@@ -620,17 +617,18 @@ class MqttBridge:
     def _publish_cover_stop_optimistic(
         self, device: Device, motion: _CoverMotion, elapsed: float, topics: DeviceTopics
     ) -> None:
-        """Publish assumed final state after a STOP in legacy optimistic mode."""
-        ratio = elapsed / motion.travel_time_s if motion.travel_time_s > 0 else 1.0
-        reached_destination = ratio >= _COVER_STOP_REACHED_RATIO
-        if motion.motion_state == "opening":
-            final_state = "open" if reached_destination else "closed"
-        else:
-            final_state = "closed" if reached_destination else "open"
+        """Publish assumed final state after a STOP in optimistic mode.
+
+        The state reflects the direction of the last command: opening→open,
+        closing→closed.  Trying to infer the real position from elapsed time
+        is unreliable without real position feedback, so we always follow the
+        direction of motion.
+        """
+        final_state = "open" if motion.motion_state == "opening" else "closed"
         self._mqtt.publish(topics.state, final_state, retain=True)
         _LOGGER.debug(
-            "Cover %s stopped after %.1fs/%.1fs (%s) -> assumed %s",
-            device.key, elapsed, motion.travel_time_s, motion.motion_state, final_state,
+            "Cover %s stopped after %.1fs (%s) -> assumed %s",
+            device.key, elapsed, motion.motion_state, final_state,
         )
 
     def _handle_cover_stop(self, device: Device) -> None:

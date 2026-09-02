@@ -38,6 +38,8 @@ const I18N = {
       "common.back": "Retour",
       "common.backCancel": "&larr; Annuler",
       "common.invert": "Inverser le sens (câblage à l'envers)",
+      "common.estimatedPosition": "Activer le suivi de position estimée",
+      "common.estimatedPositionHelp": "Permet de régler le niveau d'ouverture depuis Home Assistant en estimant la position par minuterie. Sans cette option, les boutons Ouvrir/Stop/Fermer restent toujours actifs.",
       "common.travelTime": "Durée de course estimée (secondes)",
       "common.namePlaceholder": "ex: Volet salon terrasse",
 
@@ -266,6 +268,8 @@ const I18N = {
       "common.back": "Back",
       "common.backCancel": "&larr; Cancel",
       "common.invert": "Invert direction (wired backwards)",
+      "common.estimatedPosition": "Enable estimated position tracking",
+      "common.estimatedPositionHelp": "Lets you set the opening level from Home Assistant by estimating position with a timer. Without this option, the Open/Stop/Close buttons are always enabled.",
       "common.travelTime": "Estimated travel time (seconds)",
       "common.namePlaceholder": "e.g. Living room shutter",
 
